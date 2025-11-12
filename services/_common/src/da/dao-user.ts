@@ -5,7 +5,7 @@
 // User DAO. Advanced DAO to manage the security aspect of the user. 
 ////
 
-import { GlobalAccess, GlobalAccesses, GlobalRoleName, GLOBAL_ROLES, isAccess } from '#shared/access-types.js';
+import { GLOBAL_ROLES, GlobalAccess, GlobalAccesses, GlobalRoleName, isAccess } from '#shared/access-types.js';
 import { QueryOptions, User, USER_COLUMNS } from "#shared/entities.js";
 import { CODE_ERROR } from '../error-common.js';
 import { Err } from '../error.js';
@@ -109,7 +109,7 @@ export class UserDao extends BaseDao<User, number, QueryOptions<User>>{
 		const { query } = await knexQuery({ utx, tableName: this.table });
 		// stamp manually since the 'role' is not part of the User type (by design, not needed, need to make sure accesses is used)
 
-		const dataUser = BaseDao.Stamp(utx, { username, role }, true);
+		const dataUser = BaseDao.Stamp(utx, { username, role } as any, true);
 		// NOTE: By default, thereturning this.idNames is .id
 		const userId = (await query.insert(dataUser).returning(this.idNames as 'id'))[0].id as number;
 

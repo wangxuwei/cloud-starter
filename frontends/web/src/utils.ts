@@ -1,4 +1,4 @@
-import { attr, closest } from 'dom-native';
+import { closest, getAttr } from 'dom-native';
 import { asNum } from 'utils-min';
 
 //
@@ -48,7 +48,7 @@ export function entityRef(el: HTMLElement | EventTarget | null, type?: string) {
 		const entity: { [name: string]: any } = {};
 		entity.el = entityEl;
 		entity.type = entityEl.getAttribute("data-entity");
-		entity.id = asNum(attr(entityEl, 'data-entity-id'));
+		entity.id = asNum(getAttr(entityEl, 'data-entity-id'));
 		return entity;
 	}
 	return null;

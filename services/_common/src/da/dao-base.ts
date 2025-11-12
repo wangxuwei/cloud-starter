@@ -99,7 +99,7 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 
 	}
 
-	protected static Stamp<T>(utx: UserContext, data: T, forCreate?: boolean) {
+	protected static Stamp<T extends StampedEntity>(utx: UserContext, data: T, forCreate?: boolean) {
 		const stampedData: Partial<T> & StampedEntity = data;
 		const now = nowTimestamp();
 		if (forCreate) {
@@ -284,10 +284,9 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 
 		// if we have a bulk ids, try to do the whereIn (for non-compound for now)
 		if (ids instanceof Array) {
-
 			//// if single id properties, we can do whereIn
 			if (typeof this.idNames === 'string') {
-				return query.delete().whereIn(this.idNames, ids);
+				return query.delete().whereIn(this.idNames, ids as any);
 			}
 			//// if not a compound id, need to do it one by one for now. 
 			else {

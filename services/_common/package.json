@@ -22,15 +22,17 @@
     "fs-aux": "^0.1.1",
     "ioredis": "^5.8.2",
     "knex": "^3.1.0",
-    "koa-body": "^7.0.0",
+    "koa-body": "^6.0.1",
     "koa-send": "^5.0.1",
     "koa-static": "^5.0.0",
     "pg": "^8.16.3",
     "redstream": "^0.3.0",
     "useragent": "^2.3.0",
-    "utils-min": "^0.2.4"
+    "utils-min": "^0.2.4",
+    "typescript": "^5.9.3"
   },
   "devDependencies": {
+    "@types/formidable": "^3.4.5",
     "@types/koa-static": "^4.0.4",
     "@types/useragent": "^2.3.4"
   }

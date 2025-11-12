@@ -1,4 +1,4 @@
-import { append, BaseHTMLElement, first, frag, onEvent, trigger } from 'dom-native';
+import { append, BaseHTMLElement, first, html as frag, onEvent, trigger } from 'dom-native';
 
 export interface FooterConfig {
 	/** Either true/false or the label to be displayed in the button (default false, default label "OK") */
@@ -25,10 +25,10 @@ export class BaseDialog extends BaseHTMLElement {
 	private _opts?: DialogBaseOpts;
 
 	//// Key Elements
-	get dialogEl() { return first(this, '.dialog') };
-	get headerEl() { return first(this, '.dialog > header')! };
-	get contentEl() { return first(this, '.dialog > section.dialog-content')! };
-	get footerEl() { return first(this, '.dialog > footer') };
+	get dialogEl() :HTMLElement { return first(this, '.dialog')! };
+	get headerEl():HTMLElement { return first(this, '.dialog > header')! };
+	get contentEl():HTMLElement { return first(this, '.dialog > section.dialog-content')! };
+	get footerEl():HTMLElement { return first(this, '.dialog > footer')! };
 
 	//#region    ---------- Data Setters ---------- 
 	set opts(v: DialogBaseOpts) {

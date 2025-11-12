@@ -1,4 +1,4 @@
-import { customElement, frag, onEvent, pull, trigger } from 'dom-native';
+import { customElement, html as frag, onEvent, pull, trigger } from 'dom-native';
 import { Wks } from 'shared/entities.js';
 import { BaseDialog } from '../dialog/dg-base-dialog.js';
 

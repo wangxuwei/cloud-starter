@@ -2,7 +2,7 @@ import { position } from '@dom-native/draggable';
 import { getRouteWksId, pathAt } from 'common/route.js';
 import { logoff, UserContext } from 'common/user-ctx.js';
 import { BaseViewElement } from 'common/v-base.js';
-import { append, customElement, first, frag, on, onEvent, onHub, push } from 'dom-native';
+import { append, customElement, first, html as frag, on, onEvent, onHub, push } from 'dom-native';
 import { isNotEmpty } from 'utils-min';
 
 const defaultPath = "";
@@ -19,8 +19,8 @@ export class MainView extends BaseViewElement {
 
 
 	//// Key elements
-	private get mainEl() { return first(this, 'main')! };
-	private get headerAsideEl() { return first(this, 'header aside')! }
+	private get mainEl():HTMLElement { return first(this, 'main')! };
+	private get headerAsideEl():HTMLElement { return first(this, 'header aside')! }
 
 	//#region    ---------- Data Setters ---------- 
 	set userContext(v: UserContext) {

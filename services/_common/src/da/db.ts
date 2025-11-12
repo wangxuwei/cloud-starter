@@ -25,7 +25,7 @@ types.setTypeParser(20, function (val: string) {
 
 // 1016: _int8 (i.e., int8[])
 // val is of format string like: '{123,1234}'
-types.setTypeParser(1016, function (val: string) {
+types.setTypeParser(1016 as any, function (val: string) {
 	return pgArrayParse(val, parseInt); // TODO: needs to make it big int
 });
 //#endregion ---------- /PG Type Parsers ---------- 

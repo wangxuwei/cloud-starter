@@ -1,7 +1,7 @@
 // <origin src="https://raw.githubusercontent.com/BriteSnow/cloud-starter/master/frontends/web/src/views/spec/spec-views.ts" />
 
 import { render } from 'common/render.js';
-import { BaseHTMLElement, customElement, elem, frag, onEvent } from 'dom-native';
+import { BaseHTMLElement, customElement, elem, html as frag, onEvent } from 'dom-native';
 import { BaseDialog } from '../../dialog/dg-base-dialog.js';
 
 export class BaseSpecView extends BaseHTMLElement {

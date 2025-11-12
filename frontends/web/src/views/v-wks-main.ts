@@ -1,6 +1,6 @@
 import { pathAt } from 'common/route.js';
 import { BaseViewElement } from 'common/v-base.js';
-import { all, append, attr, className, customElement, elem, onHub } from 'dom-native';
+import { all, append, className, customElement, elem, getAttr, onHub } from 'dom-native';
 import { asNum } from 'utils-min';
 
 export const t = 123;
@@ -14,7 +14,7 @@ const subViews: any = {
 export class WksMainView extends BaseViewElement {
 
 	//// properties
-	get wksId() { return asNum(attr(this, 'wks-id')) }
+	get wksId() { return asNum(getAttr(this, 'wks-id')) }
 
 	//#region    ---------- Element & Hub Events ---------- 
 	@onHub('routeHub', 'CHANGE')

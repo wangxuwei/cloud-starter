@@ -48,14 +48,14 @@ export class MediaDao extends WksScopedDao<Media, number> {
 		const coreStore = await getCoreBucket();
 
 		const wks = await wksDao.get(utx, wksId);
-		const srcName = file.name!;
+		const srcName = file.originalFilename!;
 		const name = srcName; // at start same name
 		const type = getMediaType(name);
 
 		const mediaId = await this.create(utx, { srcName, name, type });
 		const media = await this.get(utx, mediaId);
 		const folderPath = `wks/${wks.uuid}/medias/${media.uuid}/`;
-		await coreStore.upload(file.path, CORE_STORE_ROOT_DIR + folderPath + srcName);
+		await coreStore.upload(file.filepath, CORE_STORE_ROOT_DIR + folderPath + srcName);
 		await this.update(utx, mediaId, { folderPath });
 
 		const mediaMimeType = getMimeType(name);
