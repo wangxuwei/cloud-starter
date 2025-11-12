@@ -1,5 +1,5 @@
 {
-  "name": "cmd-pod",
+  "name": "cmd",
   "type": "module",
   "version": "1.0.0",
   "description": "none",
@@ -7,18 +7,18 @@
     "type": "git",
     "url": "https://no-repo/yet.git"
   },
-  "main": "dist/cmd-pod/src/index.js",
+  "main": "dist/cmd/src/index.js",
   "imports": {
     "#common/*": "./dist/services/_common/src/*",
     "#shared/*": "./dist/shared/src/*"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node dist/services/cmd-pod/src/start",
-    "makeCredential": "node dist/services/cmd-pod/src/cmd-credential makeCredential",
-    "createUser": "node dist/services/cmd-pod/src/cmd-credential createUser",
-    "setPwd": "node dist/services/cmd-pod/src/cmd-credential setPwd",
-    "recreateDb": "node dist/services/cmd-pod/src/cmd-db recreateDb"
+    "start": "node dist/services/cmd/src/start",
+    "makeCredential": "node dist/services/cmd/src/cmd-credential makeCredential",
+    "createUser": "node dist/services/cmd/src/cmd-credential createUser",
+    "setPwd": "node dist/services/cmd/src/cmd-credential setPwd",
+    "recreateDb": "node dist/services/cmd/src/cmd-db recreateDb"
   },
   "author": "",
   "license": "ISC",
