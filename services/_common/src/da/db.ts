@@ -95,7 +95,7 @@ export async function getKnexClient() {
 			// create the new knex knex
 			_knex = await knex({
 				client: 'pg',
-				connection: dbOpts,
+				connection: {...dbOpts},
 				pool: {
 					min: 0,
 					max: 5
