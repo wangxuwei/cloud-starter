@@ -22,7 +22,7 @@
   "dependencies": {
     "backlib": "^0.5.2",
     "cloud-bucket": "^0.4.2",
-    "execa": "^9.6.0",
+    "execa": "^6.1.0",
     "fs-aux": "^0.1.1",
     "knex": "^3.1.0",
     "moment": "^2.30.1",
