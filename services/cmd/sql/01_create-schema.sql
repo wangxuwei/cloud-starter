@@ -162,6 +162,39 @@ CREATE TABLE "org_user" (
 );
 -- #endregion: --- Org
 
+
+CREATE TABLE "wks" (
+  id bigserial PRIMARY KEY,
+  uuid uuid NOT NULL UNIQUE DEFAULT gen_random_uuid (),
+  cid bigint,
+  ctime timestamp with time zone,
+  mid bigint,
+  mtime timestamp with time zone,
+  name varchar(64)
+);
+
+ALTER SEQUENCE wks_id_seq
+  RESTART WITH 1000;
+
+
+CREATE TYPE wrole_name AS ENUM (
+  'wr_owner',
+  'wr_admin',
+  'wr_editor',
+  'wr_viewer'
+);
+
+
+CREATE TABLE "user_wks" (
+  "userId" bigint NOT NULL,
+  "wksId" bigint NOT NULL,
+  "role" wrole_name NOT NULL,
+  PRIMARY KEY ("userId", "wksId"),
+  FOREIGN KEY ("userId") REFERENCES "user" (id) ON DELETE CASCADE,
+  FOREIGN KEY ("wksId") REFERENCES "wks" (id) ON DELETE CASCADE
+);
+
+
 -- #region:    --- Project
 CREATE TABLE "project" (
   id bigserial PRIMARY KEY,
@@ -262,7 +295,8 @@ CREATE TYPE media_res AS ENUM (
 
 CREATE TABLE "media" (
   id bigserial PRIMARY KEY,
-  "orgId" bigint NOT NULL,  
+  "orgId" bigint NULL,   -- FIXME
+  "wksId" bigint NOT NULL,
   uuid uuid NOT NULL UNIQUE DEFAULT gen_random_uuid (),
   type media_type NOT NULL,
   name varchar(64),
@@ -281,7 +315,8 @@ CREATE TABLE "media" (
   mtime timestamp with time zone,
 
   -- rels
-  FOREIGN KEY ("orgId") REFERENCES "org" (id) ON DELETE CASCADE
+  FOREIGN KEY ("orgId") REFERENCES "org" (id) ON DELETE CASCADE,
+  FOREIGN KEY ("wksId") REFERENCES "wks" (id) ON DELETE CASCADE
 );
 
 ALTER SEQUENCE media_id_seq
@@ -302,7 +337,7 @@ CREATE TYPE job_state AS ENUM (
 CREATE TABLE "job" (
 
   id bigserial PRIMARY KEY,
-  "orgId" bigint NOT NULL,  
+  "orgId" bigint NOT NULL,
   state job_state DEFAULT 'new',
 
   event varchar(64) NOT NULL,
