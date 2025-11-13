@@ -1,11 +1,11 @@
 import { MediaResolution } from './entities.js';
 
 /** For all event wks scoped */
-interface WksScopedBase {
-	wksId: number;
+interface OrgScopedBase {
+	orgId: number;
 }
 
-interface MediaEvent extends WksScopedBase {
+interface MediaEvent extends OrgScopedBase {
 	mediaId: number;
 }
 

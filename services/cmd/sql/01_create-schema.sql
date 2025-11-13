@@ -176,22 +176,13 @@ CREATE TABLE "wks" (
 ALTER SEQUENCE wks_id_seq
   RESTART WITH 1000;
 
-
-CREATE TYPE wrole_name AS ENUM (
-  'wr_owner',
-  'wr_admin',
-  'wr_editor',
-  'wr_viewer'
-);
-
-
-CREATE TABLE "user_wks" (
+CREATE TABLE "user_org" (
   "userId" bigint NOT NULL,
-  "wksId" bigint NOT NULL,
-  "role" wrole_name NOT NULL,
-  PRIMARY KEY ("userId", "wksId"),
+  "orgId" bigint NOT NULL,
+  "role" org_role_name NOT NULL,
+  PRIMARY KEY ("userId", "orgId"),
   FOREIGN KEY ("userId") REFERENCES "user" (id) ON DELETE CASCADE,
-  FOREIGN KEY ("wksId") REFERENCES "wks" (id) ON DELETE CASCADE
+  FOREIGN KEY ("orgId") REFERENCES "org" (id) ON DELETE CASCADE
 );
 
 
@@ -295,8 +286,9 @@ CREATE TYPE media_res AS ENUM (
 
 CREATE TABLE "media" (
   id bigserial PRIMARY KEY,
-  "orgId" bigint NULL,   -- FIXME
-  "wksId" bigint NOT NULL,
+  "orgId" bigint NOT NULL,
+  "wksId" bigint NULL, -- FIXME
+  "projectId" bigint NULL, -- FIXME
   uuid uuid NOT NULL UNIQUE DEFAULT gen_random_uuid (),
   type media_type NOT NULL,
   name varchar(64),
@@ -316,7 +308,8 @@ CREATE TABLE "media" (
 
   -- rels
   FOREIGN KEY ("orgId") REFERENCES "org" (id) ON DELETE CASCADE,
-  FOREIGN KEY ("wksId") REFERENCES "wks" (id) ON DELETE CASCADE
+  FOREIGN KEY ("wksId") REFERENCES "wks" (id) ON DELETE CASCADE,
+  FOREIGN KEY ("projectId") REFERENCES "project" (id) ON DELETE CASCADE
 );
 
 ALTER SEQUENCE media_id_seq

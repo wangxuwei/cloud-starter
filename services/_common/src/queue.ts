@@ -106,7 +106,7 @@ export function getStream<K extends keyof AllEventDic>(name: K, forBlocking = tr
 		key: name,
 		dataParser: function (arr) {
 			const obj = objectDataParser(arr);
-			const data = typify(obj, { nums: ['mediaId', 'wksId'] });
+			const data = typify(obj, { nums: ['mediaId', 'orgId'] });
 			return data as AllEventDic[K];
 		},
 		// TODO: needs to assert the obj

@@ -30,7 +30,7 @@ export function param(name: string): string | null {
 }
 
 
-export function getRouteWksId() {
+export function getRouteOrgId() {
 	return asNum(getRouteInfo().pathAt(0));
 }
 

@@ -1,5 +1,5 @@
 
-import { WksAccesses } from './access-types.js';
+import { OrgAccesses } from './access-types.js';
 import { StampedEntity } from './entities-base.js';
 import { JobEventName } from './event-types.js';
 
@@ -31,23 +31,30 @@ export interface OAuth extends StampedEntity {
 	oauth_picture?: string | null;
 }
 
+export interface Org extends StampedEntity {
+	id: number;
+	uuid: string;
+	name: string;
+	accesses?: OrgAccesses
+}
+
 export interface Wks extends StampedEntity {
 	id: number;
 	uuid: string;
 	name: string;
-	accesses?: WksAccesses
 }
 
-export interface WksScopedEntity {
-	wksId: number;
+export interface OrgScopedEntity {
+	orgId: number;
 }
 
 //#region    ---------- Media ---------- 
 export type MediaType = 'video' | 'image';
 export type MediaResolution = '480p30' | '360p30';
 
-export interface Media extends StampedEntity, WksScopedEntity {
+export interface Media extends StampedEntity, OrgScopedEntity {
 	id: number;
+	project: number;
 	type: MediaType;
 	uuid: string;
 	srcName: string; // the orginal source name
@@ -69,7 +76,7 @@ export interface Job {
 
 	event: JobEventName,
 
-	wksId?: number, // can be undefined when not for a workspace
+	orgId?: number, // can be undefined when not for a workspace
 	onEntity?: string, // the entity type name e.g., "Media"
 	onId?: number, // the entity id (for now support only entity with number as id)
 

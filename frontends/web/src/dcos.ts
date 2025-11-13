@@ -1,5 +1,5 @@
 import { webRequest } from 'common/web-request.js';
-import { Media, QueryOptions, Wks } from 'shared/entities.js';
+import { Media, Org, QueryOptions, Wks } from 'shared/entities.js';
 import { BaseDco, dcoHub } from './dco-base.js';
 
 
@@ -37,6 +37,7 @@ class MediaDao extends BaseDco<Media, QueryOptions<Media>>{
 
 
 export const wksDco = new BaseDco<Wks, QueryOptions<Wks>>('Wks');
+export const orgDco = new BaseDco<Org, QueryOptions<Org>>('Org');
 
 
 export const mediaDco = new MediaDao();;

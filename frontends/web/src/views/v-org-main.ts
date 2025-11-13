@@ -10,11 +10,11 @@ const subViews: any = {
 	'videos': 'v-videos',
 	'timelines': 'v-timeline-main'
 }
-@customElement('v-wks-main')
-export class WksMainView extends BaseViewElement {
+@customElement('v-org-main')
+export class OrgMainView extends BaseViewElement {
 
 	//// properties
-	get wksId() { return asNum(getAttr(this, 'wks-id')) }
+	get orgId() { return asNum(getAttr(this, 'org-id')) }
 
 	//#region    ---------- Element & Hub Events ---------- 
 	@onHub('routeHub', 'CHANGE')
@@ -26,7 +26,7 @@ export class WksMainView extends BaseViewElement {
 	//#endregion ---------- /Data Event ---------- 
 	async init() {
 		// then initial render
-		this.innerHTML = _render(this.wksId);
+		this.innerHTML = _render(this.orgId);
 		this.refresh();
 	}
 
@@ -47,6 +47,6 @@ export class WksMainView extends BaseViewElement {
 }
 
 
-function _render(wksId: number | null) {
+function _render(orgId: number | null) {
 	return `<v-nav></v-nav>`
 }

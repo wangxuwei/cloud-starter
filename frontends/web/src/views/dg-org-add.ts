@@ -13,8 +13,8 @@ const _compCss = css`
 `;
 
 
-@customElement('dg-wks-add')
-export class DgWksAdd extends DgDialog {
+@customElement('dg-org-add')
+export class DgOrgAdd extends DgDialog {
 
 	constructor() {
 		super();
@@ -25,14 +25,14 @@ export class DgWksAdd extends DgDialog {
 	doOk() {
 		super.doOk();
 		const detail = pull(this);
-		trigger(this, 'WKS_ADD', { detail });
+		trigger(this, 'ORG_ADD', { detail });
 	}
 
 
 	init() {
 		// add the content to be slotted
 		this.innerHTML = `
-			<div slot="title">Add Workspace!!</div>
+			<div slot="title">Add Organization!!</div>
 
 			<div class="dialog-content">
 				<d-input label="name" name="name"> </d-input>

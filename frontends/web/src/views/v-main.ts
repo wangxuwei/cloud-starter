@@ -1,5 +1,5 @@
 import { position } from '@dom-native/draggable';
-import { getRouteWksId, pathAt } from 'common/route.js';
+import { getRouteOrgId, pathAt } from 'common/route.js';
 import { logoff, UserContext } from 'common/user-ctx.js';
 import { BaseViewElement } from 'common/v-base.js';
 import { append, customElement, first, html as frag, on, onEvent, onHub, push } from 'dom-native';
@@ -67,12 +67,12 @@ export class MainView extends BaseViewElement {
 
 	refresh() {
 		if (this.hasPathChanged(0)) {
-			// first, try to get the wksId from the route, and if valid, then, show v-wks-main
-			const wksId = getRouteWksId();
+			// first, try to get the orgId from the route, and if valid, then, show v-org-main
+			const orgId = getRouteOrgId();
 			const newPath = pathAt(0);
 
-			if (newPath != null && wksId != null) {
-				this.mainEl.innerHTML = `<v-wks-main wks-id="${wksId}"></v-wks-main>`;
+			if (newPath != null && orgId != null) {
+				this.mainEl.innerHTML = `<v-org-main org-id="${orgId}"></v-org-main>`;
 			}
 			else {
 				const name = isNotEmpty(newPath) ? newPath : '';

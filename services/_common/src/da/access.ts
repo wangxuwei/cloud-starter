@@ -1,6 +1,6 @@
 // (c) 2019 BriteSnow, inc - This code is licensed under MIT license (see LICENSE for details)
 
-import { GlobalAccess, isAccess, isWksAccess, WksAccess } from '#shared/access-types.js';
+import { GlobalAccess, isAccess, isOrgAccess, OrgAccess } from '#shared/access-types.js';
 import { newLeafTracer } from 'backlib';
 import { isFunction } from 'util';
 import { asNum } from 'utils-min';
@@ -27,7 +27,7 @@ type EntityMatchAccess =
 	'@cid' | // match utx.userId with second arg (number value or .cid)
 	'@userId';  // match utx.userId with second arg (number value or .userId)
 
-export type Access = GlobalAccess | WksAccess | EntityMatchAccess;
+export type Access = GlobalAccess | OrgAccess | EntityMatchAccess;
 
 
 class AccessFail extends Error { }
@@ -46,10 +46,10 @@ class AccessDecoratorError extends Error {
  * There are 4 types of Access name. They all match to the corresponding domaing 
  *  - `#admin` this match if the user is an 'admin' at the 
  *  - `@id | @cid | ...` are the utx.userId with second arg number or data.id, data.cid, ... secpmd argument property match
- *  - `pp_...` are the wks privilege name
- *  - `wr_...` are the wks role names
+ *  - `pp_...` are the org privilege name
+ *  - `org_r_...` are the org role names
  * 
- * Note: In this application, Role are scoped by wks (can be scoped on different object or root depending of the app need)
+ * Note: In this application, Role are scoped by org (can be scoped on different object or root depending of the app need)
  */
 
 //#region    ---------- Decorator ---------- 
@@ -145,25 +145,25 @@ export function AccessRequires(...accessList: Access[]) {
 							}
 						}
 
-						//// WKS PRIVILEGE
-						else if (isWksAccess(access)) {
-							// First, try to get the wksId from utx or parameters if wks table
-							const wksId = utx.wksId ?? ((dao.table === 'wks') ? entityId : undefined);
+						//// ORG PRIVILEGE
+						else if (isOrgAccess(access)) {
+							// First, try to get the orgId from utx or parameters if org table
+							const orgId = utx.orgId ?? ((dao.table === 'org') ? entityId : undefined);
 							// if not, data might be queryOptions, and might have a .access
 							const queryAccess = data?.access;
 
 							// if we have a query access, check if valid
-							if (queryAccess && !isWksAccess(queryAccess)) {
-								throw new AccessDecoratorError(`queryOptions.access ${queryAccess} is not a valid wks access.`);
+							if (queryAccess && !isOrgAccess(queryAccess)) {
+								throw new AccessDecoratorError(`queryOptions.access ${queryAccess} is not a valid org access.`);
 							}
 
-							// if we do ot have wksId in context/params or queryAccess, then, no enough information to validate access
-							if (wksId == null && !queryAccess) {
-								throw new AccessDecoratorError(`access ${access} on ${methodRef} requires a 'utx.wksId' or wksId second arg or queryOptions.access, but find none.`);
+							// if we do ot have orgId in context/params or queryAccess, then, no enough information to validate access
+							if (orgId == null && !queryAccess) {
+								throw new AccessDecoratorError(`access ${access} on ${methodRef} requires a 'utx.orgId' or orgId second arg or queryOptions.access, but find none.`);
 							}
 
-							// first, if wksId context, check access
-							if (wksId != null && await utx.hasWksAccess(wksId, access)) {
+							// first, if orgId context, check access
+							if (orgId != null && await utx.hasOrgAccess(orgId, access)) {
 								pass = true;
 								break;
 							}

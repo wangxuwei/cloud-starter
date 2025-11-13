@@ -13,7 +13,7 @@ export class ImageView extends BaseViewElement {
 	get mediaAddEl():HTMLElement { return this.cacheFirst('.media-add')! }
 
 	//// properties
-	get wksId() { return asNum(getAttr(this, 'wks-id')) }
+	get orgId() { return asNum(getAttr(this, 'org-id')) }
 
 	//#region    ---------- Element Events ---------- 
 	@onEvent('dragenter,dragover', '.media-add')

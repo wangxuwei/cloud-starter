@@ -2,7 +2,7 @@
 // (c) 2019 BriteSnow, inc - This code is licensed under MIT license (see LICENSE for details)
 
 import { isObject, isString, pruneEmpty } from 'utils-min';
-import { getRouteWksId } from './route.js';
+import { getRouteOrgId } from './route.js';
 
 type WebMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
@@ -75,9 +75,9 @@ export async function webRequest(method: WebMethod, path: string, opts?: Partial
 	}
 
 	//// Set the eventual Scoped entity as params
-	const wksId = getRouteWksId();
-	if (wksId != null) {
-		(params = params ?? {}).wksId = wksId;
+	const orgId = getRouteOrgId();
+	if (orgId != null) {
+		(params = params ?? {}).orgId = orgId;
 	}
 
 	//// Add params to url if defined
