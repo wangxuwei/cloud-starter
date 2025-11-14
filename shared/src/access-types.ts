@@ -51,6 +51,8 @@ const ORG_ACCESSES = freeze([
 	'org_a_content_create', // Create new content for this org
 	'org_a_content_edit', // 
 	'org_a_content_view', // view info and tickets from a Orgs
+	'org_a_wks_manage',
+	'org_a_project_manage',
 	'org_a_user_add', // add user
 	'org_a_user_remove'
 ] as const);
@@ -75,7 +77,7 @@ export function assertOrgAccess(name: any): asserts name is OrgAccess {
 
 // `org_r_` prefix for Org Role
 const org_r_viewer: Readonly<OrgAccess[]> = freeze(['org_a_content_view']);
-const org_r_editor: Readonly<OrgAccess[]> = freeze([...org_r_viewer, 'org_a_content_create', 'org_a_content_edit']);
+const org_r_editor: Readonly<OrgAccess[]> = freeze([...org_r_viewer, 'org_a_content_create', 'org_a_content_edit', 'org_a_project_manage', 'org_a_wks_manage']);
 const org_r_admin: Readonly<OrgAccess[]> = freeze([...org_r_editor, 'org_a_user_remove', 'org_a_user_add']);
 const org_r_owner: Readonly<OrgAccess[]> = ORG_ACCESSES;
 

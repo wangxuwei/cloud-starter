@@ -38,7 +38,7 @@ export interface Org extends StampedEntity {
 	accesses?: OrgAccesses
 }
 
-export interface Wks extends StampedEntity {
+export interface Wks extends StampedEntity, OrgScopedEntity {
 	id: number;
 	uuid: string;
 	name: string;
@@ -54,7 +54,7 @@ export type MediaResolution = '480p30' | '360p30';
 
 export interface Media extends StampedEntity, OrgScopedEntity {
 	id: number;
-	project: number;
+	projectId: number;
 	type: MediaType;
 	uuid: string;
 	srcName: string; // the orginal source name

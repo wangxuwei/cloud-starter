@@ -1,14 +1,18 @@
 import { pathAt } from 'common/route.js';
 import { BaseViewElement } from 'common/v-base.js';
 import { all, customElement, onHub } from 'dom-native';
-import { OrgMainView } from './v-org-main.js';
+import { ProjectMainView } from './v-project-main.js';
+import { projectListView } from './v-project.js';
+import { wksListView } from './v-wks.js';
 
 const defaultPath = '';
 
 @customElement('v-nav')
 export class NavView extends BaseViewElement {
 
-	get orgId() { return (<OrgMainView>this.closest('v-org-main'))?.orgId }
+	get projectId() { return (<ProjectMainView>this.closest('v-project-main'))?.projectId }
+	get wksId() { return (<projectListView>this.closest('v-project'))?.wksId }
+	get orgId() { return (<wksListView>this.closest('v-wks'))?.orgId }
 
 	//#region    ---------- Element & Hub Events ---------- 
 	@onHub('routeHub', 'CHANGE')
@@ -19,7 +23,7 @@ export class NavView extends BaseViewElement {
 
 	init() {
 		super.init();
-		this.innerHTML = _render(this.orgId);
+		this.innerHTML = _render(this.orgId, this.wksId, this.projectId);
 		this.refresh();
 	}
 
@@ -41,9 +45,9 @@ export class NavView extends BaseViewElement {
 }
 
 //// HTML
-function _render(orgId: number | null) {
-	return `<a href="/${orgId}/images"><span class='bar'></span><d-ico name="ico-images"></d-ico><label>Images</label></a>
-			<a href="/${orgId}/videos"><span class='bar'></span><d-ico name="ico-videos"></d-ico><label>Videos</label></a>
-			<a href="/${orgId}/timelines"><span class='bar'></span><d-ico name="ico-videos"></d-ico><label>Timelines</label></a>
+function _render(orgId: number | null, wksId: number | null, projectId: number | null) {
+	return `<a href="/${orgId}/${wksId}/${projectId}/images"><span class='bar'></span><d-ico name="ico-images"></d-ico><label>Images</label></a>
+			<a href="/${orgId}/${wksId}/${projectId}/videos"><span class='bar'></span><d-ico name="ico-videos"></d-ico><label>Videos</label></a>
+			<a href="/${orgId}/${wksId}/${projectId}/timelines"><span class='bar'></span><d-ico name="ico-videos"></d-ico><label>Timelines</label></a>
 			`;
 }

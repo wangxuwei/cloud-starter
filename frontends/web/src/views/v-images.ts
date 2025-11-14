@@ -4,6 +4,7 @@ import { mediaDco } from 'dcos';
 import { append, closest, customElement, first, getAttr, on, onEvent, OnEvent, onHub } from 'dom-native';
 import { Media } from 'shared/entities.js';
 import { asNum } from 'utils-min';
+import { wksListView } from './v-wks';
 
 @customElement('v-images')
 export class ImageView extends BaseViewElement {
@@ -13,7 +14,8 @@ export class ImageView extends BaseViewElement {
 	get mediaAddEl():HTMLElement { return this.cacheFirst('.media-add')! }
 
 	//// properties
-	get orgId() { return asNum(getAttr(this, 'org-id')) }
+	get projectId() { return asNum(getAttr(this, 'project-id')) }
+	get orgId() { return (<wksListView>this.closest('v-wks'))?.orgId }
 
 	//#region    ---------- Element Events ---------- 
 	@onEvent('dragenter,dragover', '.media-add')
@@ -27,7 +29,7 @@ export class ImageView extends BaseViewElement {
 		evt.stopPropagation();
 		const file = evt.dataTransfer?.files?.[0];
 		if (file != null) {
-			await mediaDco.create({ file });
+			await mediaDco.create({ file, projectId: this.projectId });
 		}
 	}
 

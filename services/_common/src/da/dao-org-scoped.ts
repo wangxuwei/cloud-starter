@@ -37,7 +37,7 @@ export class OrgScopedDao<E extends OrgScopedEntity, I, Q extends QueryOptions<E
 	}
 
 	@AccessRequires('org_a_content_edit', "@cid")
-	async remove(utx: UserContext, id: I): Promise<number> {
+	async remove(utx: UserContext, id: I | I[]): Promise<number> {
 		return super.remove(utx, id);
 	}
 

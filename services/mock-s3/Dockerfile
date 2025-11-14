@@ -1,4 +1,4 @@
-from minio/minio
+FROM minio/minio
 
 # Setup the mc command
 RUN curl -O https://dl.min.io/client/mc/release/linux-amd64/mc && \

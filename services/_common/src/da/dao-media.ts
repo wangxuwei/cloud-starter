@@ -51,8 +51,9 @@ export class MediaDao extends OrgScopedDao<Media, number> {
 		const srcName = file.originalFilename!;
 		const name = srcName; // at start same name
 		const type = getMediaType(name);
+		const projectId = data.projectId;
 
-		const mediaId = await this.create(utx, { srcName, name, type });
+		const mediaId = await this.create(utx, { srcName, name, type, projectId });
 		const media = await this.get(utx, mediaId);
 		const folderPath = `org/${org.uuid}/medias/${media.uuid}/`;
 		await coreStore.upload(file.filepath, CORE_STORE_ROOT_DIR + folderPath + srcName);

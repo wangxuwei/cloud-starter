@@ -3,18 +3,16 @@ import { BaseViewElement } from 'common/v-base.js';
 import { all, append, className, customElement, elem, getAttr, onHub } from 'dom-native';
 import { asNum } from 'utils-min';
 
-export const t = 123;
-
 const subViews: any = {
 	'images': 'v-images',
 	'videos': 'v-videos',
 	'timelines': 'v-timeline-main'
 }
-@customElement('v-org-main')
-export class OrgMainView extends BaseViewElement {
+@customElement('v-project-main')
+export class ProjectMainView extends BaseViewElement {
 
 	//// properties
-	get orgId() { return asNum(getAttr(this, 'org-id')) }
+	get projectId() { return asNum(getAttr(this, 'project-id')) }
 
 	//#region    ---------- Element & Hub Events ---------- 
 	@onHub('routeHub', 'CHANGE')
@@ -26,14 +24,14 @@ export class OrgMainView extends BaseViewElement {
 	//#endregion ---------- /Data Event ---------- 
 	async init() {
 		// then initial render
-		this.innerHTML = _render(this.orgId);
+		this.innerHTML = _render(this.projectId);
 		this.refresh();
 	}
 
 	async refresh() {
 
-		if (this.hasPathChanged(1)) {
-			const newPath = pathAt(1) ?? 'videos';
+		if (this.hasPathChanged(3)) {
+			const newPath = pathAt(3) ?? 'videos';
 			if (newPath) {
 				all(this, ':scope > *')[1]?.remove();
 				append(this, className(elem(subViews[newPath]), { screen: true }));
@@ -47,6 +45,6 @@ export class OrgMainView extends BaseViewElement {
 }
 
 
-function _render(orgId: number | null) {
+function _render(projectId: number | null) {
 	return `<v-nav></v-nav>`
 }

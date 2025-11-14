@@ -214,6 +214,12 @@ const generated_schemas = {
         "uuid": {
           "type": "string"
         },
+        "orgId": {
+          "type": "number"
+        },
+        "wksId": {
+          "type": "number"
+        },
         "name": {
           "type": "string"
         },
@@ -256,6 +262,7 @@ const generated_schemas = {
         "mtime",
         "name",
         "org",
+        "orgId",
         "uuid"
       ]
     },

@@ -72,7 +72,7 @@ export class MainView extends BaseViewElement {
 			const newPath = pathAt(0);
 
 			if (newPath != null && orgId != null) {
-				this.mainEl.innerHTML = `<v-org-main org-id="${orgId}"></v-org-main>`;
+				this.mainEl.innerHTML = `<v-wks org-id="${orgId}"></v-wks>`;
 			}
 			else {
 				const name = isNotEmpty(newPath) ? newPath : '';
