@@ -71,7 +71,7 @@ export class projectListView extends BaseViewElement {
 	}
 
 	async refresh(force?:boolean) {
-		if (this.hasPathChanged(2)) {
+		if (this.hasPathChanged(2) || force) {
 			const projectId = pathAsNum(2);
 			if(!projectId || force){
 				const projectList = await projectDco.list({matching: {wksId: this.wksId!}});

@@ -72,7 +72,7 @@ export class wksListView extends BaseViewElement {
 	}
 
 	async refresh(force?:boolean) {
-		if (this.hasPathChanged(1)) {
+		if (this.hasPathChanged(1) || force) {
 			const wksId = pathAsNum(1);
 			if(!wksId || force){
 				const wksList = await wksDco.list({matching: {orgId: this.orgId!}});
