@@ -2,7 +2,6 @@
 
 import { GlobalAccess, isAccess, isOrgAccess, OrgAccess } from '#shared/access-types.js';
 import { newLeafTracer } from 'backlib';
-import { isFunction } from 'util';
 import { asNum } from 'utils-min';
 import { assertUserContext, getSysContext, UserContext } from '../user-context.js';
 
@@ -193,3 +192,7 @@ export function AccessRequires(...accessList: Access[]) {
 
 }
 //#endregion ---------- /Decorator ----------
+
+function isFunction(value: any): value is Function {
+  return typeof value === 'function';
+};
