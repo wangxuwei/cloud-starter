@@ -31,6 +31,13 @@
     "utils-min": "^0.2.4",
     "typescript": "^5.9.3"
   },
+  "overrides": {
+    "rimraf": "^4.0.0",
+    "glob": "^9.0.0",
+    "inflight": "^1.0.6",
+    "aws-sdk": "^2.1692.0",
+    "@google-cloud/storage": "^7.17.3"
+  },
   "devDependencies": {
     "@types/formidable": "^3.4.5",
     "@types/koa-static": "^4.0.4",
