@@ -1,5 +1,5 @@
 import { position } from '@dom-native/draggable';
-import { getRouteOrgId, pathAsNum } from 'common/route';
+import { getRouteOrgId, pathAsNum, pathAt } from 'common/route';
 import { BaseViewElement } from 'common/v-base.js';
 import { wksDco } from 'dcos';
 import { append, closest, customElement, elem, first, getAttr, on, OnEvent, onEvent, onHub } from 'dom-native';
@@ -72,7 +72,7 @@ export class wksListView extends BaseViewElement {
 	}
 
 	async refresh(force?:boolean) {
-		if (this.hasPathChanged(1) || force) {
+		if ((this.hasPathChanged(1) || force) && pathAt(0)) {
 			const wksId = pathAsNum(1);
 			if(!wksId || force){
 				const wksList = await wksDco.list({matching: {orgId: this.orgId!}});

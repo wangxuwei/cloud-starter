@@ -1,5 +1,5 @@
 import { position } from '@dom-native/draggable';
-import { getRouteOrgId, pathAsNum } from 'common/route';
+import { getRouteOrgId, pathAsNum, pathAt } from 'common/route';
 import { BaseViewElement } from 'common/v-base.js';
 import { projectDco } from 'dcos';
 import { append, closest, customElement, elem, first, getAttr, on, OnEvent, onEvent, onHub } from 'dom-native';
@@ -71,7 +71,7 @@ export class projectListView extends BaseViewElement {
 	}
 
 	async refresh(force?:boolean) {
-		if (this.hasPathChanged(2) || force) {
+		if ((this.hasPathChanged(2) || force) && pathAt(1)) {
 			const projectId = pathAsNum(2);
 			if(!projectId || force){
 				const projectList = await projectDco.list({matching: {wksId: this.wksId!}});
