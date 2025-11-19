@@ -28,7 +28,7 @@ export class NavView extends BaseViewElement {
 	}
 
 	refresh() {
-		const idx = 1; // path ind
+		const idx = 3; // path ind
 		let urlName = pathAt(idx) ?? 'videos';
 
 		for (const a of all(this, 'a')) {
