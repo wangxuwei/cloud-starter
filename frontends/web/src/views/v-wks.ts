@@ -22,13 +22,13 @@ export class wksListView extends BaseViewElement {
 	}
 
 	// Note: since .card is a <a> tag, prevent following on click on .show-menu (must bind to click)
-	@onEvent('click', 'a .show-menu')
+	@onEvent('click', 'a.wks .show-menu')
 	onShowClick(evt: MouseEvent & OnEvent) {
 		evt.preventDefault();
 		evt.cancelBubble = true;
 	}
 
-	@onEvent('pointerup', '.show-menu')
+	@onEvent('pointerup', 'a.wks .show-menu')
 	onCardShowMenuUp(evt: PointerEvent & OnEvent) {
 
 		if (first('#wks-card-menu') == null) {
