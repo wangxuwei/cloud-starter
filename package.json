@@ -52,21 +52,22 @@
     "chokidar": "^4.0.3",
     "cmdrouter": "^0.3.1",
     "supports-color": "^10.2.2",
-    "ts-json-schema-generator": "^2.4.0"
+    "ts-json-schema-generator": "^2.4.0",
+    "tsx": "^4.20.6"
   },
   "scripts": {
     "sketchdev": "./node_modules/.bin/sketchdev",
-    "ts-schema": "node --loader ts-node/esm scripts/cmd-ts-schema.ts",
-    "test": "node --loader ts-node/esm scripts/cmd-test.ts test",
-    "testw": "node --loader ts-node/esm scripts/cmd-test.ts testw",
-    "testd": "node --loader ts-node/esm scripts/cmd-test.ts testd",
-    "watch": "node --loader ts-node/esm scripts/cmd-watch.ts watch",
+    "ts-schema": "tsx scripts/cmd-ts-schema.ts",
+    "test": "tsx scripts/cmd-test.ts test",
+    "testw": "tsx scripts/cmd-test.ts testw",
+    "testd": "tsx scripts/cmd-test.ts testd",
+    "watch": "tsx scripts/cmd-watch.ts watch",
     "recreateDb": "kdd kexec cmd npm run recreateDb",
     "credential": "kdd kexec cmd npm run credential",
     "makeCredential": "kdd kexec cmd npm run makeCredential",
     "createUser": "kdd kexec cmd npm run createUser",
     "setPwd": "kdd kexec cmd npm run setPwd",
-    "pupdate": "node --loader ts-node/esm scripts/cmd-others.ts pupdate"
+    "pupdate": "tsx scripts/cmd-others.ts pupdate"
   },
   "engines": {
     "node": ">=16.13.0"
