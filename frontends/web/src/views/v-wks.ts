@@ -1,9 +1,9 @@
 import { position } from '@dom-native/draggable';
 import { getRouteOrgId, pathAsNum, pathAt } from 'common/route';
 import { BaseViewElement } from 'common/v-base.js';
-import { wksDco } from 'dcos';
+import { orgDco, wksDco } from 'dcos';
 import { append, closest, customElement, elem, first, getAttr, on, OnEvent, onEvent, onHub } from 'dom-native';
-import { Wks } from 'shared/entities.js';
+import { Org, Wks } from 'shared/entities.js';
 import { asNum } from 'utils-min';
 
 @customElement('v-wks')
@@ -75,8 +75,9 @@ export class wksListView extends BaseViewElement {
 		if ((this.hasPathChanged(1) || force) && pathAt(0)) {
 			const wksId = pathAsNum(1);
 			if(!wksId || force){
+				const org = await orgDco.get(this.orgId!);
 				const wksList = await wksDco.list({matching: {orgId: this.orgId!}});
-				this.innerHTML = _render(wksList);
+				this.innerHTML = _render(org, wksList);
 			}else{
 				this.innerHTML = `<v-project wks-id='${wksId}'></v-project>`;
 			}
@@ -86,9 +87,15 @@ export class wksListView extends BaseViewElement {
 
 //// HTMLs
 
-function _render(wksList: Wks[] = []) {
-	let html = `	<header><h1>Workspaces</h1></header>
-	<section>
+function _render(org:Org,wksList: Wks[] = []) {
+	let html = `
+		<div class="breadcrumbs">
+			<a href="/">Organizations</a>
+			<span class="sep">/</span>
+			<span>${org.name}</span>
+		</div>
+		<header><h1>Workspaces</h1></header>
+		<section>
 		<div class="card wks-add">
 			<c-ico src="#ico-add"></c-ico>
 			<h3>Add New Workspace</h3>
