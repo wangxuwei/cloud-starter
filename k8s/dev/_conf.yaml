@@ -23,6 +23,7 @@ metadata:
   name: cstar-config
 data:
   https_mode: 'false'
+  is_dev: "true"
 
   # -- BUCKET - core store bucket
   # Core store credential (when mino)
