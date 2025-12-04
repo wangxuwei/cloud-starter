@@ -1,4 +1,4 @@
-FROM britesnow/base-node:25-11-30
+FROM britesnow/base-node-pg:25-11-30
 
 RUN mkdir /service
 
