@@ -27,7 +27,7 @@
     "@types/useragent": "^2.3.4",
     "ajv": "^8.17.1",
     "backlib": "^0.5.2",
-    "cloud-bucket": "^0.4.2",
+    "cloud-bucket": "git://github.com/wangxuwei/node-cloud-bucket.git#latest_libs",
     "execa": "^6.1.0",
     "fs-aux": "^0.1.1",
     "googleapis": "^166.0.0",
@@ -45,12 +45,5 @@
     "useragent": "^2.3.0",
     "utils-min": "^0.2.4",
     "uuid": "^13.0.0"
-  },
-  "overrides": {
-    "rimraf": "^4.0.0",
-    "glob": "^9.0.0",
-    "inflight": "^1.0.6",
-    "aws-sdk": "^2.1692.0",
-    "@google-cloud/storage": "^7.17.3"
   }
 }
