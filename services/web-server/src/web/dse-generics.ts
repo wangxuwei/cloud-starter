@@ -62,7 +62,7 @@ class DseGenerics extends ApiRouter {
 		const type = ktx.params.type;
 		const dao = daoByEntity[type];
 
-		const data = ktx.request.body;
+		const data = ktx.request.body as any;
 		const id = await dao.create(ctx, data);
 		const entity = await dao.get(ctx, id);
 
@@ -76,7 +76,7 @@ class DseGenerics extends ApiRouter {
 		const id = parseInt(ktx.params.id);
 		const dao = daoByEntity[type];
 
-		const data = ktx.request.body;
+		const data = ktx.request.body as any;
 		await dao.update(ctx, id, data);
 		const entity = await dao.get(ctx, id);
 

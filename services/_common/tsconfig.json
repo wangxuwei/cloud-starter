@@ -29,6 +29,7 @@
 			"#shared/*": ["../../../shared/src/*"]
 		},
 
+		"skipLibCheck": true,
 
 		"experimentalDecorators": true,
 
