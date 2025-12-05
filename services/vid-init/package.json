@@ -20,7 +20,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "backlib": "^0.5.2",
+    "backlib": "git://github.com/wangxuwei/node-backlib.git#latest_libs",
     "cloud-bucket": "git://github.com/wangxuwei/node-cloud-bucket.git#latest_libs",
     "execa": "^6.1.0",
     "fs-aux": "git://github.com/wangxuwei/node-fs-aux.git#latest_libs",

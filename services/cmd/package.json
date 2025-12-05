@@ -24,7 +24,7 @@
   "license": "ISC",
   "dependencies": {
     "@types/uuid": "^10.0.0",
-    "backlib": "^0.5.2",
+    "backlib": "git://github.com/wangxuwei/node-backlib.git#latest_libs",
     "cmdrouter": "^0.3.1",
     "execa": "^6.1.0",
     "fs-aux": "git://github.com/wangxuwei/node-fs-aux.git#latest_libs",

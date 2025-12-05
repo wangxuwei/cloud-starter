@@ -1,7 +1,7 @@
 import { ApiResponse } from '#shared/api-types.js';
 import { WebLogRecord } from '#shared/log-types.js';
 import { BaseRouter } from '@backlib/koa';
-import { Next, ParameterizedContext } from 'koa';
+import { DefaultContext, Next, ParameterizedContext } from 'koa';
 import useragent from 'useragent';
 import { pruneEmpty } from 'utils-min';
 import { SERVICE_NAME } from '../conf.js';
@@ -24,7 +24,7 @@ export interface KState {
 	}
 }
 
-export interface KCustom {
+export interface KCustom extends DefaultContext {
 	token_name: string;
 
 	clearCookie(name: string): void
@@ -75,7 +75,7 @@ export function initKtxMdw(opts: InitKtxMdwOpts) {
 /**
  * Base App router that any application router should extends of. 
  */
-export class AppRouter<S = KState, C = KCustom> extends BaseRouter<S, C>{
+export class AppRouter<S = KState, C extends DefaultContext = KCustom> extends BaseRouter<S, C>{
 	async assertKtx(ktx: ParameterizedContext<S, C>) {
 		if (ktx.state == null) {
 			throw new Error(`ERROR - BaseRouter assertKtx error - ktx does not have a '.state' property (make sure to initiliaze)`)
