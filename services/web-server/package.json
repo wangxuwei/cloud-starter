@@ -30,7 +30,7 @@
     "cloud-bucket": "git://github.com/wangxuwei/node-cloud-bucket.git#latest_libs",
     "execa": "^9.6.1",
     "fs-aux": "git://github.com/wangxuwei/node-fs-aux.git#latest_libs",
-    "googleapis": "^167.0.0",
+    "googleapis": "^168.0.0",
     "ioredis": "^5.8.2",
     "knex": "^3.1.0",
     "koa-body": "^7.0.0",
