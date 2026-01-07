@@ -7,11 +7,11 @@ import { customElement, OnEvent, onEvent } from 'dom-native';
 export class TimelineMainView extends BaseViewElement {
 
 	//// key elements
-	get tmZoomEl() { return this.cacheFirst('tm-zoom')! };
-	get tmZoomHeadEl() { return this.cacheFirst('tm-zoom .tm-head')! };
-	get tmZoomZoneEl() { return this.cacheFirst('tm-zone')! };
-	get tmPlayEl() { return this.cacheFirst('tm-play')! };
-	get tmPlayHeadEl() { return this.cacheFirst('tm-play .tm-head')! };
+	get tmZoomEl():HTMLElement { return this.cacheFirst('tm-zoom')! };
+	get tmZoomHeadEl():HTMLElement { return this.cacheFirst('tm-zoom .tm-head')! };
+	get tmZoomZoneEl():HTMLElement { return this.cacheFirst('tm-zone')! };
+	get tmPlayEl():HTMLElement { return this.cacheFirst('tm-play')! };
+	get tmPlayHeadEl():HTMLElement { return this.cacheFirst('tm-play .tm-head')! };
 
 
 	@onEvent('pointerdown', 'tm-play tm-zone')

@@ -1,6 +1,6 @@
 import { GlobalAccess, GlobalAccesses } from '#shared/access-types.js';
 import { User } from '#shared/entities.js';
-import { getWksAccesses } from './da/access-wks.js';
+import { getOrgAccesses } from './da/access-org.js';
 import { PerfContext } from './perf.js';
 
 
@@ -9,7 +9,7 @@ import { PerfContext } from './perf.js';
  */
 export interface UserForContext extends Readonly<Pick<User, 'id'>> {
 	accesses: GlobalAccesses;
-	wksId?: number; // the eventual wks scope of the context
+	orgId?: number; // the eventual org scope of the context
 }
 
 /** Note: Make context an interface so that ContextImpl class does not get expose and app code cannot create it of the newContext factory */
@@ -18,10 +18,10 @@ export interface UserContext {
 	readonly user: UserForContext;
 	/** Check global access */
 	hasAccess(access: GlobalAccess): boolean;
-	/** Check wks access */
-	hasWksAccess(wksId: number, access: string): Promise<boolean>;
+	/** Check org access */
+	hasOrgAccess(orgId: number, access: string): Promise<boolean>;
 	readonly perfContext: PerfContext;
-	readonly wksId?: number;
+	readonly orgId?: number;
 }
 
 
@@ -29,8 +29,8 @@ export interface UserContext {
  * Create a new SysContext on every call. 
  * Note: user 0, if hardcode to be the sys user and can be in memory only for now. 
  */
-export async function getSysContext(opts?: { wksId: number }): Promise<UserContext> {
-	return newUserContext({ id: 0, wksId: opts?.wksId, accesses: { '#sys': true } }); // we know 0 is sys. 
+export async function getSysContext(opts?: { orgId: number }): Promise<UserContext> {
+	return newUserContext({ id: 0, orgId: opts?.orgId, accesses: { '#sys': true } }); // we know 0 is sys. 
 }
 
 
@@ -57,9 +57,9 @@ class UserContextImpl implements UserContext {
 	#data = new Map<string, any>(); // not used yet. 
 
 	get userId() { return this.#user.id };
-	get wksId() { return this.#user.wksId };
+	get orgId() { return this.#user.orgId };
 
-	private accessesByWksId: Map<number, Set<string>> = new Map();
+	private accessesByOrgId: Map<number, Set<string>> = new Map();
 	readonly perfContext = new PerfContext();
 
 
@@ -79,15 +79,15 @@ class UserContextImpl implements UserContext {
 		return this.#user.accesses[access] ?? false;
 	}
 
-	async hasWksAccess(wksId: number, access: string) {
+	async hasOrgAccess(orgId: number, access: string) {
 
-		// first, get the privileges for this user on this wks (from context cache)
-		let privileges = this.accessesByWksId.get(wksId);
+		// first, get the privileges for this user on this org (from context cache)
+		let privileges = this.accessesByOrgId.get(orgId);
 		// if not found, we load it and set it to the context cache
 		if (privileges == null) {
-			const privilegesArray = await getWksAccesses(this.userId, wksId);
+			const privilegesArray = await getOrgAccesses(this.userId, orgId);
 			privileges = new Set(privilegesArray);
-			this.accessesByWksId.set(wksId, privileges);
+			this.accessesByOrgId.set(orgId, privileges);
 		}
 		return privileges.has(access);
 	}

@@ -13,10 +13,10 @@ mc alias set minio http://localhost:9000 minio miniominio --api S3v4
 # Seeding the buckets for dev and set them download (no sign in minio/dev environment)
 # Prod will use aws s3 buckets
 mc mb minio/core-bucket
-mc policy set download minio/core-bucket
+mc anonymous set download minio/core-bucket
 
 mc mb minio/logs-bucket
-mc policy set download minio/logs-bucket
+mc anonymous set download minio/logs-bucket
 
 
 # wait forever

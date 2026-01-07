@@ -38,6 +38,7 @@ spec:
       initContainers: 
         - name: disable-thp
           image: busybox
+          imagePullPolicy: IfNotPresent
           volumeMounts:
             - name: host-sys
               mountPath: /host-sys

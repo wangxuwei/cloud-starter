@@ -1,20 +1,18 @@
 import { pathAt } from 'common/route.js';
 import { BaseViewElement } from 'common/v-base.js';
-import { all, append, attr, className, customElement, elem, onHub } from 'dom-native';
+import { all, append, className, customElement, elem, getAttr, onHub } from 'dom-native';
 import { asNum } from 'utils-min';
-
-export const t = 123;
 
 const subViews: any = {
 	'images': 'v-images',
 	'videos': 'v-videos',
 	'timelines': 'v-timeline-main'
 }
-@customElement('v-wks-main')
-export class WksMainView extends BaseViewElement {
+@customElement('v-project-main')
+export class ProjectMainView extends BaseViewElement {
 
 	//// properties
-	get wksId() { return asNum(attr(this, 'wks-id')) }
+	get projectId() { return asNum(getAttr(this, 'project-id')) }
 
 	//#region    ---------- Element & Hub Events ---------- 
 	@onHub('routeHub', 'CHANGE')
@@ -26,14 +24,14 @@ export class WksMainView extends BaseViewElement {
 	//#endregion ---------- /Data Event ---------- 
 	async init() {
 		// then initial render
-		this.innerHTML = _render(this.wksId);
+		this.innerHTML = _render(this.projectId);
 		this.refresh();
 	}
 
 	async refresh() {
 
-		if (this.hasPathChanged(1)) {
-			const newPath = pathAt(1) ?? 'videos';
+		if (this.hasPathChanged(3)) {
+			const newPath = pathAt(3) ?? 'videos';
 			if (newPath) {
 				all(this, ':scope > *')[1]?.remove();
 				append(this, className(elem(subViews[newPath]), { screen: true }));
@@ -47,6 +45,6 @@ export class WksMainView extends BaseViewElement {
 }
 
 
-function _render(wksId: number | null) {
+function _render(projectId: number | null) {
 	return `<v-nav></v-nav>`
 }

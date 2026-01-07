@@ -9,9 +9,9 @@
  * The OpVal can be simplified with string, in this case, it will default to op = '='. 
  * 
  * Examples
- *  - `{"wksId": 123}` will select entities with wksId == 123 (default operation is =)
+ *  - `{"orgId": 123}` will select entities with orgId == 123 (default operation is =)
  *  - `{"stage": {op: '>', 1}}` will select entity with stage > 1
- *  - `{"stage;>": 1, "wksId": 123}`: will select entities from wksId 123 AND stage > 1
+ *  - `{"stage;>": 1, "orgId": 123}`: will select entities from orgId 123 AND stage > 1
  * 
  **/
 export interface QueryFilter {

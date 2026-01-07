@@ -28,8 +28,9 @@ class AuthLoginRegisterRouter extends AppRouter {
 	@routePost('/login')
 	async login(ktx: Ktx) {
 		const sysCtx = await getSysContext();
-		const username = ktx.request.body.username;
-		const clearPwd = ktx.request.body.pwd;
+		const body = ktx.request.body as any;
+		const username = body?.username;
+		const clearPwd = body?.pwd;
 
 		try {
 			const userCredential = await userDao.getUserCredForLogin(sysCtx, { username });
@@ -59,7 +60,7 @@ class AuthLoginRegisterRouter extends AppRouter {
 	async register(ktx: Ktx) {
 		const sysCtx = await getSysContext();
 
-		const { username, pwd: clearPwd } = ktx.request.body;
+		const { username, pwd: clearPwd } = ktx.request.body as any;
 		if (!username || !clearPwd) {
 			throw new AuthFailErr(ERROR.USERNAME_OR_PWD_EMPTY);
 		}

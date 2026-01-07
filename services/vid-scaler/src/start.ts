@@ -40,9 +40,9 @@ async function start() {
 		let ffmpegResult: any = null;
 
 		try {
-			const { wksId, mediaId, res } = entry.data;
+			const { orgId, mediaId, res } = entry.data;
 
-			const sysUtx = await getSysContext({ wksId });
+			const sysUtx = await getSysContext({ orgId });
 			const media = await mediaDao.get(sysUtx, mediaId);
 
 			const mediaName = media.name;
@@ -77,7 +77,7 @@ async function start() {
 				await coreStore.upload(localScaledFile, remoteScaledFile);
 
 				// send the data event
-				await mediaScaledMp4Queue.add({ type: 'MediaScaledMp4', mediaId, wksId, res });
+				await mediaScaledMp4Queue.add({ type: 'MediaScaledMp4', mediaId, orgId, res });
 			}
 
 			// update the sd if not present

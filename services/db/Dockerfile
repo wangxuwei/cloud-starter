@@ -1,4 +1,4 @@
-FROM postgres:14
+FROM postgres:18
 
 
-CMD docker-entrypoint.sh postgres
+CMD ["docker-entrypoint.sh", "postgres"]

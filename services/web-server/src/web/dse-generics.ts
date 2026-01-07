@@ -3,7 +3,7 @@
 // (c) 2019 BriteSnow, inc - This code is licensed under MIT license (see LICENSE for details)
 
 import { BaseDao } from '#common/da/dao-base.js';
-import { mediaDao, userDao, wksDao } from '#common/da/daos.js';
+import { mediaDao, orgDao, projectDao, userDao, wksDao } from '#common/da/daos.js';
 import { ApiKtx, ApiRouter, routeDelete, routeGet, routePatch, routePost } from '#common/web/koa-utils.js';
 
 
@@ -16,7 +16,9 @@ import { ApiKtx, ApiRouter, routeDelete, routeGet, routePatch, routePost } from 
  */
 const daoByEntity: { [type: string]: BaseDao<any, any> } = {
 	User: userDao,
+	Org: orgDao,
 	Wks: wksDao,
+	Project: projectDao,
 	Media: mediaDao
 }
 
@@ -60,7 +62,7 @@ class DseGenerics extends ApiRouter {
 		const type = ktx.params.type;
 		const dao = daoByEntity[type];
 
-		const data = ktx.request.body;
+		const data = ktx.request.body as any;
 		const id = await dao.create(ctx, data);
 		const entity = await dao.get(ctx, id);
 
@@ -74,7 +76,7 @@ class DseGenerics extends ApiRouter {
 		const id = parseInt(ktx.params.id);
 		const dao = daoByEntity[type];
 
-		const data = ktx.request.body;
+		const data = ktx.request.body as any;
 		await dao.update(ctx, id, data);
 		const entity = await dao.get(ctx, id);
 

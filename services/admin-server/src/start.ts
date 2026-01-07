@@ -1,7 +1,7 @@
 import { __version__ } from '#common/conf.js';
 import { KoaApp } from '#common/web/koa-app.js';
 
-const PORT = 8081;
+const PORT = 8080;
 
 main();
 

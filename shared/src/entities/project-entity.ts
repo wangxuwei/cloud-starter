@@ -1,16 +1,19 @@
+import { OrgScopedEntity } from '../entities';
 import { Orged, Timestamped } from './entity-base';
 
 /**
  * Project entity model when read from the DAO
  * table name: 'project'
  */
-export interface Project extends Timestamped, Orged {
+export interface Project extends Timestamped, Orged, OrgScopedEntity {
   /**
    * @access some stuff
    * @minimum 123
    */
   id: number,
   uuid: string,
+	orgId: number;
+  wksId?: number,
 
   name: string,
 

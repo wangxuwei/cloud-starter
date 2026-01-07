@@ -1,14 +1,18 @@
 import { pathAt } from 'common/route.js';
 import { BaseViewElement } from 'common/v-base.js';
 import { all, customElement, onHub } from 'dom-native';
-import { WksMainView } from './v-wks-main.js';
+import { ProjectMainView } from './v-project-main.js';
+import { projectListView } from './v-project.js';
+import { wksListView } from './v-wks.js';
 
 const defaultPath = '';
 
 @customElement('v-nav')
 export class NavView extends BaseViewElement {
 
-	get wksId() { return (<WksMainView>this.closest('v-wks-main'))?.wksId }
+	get projectId() { return (<ProjectMainView>this.closest('v-project-main'))?.projectId }
+	get wksId() { return (<projectListView>this.closest('v-project'))?.wksId }
+	get orgId() { return (<wksListView>this.closest('v-wks'))?.orgId }
 
 	//#region    ---------- Element & Hub Events ---------- 
 	@onHub('routeHub', 'CHANGE')
@@ -19,12 +23,12 @@ export class NavView extends BaseViewElement {
 
 	init() {
 		super.init();
-		this.innerHTML = _render(this.wksId);
+		this.innerHTML = _render(this.orgId, this.wksId, this.projectId);
 		this.refresh();
 	}
 
 	refresh() {
-		const idx = 1; // path ind
+		const idx = 3; // path ind
 		let urlName = pathAt(idx) ?? 'videos';
 
 		for (const a of all(this, 'a')) {
@@ -41,9 +45,9 @@ export class NavView extends BaseViewElement {
 }
 
 //// HTML
-function _render(wksId: number | null) {
-	return `<a href="/${wksId}/images"><span class='bar'></span><d-ico name="ico-images"></d-ico><label>Images</label></a>
-			<a href="/${wksId}/videos"><span class='bar'></span><d-ico name="ico-videos"></d-ico><label>Videos</label></a>
-			<a href="/${wksId}/timelines"><span class='bar'></span><d-ico name="ico-videos"></d-ico><label>Timelines</label></a>
+function _render(orgId: number | null, wksId: number | null, projectId: number | null) {
+	return `<a href="/${orgId}/${wksId}/${projectId}/images"><span class='bar'></span><d-ico name="ico-images"></d-ico><label>Images</label></a>
+			<a href="/${orgId}/${wksId}/${projectId}/videos"><span class='bar'></span><d-ico name="ico-videos"></d-ico><label>Videos</label></a>
+			<a href="/${orgId}/${wksId}/${projectId}/timelines"><span class='bar'></span><d-ico name="ico-videos"></d-ico><label>Timelines</label></a>
 			`;
 }
