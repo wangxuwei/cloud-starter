@@ -34,6 +34,8 @@
 			"#common/*": ["../../_common/src/*"], // backend services common code
 			"#shared/*": ["../../../shared/src/*"] // frontend and backend shared code
 		},
+		
+		"skipLibCheck": true,
 
 		// decorators for backend service code
 		"experimentalDecorators": true,

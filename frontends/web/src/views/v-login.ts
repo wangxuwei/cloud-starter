@@ -9,9 +9,9 @@ type Mode = 'login' | 'register';
 export class LoginView extends BaseViewElement {
 
 	//// some dom element that will be used in this component view
-	private get fieldset() { return first(this, 'section.content')! };
-	private get footerMessage() { return first(this, 'footer .message')! };
-	private get googleLink() { return first(this, 'a.google-oauth')! };
+	private get fieldset():HTMLElement { return first(this, 'section.content')! };
+	private get footerMessage():HTMLElement { return first(this, 'footer .message')! };
+	private get googleLink():HTMLElement { return first(this, 'a.google-oauth')! };
 
 	//// the mode getter and setter which is DOM/Class backed, but exposed a simple object property
 	private get mode(): Mode {

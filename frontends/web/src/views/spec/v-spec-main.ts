@@ -11,7 +11,7 @@ const defaultPath = 'typo';
 export class SpecMainView extends BaseViewElement {
 
 	//// Key Elements
-	protected get contentEl() { return first(this, 'section.content')! }
+	protected get contentEl():HTMLElement { return first(this, 'section.content')! }
 
 	//#region    ---------- Element & Hub Events ---------- 
 	@onHub('routeHub', 'CHANGE')

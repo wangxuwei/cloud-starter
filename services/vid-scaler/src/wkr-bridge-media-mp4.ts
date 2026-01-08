@@ -17,10 +17,10 @@ async function main() {
 		const entry = await mediaMp4Queue.next(streamGroup);
 		assertEvent('MediaMainMp4', entry.data);
 
-		const { wksId, mediaId } = entry.data;
+		const { orgId, mediaId } = entry.data;
 
 
-		const vidScalerTodo: VidScalerJob = { type: 'VidScalerJob', wksId, mediaId, res: '480p30' };
+		const vidScalerTodo: VidScalerJob = { type: 'VidScalerJob', orgId, mediaId, res: '480p30' };
 		await vidScalerTodoQueue.add(vidScalerTodo);
 
 

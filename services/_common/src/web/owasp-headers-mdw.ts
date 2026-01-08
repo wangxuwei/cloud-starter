@@ -2,7 +2,7 @@
 // (c) 2021 BriteSnow, inc - This code is licensed under MIT license (see LICENSE for details)
 
 import * as Path from 'path';
-import { CDN_BASE_URL } from '../conf.js';
+import { CDN_BASE_URL, IS_DEV } from '../conf.js';
 import { Ktx, Next } from './koa-utils.js';
 
 /**
@@ -70,12 +70,15 @@ export function owaspHeadersMdw() {
 		}
 
 		else if (isStatic) {
-			if (ktx.query.v) {
-				ktx.res.setHeader('Cache-Control', `max-age=${SEC_1YEAR}`);
-			} else {
-				ktx.res.setHeader('Cache-Control', `max-age=${SEC_1DAY}`);
+			if(IS_DEV){
+				ktx.res.setHeader('Cache-Control', 'no-cache');
+			}else{
+				if (ktx.query.v) {
+					ktx.res.setHeader('Cache-Control', `max-age=${SEC_1YEAR}`);
+				} else {
+					ktx.res.setHeader('Cache-Control', `max-age=${SEC_1DAY}`);
+				}
 			}
-
 		}
 		// if frontend api (wapi/) or public api (api/), same rule
 		else if (isAPI) {

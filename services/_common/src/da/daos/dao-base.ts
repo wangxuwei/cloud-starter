@@ -33,7 +33,7 @@ export class BaseDao {
   }
 
   protected static Stamp<T>(utx: UserContext, data: T, forCreate?: boolean) {
-    const stampedData: Partial<T> & Partial<TimestampedRec> = data;
+    const stampedData: Partial<T> & Partial<TimestampedRec> = data as any;
     const now = nowTimestamp();
     if (forCreate) {
       stampedData.cid = utx.userId;

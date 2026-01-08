@@ -99,7 +99,7 @@ export async function pgStatus(pgOpts: PsqlOptions): Promise<PgStatusResult> {
   const code = p.exitCode;
   const message = p.stdout.trim();
   const accepting = (0 === p.exitCode) ? true : false;
-  return { accepting, message, code };
+  return { accepting, message, code: code! };
 }
 
 // --------- /Utils public API --------- //
@@ -118,7 +118,7 @@ async function execPsql(pgOpts: PsqlOptions, args: string[]): Promise<{ stdout: 
   let { stdout, stderr } = spawnResult;
 
   if (stderr) {
-    const err = stderr.trim();
+    const err = (<any>stderr).trim();
     let itemErr = null;
     for (const line of err.split('\n')) {
       if (!line.includes("NOTICE:")) {

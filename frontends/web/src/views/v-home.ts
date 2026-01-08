@@ -1,19 +1,19 @@
 import { position } from '@dom-native/draggable';
 import { BaseViewElement } from 'common/v-base.js';
-import { wksDco } from 'dcos';
+import { orgDco } from 'dcos';
 import { append, closest, customElement, elem, first, on, OnEvent, onEvent, onHub } from 'dom-native';
-import { Wks } from 'shared/entities.js';
+import { Org } from 'shared/entities.js';
 import { asNum } from 'utils-min';
 
 @customElement('v-home')
-export class wksListView extends BaseViewElement {
+export class orgListView extends BaseViewElement {
 
 	//#region    ---------- Events---------- 
-	@onEvent('click', '.wks-add')
-	clickAddWks() {
-		const dialogEl = append(document.body, elem('dg-wks-add'));
-		on(dialogEl, 'WKS_ADD', (evt) => {
-			wksDco.create(evt.detail);
+	@onEvent('click', '.org-add')
+	clickAddOrg() {
+		const dialogEl = append(document.body, elem('dg-org-add'));
+		on(dialogEl, 'ORG_ADD', (evt) => {
+			orgDco.create(evt.detail);
 		});
 	}
 
@@ -27,32 +27,32 @@ export class wksListView extends BaseViewElement {
 	@onEvent('pointerup', '.show-menu')
 	onCardShowMenuUp(evt: PointerEvent & OnEvent) {
 
-		if (first('#wks-card-menu') == null) {
+		if (first('#org-card-menu') == null) {
 
 			const [menu] = append(document.body, `
-			<c-menu id='wks-card-menu'>
+			<c-menu id='org-card-menu'>
 			<li class="do-delete">Delete</li>
 			</c-menu>`);
 
 			position(menu, evt.selectTarget, { at: 'bottom', align: 'right' });
 
-			const cardEl = closest(evt.selectTarget, '[data-type="Wks"]');
+			const cardEl = closest(evt.selectTarget, '[data-type="Org"]');
 			on(menu, 'pointerup', '.do-delete', async (evt) => {
 				const id = asNum(cardEl?.getAttribute('data-id'));
 				if (id == null) {
 					throw new Error(`UI ERROR - cannot find data-type Case data-id on element ${cardEl}`);
 				}
-				await wksDco.remove(id);
+				await orgDco.remove(id);
 			})
 		}
 	}
 	//#endregion ---------- /Events---------- 
 
 	//#region    ---------- Hub Events ---------- 
-	@onHub('dcoHub', 'Wks', 'create, update, remove')
-	async onWksChange() {
-		const wksList = await wksDco.list();
-		this.refresh(wksList);
+	@onHub('dcoHub', 'Org', 'create, update, remove')
+	async onOrgChange() {
+		const orgList = await orgDco.list();
+		this.refresh(orgList);
 	}
 	//#endregion ---------- /Hub Events ---------- 
 
@@ -69,28 +69,28 @@ export class wksListView extends BaseViewElement {
 		this.refresh();
 	}
 
-	async refresh(wksList?: Wks[]) {
-		// if no wksList, then, fetch the new list
-		if (wksList == null) {
-			wksList = await wksDco.list();
+	async refresh(orgList?: Org[]) {
+		// if no orgList, then, fetch the new list
+		if (orgList == null) {
+			orgList = await orgDco.list();
 		}
-		this.innerHTML = _render(wksList);
+		this.innerHTML = _render(orgList);
 	}
 }
 
 //// HTMLs
 
-function _render(wksList: Wks[] = []) {
-	let html = `	<header><h1>Workspaces</h1></header>
+function _render(orgList: Org[] = []) {
+	let html = `	<header><h1>Organizations</h1></header>
 	<section>
-		<div class="card wks-add">
+		<div class="card org-add">
 			<c-ico src="#ico-add"></c-ico>
-			<h3>Add New Workspace</h3>
+			<h3>Add New Organization</h3>
 		</div>
 	`;
 
-	for (const p of wksList) {
-		html += `	<a class="card wks" data-type="Wks" data-id="${p.id}" href="/${p.id}">
+	for (const p of orgList) {
+		html += `	<a class="card org" data-type="Org" data-id="${p.id}" href="/${p.id}">
 		<header>
 			<h2>${p.name}</h2>
 			<c-ico src="#ico-more" class="show-menu"></c-ico>

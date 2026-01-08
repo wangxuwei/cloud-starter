@@ -2,7 +2,7 @@
 // (c) 2021 BriteSnow, inc - This code is licensed under MIT license (see LICENSE for details)
 
 import Koa from 'koa';
-import koaBody from 'koa-body';
+import { koaBody } from 'koa-body';
 import koaSend from 'koa-send';
 import koaStatic from 'koa-static';
 import { extname } from 'path';

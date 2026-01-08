@@ -1,19 +1,21 @@
 import { position } from '@dom-native/draggable';
 import { BaseViewElement } from 'common/v-base.js';
 import { mediaDco } from 'dcos';
-import { append, attr, closest, customElement, first, on, onEvent, OnEvent, onHub } from 'dom-native';
+import { append, closest, customElement, first, getAttr, on, onEvent, OnEvent, onHub } from 'dom-native';
 import { Media } from 'shared/entities.js';
 import { asNum } from 'utils-min';
+import { wksListView } from './v-wks';
 
 @customElement('v-images')
 export class ImageView extends BaseViewElement {
 
 	//// Key Elements
-	get contentEl() { return this } // for now the contentEl is this element
-	get mediaAddEl() { return this.cacheFirst('.media-add')! }
+	get contentEl():BaseViewElement { return this } // for now the contentEl is this element
+	get mediaAddEl():HTMLElement { return this.cacheFirst('.media-add')! }
 
 	//// properties
-	get wksId() { return asNum(attr(this, 'wks-id')) }
+	get projectId() { return asNum(getAttr(this, 'project-id')) }
+	get orgId() { return (<wksListView>this.closest('v-wks'))?.orgId }
 
 	//#region    ---------- Element Events ---------- 
 	@onEvent('dragenter,dragover', '.media-add')
@@ -27,7 +29,7 @@ export class ImageView extends BaseViewElement {
 		evt.stopPropagation();
 		const file = evt.dataTransfer?.files?.[0];
 		if (file != null) {
-			await mediaDco.create({ file });
+			await mediaDco.create({ file, projectId: this.projectId });
 		}
 	}
 

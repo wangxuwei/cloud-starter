@@ -17,6 +17,7 @@ export const SERVICE_NAME = envAsStr('service_name');
 
 //// HTTP
 export const HTTPS_MODE = (env.https_mode === 'true') ? true : false;
+export const IS_DEV = (env.is_dev === 'true') ? true : false;
 export const PWD_SCHEME_01_SALT = envAsStr('pwd_scheme_01_salt');
 export const PWD_SCHEME_02_SALT = envAsStr('pwd_scheme_02_salt');
 export const PWD_PRLINK_SALT = envAsStr('pwd_prlink_salt');

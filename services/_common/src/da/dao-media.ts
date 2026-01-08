@@ -7,13 +7,13 @@ import { getAppQueue } from '../queue.js';
 import { getCoreBucket } from '../store.js';
 import { UserContext } from '../user-context.js';
 import { getMimeType, symbolDic } from '../utils.js';
-import { WksScopedDao } from './dao-wks-scoped.js';
+import { OrgScopedDao } from './dao-org-scoped.js';
 
 const ERROR = symbolDic(
-	'MEDIA_UPLOAD_FAIL_NO_WKSID',
+	'MEDIA_UPLOAD_FAIL_NO_ORGID',
 )
 
-export class MediaDao extends WksScopedDao<Media, number> {
+export class MediaDao extends OrgScopedDao<Media, number> {
 
 	constructor() { super({ table: 'media', stamped: true }) }
 
@@ -35,33 +35,34 @@ export class MediaDao extends WksScopedDao<Media, number> {
 	//#region    ---------- Media Specific Methods ---------- 
 	async createWithFile(utx: UserContext, data: Partial<Media> & { file: File }): Promise<number> {
 		// NOTE: Needed to avoid cyclic issues in some cases which makes the MediaDao undefined in export. Investigate if cleaner alternative.
-		const { wksDao } = await import('./daos.js');
+		const { orgDao } = await import('./daos.js');
 
-		const wksId = utx.wksId;
+		const orgId = utx.orgId;
 
-		if (wksId == null) {
-			throw new Err(ERROR.MEDIA_UPLOAD_FAIL_NO_WKSID);
+		if (orgId == null) {
+			throw new Err(ERROR.MEDIA_UPLOAD_FAIL_NO_ORGID);
 		}
 
 		// TODO: For now, ignore any other data properties (infer all from name);
 		const file = data.file;
 		const coreStore = await getCoreBucket();
 
-		const wks = await wksDao.get(utx, wksId);
-		const srcName = file.name!;
+		const org = await orgDao.get(utx, orgId);
+		const srcName = file.originalFilename!;
 		const name = srcName; // at start same name
 		const type = getMediaType(name);
+		const projectId = data.projectId;
 
-		const mediaId = await this.create(utx, { srcName, name, type });
+		const mediaId = await this.create(utx, { srcName, name, type, projectId });
 		const media = await this.get(utx, mediaId);
-		const folderPath = `wks/${wks.uuid}/medias/${media.uuid}/`;
-		await coreStore.upload(file.path, CORE_STORE_ROOT_DIR + folderPath + srcName);
+		const folderPath = `org/${org.uuid}/medias/${media.uuid}/`;
+		await coreStore.upload(file.filepath, CORE_STORE_ROOT_DIR + folderPath + srcName);
 		await this.update(utx, mediaId, { folderPath });
 
 		const mediaMimeType = getMimeType(name);
 		getAppQueue('MediaNew').add({
 			type: 'MediaNew',
-			wksId,
+			orgId,
 			mediaId,
 			mediaMimeType
 		});

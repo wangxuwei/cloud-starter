@@ -30,13 +30,13 @@ async function recreateDb() {
 	//// Drop the bb_ db and user
 	const t = await pgTest(POSTGRES_DB_CRED);
 	// local test: // psql -U postgres -d postgres -f sql/_drop-db.sql
-	await psqlImport(POSTGRES_DB_CRED, [`${sqlDir}/_drop-db.sql`]);
+	await psqlImport(POSTGRES_DB_CRED, [`${sqlDir}_drop-db.sql`]);
 
 	const allSqlFiles = await glob('*.sql', sqlDir);
 
 	//// create the bb_... database / user
 	// local test: psql -U postgres -d postgres -f sql/00_create-db.sql
-	await psqlImport(POSTGRES_DB_CRED, [`${sqlDir}/00_create-db.sql`]);
+	await psqlImport(POSTGRES_DB_CRED, [`${sqlDir}00_create-db.sql`]);
 
 	//// Option 1) At the beginning, load from sql
 	const sqlFiles = filterNumbered(allSqlFiles, 1);

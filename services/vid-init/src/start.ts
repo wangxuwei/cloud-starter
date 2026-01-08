@@ -38,10 +38,10 @@ async function start() {
 	for (; ;) {
 		const entry = await vidInitJobQueue.nextJob();
 
-		const { wksId, mediaId } = entry.data;
+		const { orgId, mediaId } = entry.data;
 
 		try {
-			const sysUtx = await getSysContext({ wksId });
+			const sysUtx = await getSysContext({ orgId });
 			const media = await mediaDao.get(sysUtx, mediaId);
 
 			// if the media.name is not mp4, then, transcode
@@ -73,7 +73,7 @@ async function start() {
 			// NOTE: Even if the data was already mp4, then, we still send the event MediaMainMp4 for other to pickup
 			const mediaAfterUpdate = await mediaDao.get(sysUtx, mediaId);
 			if (mediaAfterUpdate.name.endsWith('.mp4')) {
-				await mediaMainMp4Queue.add({ type: 'MediaMainMp4', wksId, mediaId });
+				await mediaMainMp4Queue.add({ type: 'MediaMainMp4', orgId, mediaId });
 			}
 
 			await vidInitJobQueue.done(entry);

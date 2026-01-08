@@ -4,7 +4,7 @@ import { execa } from 'execa';
 import { env } from 'process';
 import dseGenerics from './web/dse-generics.js';
 import dseMedia from './web/dse-media.js';
-import dseWks from './web/dse-wks.js';
+import dseOrg from './web/dse-org.js';
 import routerAuthGoogleOAuth from './web/router-auth-google-oauth.js';
 
 const PORT = 8080;
@@ -25,7 +25,7 @@ async function main() {
 			routerAuthGoogleOAuth().middleware()
 		],
 		apiMdws: [
-			dseWks('/api').middleware(),
+			dseOrg('/api').middleware(),
 			dseMedia('/api').middleware(),
 			dseGenerics('/api').middleware()
 		]
@@ -46,7 +46,7 @@ async function main() {
 
 	app.start(PORT);
 
-	console.log(`--> web-server!!! (${__version__}) - listening at ${PORT} ->> 333`);
+	console.log(`--> web-server (${__version__}) - listening at ${PORT}`);
 }
 
 

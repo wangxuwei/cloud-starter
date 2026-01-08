@@ -9,8 +9,8 @@ import { asNum } from 'utils-min';
 export class VideosView extends BaseViewElement {
 
 	//// Key Elements
-	get contentEl() { return this } // for now the contentEl is this element
-	get mediaAddEl() { return this.cacheFirst('.media-add')! }
+	get contentEl():BaseViewElement { return this } // for now the contentEl is this element
+	get mediaAddEl():HTMLElement { return this.cacheFirst('.media-add')! }
 
 	//#region    ---------- Element Events ---------- 
 

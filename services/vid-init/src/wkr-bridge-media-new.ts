@@ -16,11 +16,11 @@ async function main() {
 	for (; ;) {
 		const entry = await mediaNewQueue.next(streamGroup);
 		assertEvent('MediaNew', entry.data);
-		const { wksId, mediaId, mediaMimeType } = entry.data;
+		const { orgId, mediaId, mediaMimeType } = entry.data;
 
 		if (mediaMimeType.startsWith('video')) {
 
-			const vidInitTodo: VidInitJob = { type: 'VidInitJob', wksId, mediaId };
+			const vidInitTodo: VidInitJob = { type: 'VidInitJob', orgId, mediaId };
 			await vidInitQueue.add(vidInitTodo);
 
 		}
