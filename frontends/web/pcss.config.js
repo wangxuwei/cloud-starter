@@ -10,7 +10,7 @@ const plugins = [
 
 export default {
 	// required. Support single string, or array, will be processed in order
-	input: ['./pcss/main.pcss', './src/**/*.pcss'],
+	input: ['./pcss/main.pcss', './pcss/**/*.pcss'],
 
 	// required. single css file supported for now. 
 	output: '../../services/web-server/web-folder/css/all-bundle.css',
