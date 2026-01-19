@@ -24,9 +24,9 @@ metadata:
 spec:
   type: LoadBalancer
   ports:
-    - port: 9900
+    - port: 9001
       protocol: TCP
-      targetPort: 9900
+      targetPort: 9001
   selector:
     run: cstar-mock-s3 # this will select from the template.spec.metadata.labels (the pod)    
 ---
@@ -47,6 +47,12 @@ spec:
       labels:
         run: cstar-mock-s3
     spec:
+      volumes:
+        # Those volumes are for development, it allow REPL dev from local build
+        - name: cstar-mock-s3-data-folder
+          hostPath:
+            path: '{{dir_abs}}/services/mock-s3/.data'
+            type: DirectoryOrCreate
       containers:
         - image: "localhost:5000/cstar-mock-s3:{{image_tag}}"
           imagePullPolicy: Always
@@ -54,12 +60,17 @@ spec:
           env:
             - name: service_name
               value: mock-s3        
-            - name: MINIO_ROOT_USER
-              value: 'minio'        
-            - name: MINIO_ROOT_PASSWORD
-              value: 'miniominio' 
+            - name: RUSTFS_ACCESS_KEY
+              value: 'rustfsadmin'        
+            - name: RUSTFS_SECRET_KEY
+              value: 'rustfsadmin' 
           ports:
             - containerPort: 9000
               protocol: TCP
+            - containerPort: 9001
+              protocol: TCP  
+          volumeMounts:
+            - mountPath: /data
+              name: cstar-mock-s3-data-folder
       restartPolicy: Always
 
