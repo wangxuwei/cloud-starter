@@ -1,6 +1,5 @@
 import { webRequest } from 'common/web-request.js';
-import { Media, Org, QueryOptions, Wks } from 'shared/entities.js';
-import { Project } from 'shared/entities/project-entity.js';
+import { Media, Org, Project, QueryOptions, Wks } from 'shared/entities.js';
 import { BaseDco, dcoHub } from './dco-base.js';
 
 

@@ -88,7 +88,7 @@ export class OAuthDao extends BaseDao<OAuth, number>{
 
 ```typescript
 import { QueryOptions } from '#shared/entities.js';
-import { Project } from '#shared/entities/project-entity.js';
+import { Project } from '#shared/entities.js';
 import { UserContext } from '../user-context.js';
 import { AccessRequires } from './access.js';
 import { OrgScopedDao } from './dao-org-scoped.js';
