@@ -28,7 +28,7 @@ export const CORE_STORE_BUCKET = freeze({
 	bucketName: envAsStr('core_store_bucket_name'),
 	access_key_id: envAsStr('core_store_access_key_id'),
 	access_key_secret: envAsStr('core_store_access_key_secret'),
-	minio_endpoint: envAsStrOr('core_store_minio_endpoint', undefined), // if undefined then, S3
+	minio_endpoint: envAsStrOr('core_store_rustfs_endpoint', undefined), // if undefined then, S3
 });
 
 

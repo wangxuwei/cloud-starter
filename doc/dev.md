@@ -92,7 +92,7 @@ psql -U postgres
 psql$ \c cstar_db
 ```
 
-Connect to mock-s3 (minio)
+Connect to mock-s3 (rustfs)
 
 ```sh
 kubectl exec -it $(kubectl get pods -l run=cstar-mock-s3 --no-headers=true -o custom-columns=:metadata.name) -- /bin/bash

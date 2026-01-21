@@ -6,7 +6,7 @@ type: Opaque
 data:
   db_password: d2VsY29tZQ==
   
-  core_store_access_key_secret: bWluaW9taW5pbw==
+  core_store_access_key_secret: cnVzdGZzYWRtaW4=
 
   pwd_scheme_01_salt: NzRmZWM5MmU5Njg2MjY0ZTM2MzcxODkxNjhlYjNjNTBmZmFh 
   pwd_scheme_02_salt: NzRmZWM5MmU5Njg2MjY0ZTM2MzcxODkxNjhlYjNjNTBmZmFh
@@ -28,10 +28,10 @@ data:
   # -- BUCKET - core store bucket
   # Core store credential (when mino)
   core_store_bucket_name: core-bucket
-  core_store_access_key_id: minio
+  core_store_access_key_id: rustfsadmin
   # core_store_access_key_secret (in cstar-secret)
   core_store_root_dir: core-store-root/  
-  core_store_minio_endpoint: http://cstar-mock-s3-srv:9000 # for dev
+  core_store_rustfs_endpoint: http://cstar-mock-s3-srv:9000 # for dev
   # Core store CDN
   # Note: For dev. In prod, this will be the CDN url that will point to the core bucket backend.
   core_store_cdn_base_url: http://localhost:9000/core-bucket/
@@ -39,8 +39,8 @@ data:
   # -- BUCKET - LOG bucket (SS3 Cred format)
   logs_store_bucket_name: logs-bucket
   logs_store_root_dir: logs
-  SS3_BUCKET_logs_bucket_KEY_ID: minio
-  SS3_BUCKET_logs_bucket_KEY_SECRET: miniominio
+  SS3_BUCKET_logs_bucket_KEY_ID: rustfsadmin
+  SS3_BUCKET_logs_bucket_KEY_SECRET: rustfsadmin
   SS3_BUCKET_logs_bucket_ENDPOINT: http://cstar-mock-s3-srv:9000
 
   # -- LOG - CONFIG
