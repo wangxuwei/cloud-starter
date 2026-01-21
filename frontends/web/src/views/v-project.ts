@@ -4,7 +4,7 @@ import { BaseViewElement } from 'common/v-base.js';
 import { orgDco, projectDco, wksDco } from 'dcos';
 import { append, closest, customElement, elem, first, getAttr, on, OnEvent, onEvent, onHub } from 'dom-native';
 import { Org, Wks } from 'shared/entities';
-import { Project } from 'shared/entities/project-entity.js';
+import { Project } from 'shared/entities.js';
 import { asNum } from 'utils-min';
 
 @customElement('v-project')

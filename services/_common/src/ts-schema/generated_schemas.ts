@@ -35,11 +35,7 @@ const generated_schemas = {
         }
       },
       "required": [
-        "cid",
-        "ctime",
         "id",
-        "mid",
-        "mtime",
         "name",
         "type",
         "uuid"
@@ -78,56 +74,9 @@ const generated_schemas = {
         }
       },
       "required": [
-        "cid",
-        "ctime",
         "id",
-        "mid",
-        "mtime",
         "name",
         "orgId",
-        "uuid"
-      ]
-    },
-    "TicketRec": {
-      "description": "table name: 'project'",
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "number"
-        },
-        "uuid": {
-          "type": "string"
-        },
-        "title": {
-          "type": "string"
-        },
-        "desc": {
-          "type": "string"
-        },
-        "cid": {
-          "type": "number"
-        },
-        "ctime": {
-          "type": "string"
-        },
-        "mid": {
-          "type": "number"
-        },
-        "mtime": {
-          "type": "string"
-        },
-        "orgId": {
-          "type": "number"
-        }
-      },
-      "required": [
-        "cid",
-        "ctime",
-        "id",
-        "mid",
-        "mtime",
-        "orgId",
-        "title",
         "uuid"
       ]
     },
@@ -189,11 +138,7 @@ const generated_schemas = {
         }
       },
       "required": [
-        "cid",
-        "ctime",
         "id",
-        "mid",
-        "mtime",
         "psalt",
         "pwd",
         "pwdHistory",
@@ -237,119 +182,14 @@ const generated_schemas = {
         },
         "mtime": {
           "type": "string"
-        },
-        "org": {
-          "type": "object",
-          "properties": {
-            "id": {
-              "type": "number"
-            },
-            "name": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "id",
-            "name"
-          ]
         }
       },
       "required": [
-        "cid",
-        "ctime",
         "id",
-        "mid",
-        "mtime",
         "name",
-        "org",
         "orgId",
         "uuid"
       ]
-    },
-    "Ticket": {
-      "description": "Ticket entity model when read from the DAO\ntable name: 'ticket'",
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "number"
-        },
-        "uuid": {
-          "type": "string"
-        },
-        "title": {
-          "type": "string"
-        },
-        "desc": {
-          "type": "string"
-        },
-        "cid": {
-          "type": "number"
-        },
-        "ctime": {
-          "type": "string"
-        },
-        "mid": {
-          "type": "number"
-        },
-        "mtime": {
-          "type": "string"
-        },
-        "org": {
-          "type": "object",
-          "properties": {
-            "id": {
-              "type": "number"
-            },
-            "name": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "id",
-            "name"
-          ]
-        }
-      },
-      "required": [
-        "cid",
-        "ctime",
-        "id",
-        "mid",
-        "mtime",
-        "org",
-        "title",
-        "uuid"
-      ]
-    },
-    "TicketForCreate": {
-      "type": "object",
-      "properties": {
-        "title": {
-          "type": "string"
-        },
-        "projectId": {
-          "type": "string"
-        },
-        "desc": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "projectId",
-        "title"
-      ]
-    },
-    "TicketForPatch": {
-      "description": "For rpc/dao update. (id will be passed as a parent parameters)",
-      "type": "object",
-      "properties": {
-        "title": {
-          "type": "string"
-        },
-        "desc": {
-          "type": "string"
-        }
-      }
     },
     "OrgType": {
       "enum": [

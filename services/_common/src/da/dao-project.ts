@@ -1,5 +1,4 @@
-import { QueryOptions } from '#shared/entities.js';
-import { Project } from '#shared/entities/project-entity.js';
+import { Project, QueryOptions } from '#shared/entities.js';
 import { Monitor } from '../perf.js';
 import { UserContext } from '../user-context.js';
 import { AccessRequires } from './access.js';

@@ -1,11 +1,12 @@
 import { readdirSync, writeFileSync } from 'fs';
+import { join } from 'path';
 import * as TJS from "typescript-json-schema";
 
-const REC_TYPES = ['OrgRec', 'ProjectRec', 'TicketRec', 'UserRec'];
+const REC_TYPES = ['OrgRec', 'ProjectRec', 'UserRec'];
 const REC_DIR = 'services/_common/src/da/records';
 
-const ENT_TYPES = ['Project', 'Ticket', 'TicketForCreate', 'TicketForPatch'];
-const ENT_DIR = 'shared/src/entities';
+const ENT_TYPES = ['Project'];
+const ENT_DIR = 'shared/src/';
 
 const COMMON_TS_SCHEMA_FILE = 'services/_common/src/ts-schema/generated_schemas.ts';
 const SHARED_TS_SCHEMA_FILE = 'shared/src/ts-schema/generated_schemas.ts';
@@ -15,9 +16,7 @@ const recFiles = readdirSync(REC_DIR)
   .filter((fileName) => fileName.endsWith('.ts'))
   .map((fileName) => `${REC_DIR}/${fileName}`);
 
-const entFiles = readdirSync(ENT_DIR)
-  .filter((fileName) => fileName.endsWith('.ts'))
-  .map((fileName) => `${ENT_DIR}/${fileName}`);
+const entFiles = [join(ENT_DIR, "entities.ts"), join(ENT_DIR, "entities-base.ts")];
 
 // optionally pass argument to schema generator
 const settings: TJS.PartialArgs = {
