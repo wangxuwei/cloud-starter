@@ -10,15 +10,11 @@
   - [UI](doc/ui.md) Native Web UI Application Component Model, approach, code structured, and best practices.
   - [Error Handling](doc/error.md) Simple, safe, and scalable way to handle exception/error in JS/TS.
 - **Best Practices**
-  - [Comments](doc/comments.md) Short conventions and best practices about commenting.
-  - [TypeScript](doc/typescrip.md) Best practices
-  - [Postgresql](doc/postgres.md) Best practices
-  - [Css](doc/css.md) Css/PostCSS best practices, technics, and links.
-  - [Css](doc/css.md) Css/PostCSS best practices, technics, and links.
+  - all best practice docs are in dev-xp/best-practice/
 - **DevOps**
   - [build](doc/build.md) Build flow and documentation.
   - [Dev](doc/dev.md) Kubernetes centric development workflow and technics.
-  - [Test](doc/test.md) Test setup, running, best practices, technics, and links.
+  - [Test](dev-xp/best-practice/test-best-practice.md) Test setup, running, best practices, technics, and links.
   - [kubectl](doc/kubectl.md) useful commands in the context of this architecture.
 
 ## Approach
