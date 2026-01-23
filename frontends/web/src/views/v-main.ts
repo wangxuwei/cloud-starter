@@ -39,7 +39,6 @@ export class MainView extends BaseViewElement {
 			const [menu] = append(document.body, frag(`
 			<c-menu id='user-menu-123'>
 				<li class="do-logoff">Logoff</li>
-				<li class="show-profile">Profile</li>
 			</c-menu>
 			`));
 
