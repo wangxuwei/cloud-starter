@@ -55,11 +55,10 @@ frontends/
     base.pcss          # Base/reset styles
     main.pcss          # Main entry point
     vars-colors.pcss  # Color variables (overrides)
-    src/
-      views/
-        v-*.pcss       # View-specific styles
-      dialog/
-        dg-*.pcss      # Dialog-specific styles
+    views/
+      v-*.pcss       # View-specific styles
+    dialog/
+      dg-*.pcss      # Dialog-specific styles
 ```
 
 ## Writing PCSS

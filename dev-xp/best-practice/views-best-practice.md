@@ -239,6 +239,8 @@ import { Org } from 'shared/entities.js';
 import { asNum } from 'utils-min';
 ```
 
+Note: PCSS files are located in `frontends/web/pcss/views/` and are included by the build system. They do not require explicit imports in TypeScript files.
+
 ## PostCSS Views (`.pcss`)
 
 ### Naming Conventions
@@ -268,9 +270,9 @@ v-images {
 .show-menu { }
 ```
 
-### File Structure
+### File Structure and Location
 
-Use nested structure with `&` for children:
+PCSS files for views are now located in `frontends/web/pcss/views/` and named after the view (e.g., `v-home.pcss`). The styles are organized in a nested structure with `&` for children:
 
 ```pcss
 v-home {
@@ -296,6 +298,7 @@ Benefits:
 - Clear parent-child relationships
 - Reduces selector repetition
 - Easy to understand hierarchy
+- Centralized location for all view styles
 
 ### Layout Best Practices
 
@@ -475,3 +478,5 @@ For content cards:
 - [ ] State modifiers use `&:hover`, `&:active`, etc.
 - [ ] Grid layout for card grids
 - [ ] Images use `object-fit: contain` or `cover`
+- [ ] Files are located in `frontends/web/pcss/views/`
+- [ ] File naming matches view name (e.g., `v-home.pcss`)
