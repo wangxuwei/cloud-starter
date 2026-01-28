@@ -28,11 +28,11 @@
     "cmdrouter": "^0.3.1",
     "execa": "^9.6.1",
     "fs-aux": "git://github.com/wangxuwei/node-fs-aux.git#latest_libs",
-    "ioredis": "^5.9.0",
+    "ioredis": "^5.9.2",
     "knex": "^3.1.0",
     "mime-types": "^3.0.2",
     "moment": "^2.30.1",
-    "pg": "^8.16.3",
+    "pg": "^8.17.2",
     "redstream": "^0.3.0",
     "ts-node": "^10.9.2",
     "uuid": "^13.0.0"

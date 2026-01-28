@@ -109,7 +109,7 @@ Use quoted foreign key column names with the table name prefix.
 Use `ON DELETE CASCADE` for child tables to maintain referential integrity automatically.
 
 ```sql
-CREATE TABLE "org_user" (
+CREATE TABLE "user_org" (
   "userId" bigint NOT NULL,
   "orgId" bigint NOT NULL,
   role org_role_name NOT NULL,

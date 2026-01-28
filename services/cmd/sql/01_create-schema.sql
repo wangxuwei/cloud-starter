@@ -143,23 +143,6 @@ CREATE TABLE "org" (
 );
 ALTER SEQUENCE org_id_seq
   RESTART WITH 1000;
-
-CREATE TABLE "org_user" (
-  "userId" bigint NOT NULL,
-  "orgId" bigint NOT NULL,
-  "role" org_role_name NOT NULL,
-
-  -- timestamps 
-  cid bigint,
-  ctime timestamp with time zone,  
-  mid bigint,
-  mtime timestamp with time zone,
-
-  -- rels  
-  PRIMARY KEY ("userId", "orgId"),
-  FOREIGN KEY ("userId") REFERENCES "user" (id) ON DELETE CASCADE,
-  FOREIGN KEY ("orgId") REFERENCES "org" (id) ON DELETE CASCADE
-);
 -- #endregion: --- Org
 
 

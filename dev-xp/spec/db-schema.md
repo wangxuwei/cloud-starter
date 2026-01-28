@@ -10,8 +10,6 @@ The database consists of the following main entities:
 - Organization management
 - Workspace management
 - Project management
-- Ticket management
-- Label management
 - Media management
 - Job processing
 
@@ -99,22 +97,6 @@ Organizations (personal or group).
 
 ---
 
-### org_user
-
-User-to-organization membership with roles.
-
-| Field | Type | Description | Constraints |
-|-------|------|-------------|-------------|
-| userId | bigint | Reference to user | NOT NULL, PRIMARY KEY, FOREIGN KEY → user(id) ON DELETE CASCADE |
-| orgId | bigint | Reference to organization | NOT NULL, PRIMARY KEY, FOREIGN KEY → org(id) ON DELETE CASCADE |
-| role | org_role_name | Role in organization | NOT NULL |
-| cid | bigint | Creator ID | |
-| ctime | timestamp with time zone | Creation timestamp | |
-| mid | bigint | Modifier ID | |
-| mtime | timestamp with time zone | Modification timestamp | |
-
----
-
 ### wks
 
 Workspaces within organizations.
@@ -124,11 +106,11 @@ Workspaces within organizations.
 | id | bigserial | Primary key | PRIMARY KEY |
 | uuid | uuid | Unique identifier | NOT NULL, UNIQUE, DEFAULT: gen_random_uuid() |
 | orgId | bigint | Reference to organization | NOT NULL, FOREIGN KEY → org(id) ON DELETE CASCADE |
-| name | varchar(64) | Workspace name | |
 | cid | bigint | Creator ID | |
 | ctime | timestamp with time zone | Creation timestamp | |
 | mid | bigint | Modifier ID | |
 | mtime | timestamp with time zone | Modification timestamp | |
+| name | varchar(64) | Workspace name | |
 
 **Note**: ID sequence starts at 1000.
 
@@ -136,7 +118,7 @@ Workspaces within organizations.
 
 ### user_org
 
-Alternative user-to-organization mapping (similar to org_user).
+Alternative user-to-organization mapping.
 
 | Field | Type | Description | Constraints |
 |-------|------|-------------|-------------|
@@ -163,75 +145,6 @@ Projects within workspaces.
 | mtime | timestamp with time zone | Modification timestamp | |
 
 **Note**: ID sequence starts at 1000.
-
----
-
-### ticket
-
-Tickets for tracking tasks or issues.
-
-| Field | Type | Description | Constraints |
-|-------|------|-------------|-------------|
-| id | bigserial | Primary key | PRIMARY KEY |
-| orgId | bigint | Reference to organization | NOT NULL |
-| uuid | uuid | Unique identifier | NOT NULL, UNIQUE, DEFAULT: gen_random_uuid() |
-| title | varchar(64) | Ticket title | |
-| desc | text | Ticket description | |
-| cid | bigint | Creator ID | |
-| ctime | timestamp with time zone | Creation timestamp | |
-| mid | bigint | Modifier ID | |
-| mtime | timestamp with time zone | Modification timestamp | |
-
-**Note**: ID sequence starts at 1000.
-
----
-
-### ticket_project
-
-Many-to-many relationship between tickets and projects.
-
-| Field | Type | Description | Constraints |
-|-------|------|-------------|-------------|
-| ticketId | bigint | Reference to ticket | NOT NULL, PRIMARY KEY, FOREIGN KEY → ticket(id) ON DELETE CASCADE |
-| projectId | bigint | Reference to project | NOT NULL, PRIMARY KEY, FOREIGN KEY → project(id) ON DELETE CASCADE |
-| cid | bigint | Creator ID | |
-| ctime | timestamp with time zone | Creation timestamp | |
-| mid | bigint | Modifier ID | |
-| mtime | timestamp with time zone | Modification timestamp | |
-
----
-
-### label
-
-Labels for categorizing tickets.
-
-| Field | Type | Description | Constraints |
-|-------|------|-------------|-------------|
-| id | bigserial | Primary key | PRIMARY KEY |
-| orgId | bigint | Reference to organization | NOT NULL |
-| name | varchar(64) | Label name | |
-| cid | bigint | Creator ID | |
-| ctime | timestamp with time zone | Creation timestamp | |
-| mid | bigint | Modifier ID | |
-| mtime | timestamp with time zone | Modification timestamp | |
-
-**Note**: ID sequence starts at 1000.
-
----
-
-### label_ticket
-
-Many-to-many relationship between labels and tickets.
-
-| Field | Type | Description | Constraints |
-|-------|------|-------------|-------------|
-| labelId | bigint | Reference to label | NOT NULL, PRIMARY KEY, FOREIGN KEY → label(id) ON DELETE CASCADE |
-| ticketId | bigint | Reference to ticket | NOT NULL, PRIMARY KEY, FOREIGN KEY → ticket(id) ON DELETE CASCADE |
-| cid | bigint | Creator ID | |
-| ctime | timestamp with time zone | Creation timestamp | |
-| mid | bigint | Modifier ID | |
-| mtime | timestamp with time zone | Modification timestamp | |
-
 ---
 
 ### media
