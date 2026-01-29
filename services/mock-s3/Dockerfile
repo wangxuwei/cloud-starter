@@ -9,7 +9,6 @@ RUN curl -O https://dl.min.io/client/mc/release/linux-amd64/mc && \
 
 
 COPY entrypoint.sh .
-RUN chmod +x /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
 

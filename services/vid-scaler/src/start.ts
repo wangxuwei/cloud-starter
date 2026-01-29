@@ -8,7 +8,7 @@ import { CORE_STORE_ROOT_DIR, __version__ } from '#common/conf.js';
 import { getResMp4Name } from '#common/da/dao-media.js';
 import { mediaDao } from '#common/da/daos.js';
 import { getAppQueue, getJobQueue } from '#common/queue.js';
-import { getCoreBucket } from '#common/store.js';
+import { existFile, getCoreBucket } from '#common/store.js';
 import { getSysContext } from '#common/user-context.js';
 import { execa } from 'execa';
 import { mkdir } from 'fs/promises';
@@ -56,7 +56,7 @@ async function start() {
 			const coreStore = await getCoreBucket();
 
 			// if not already done, then, we update it. 
-			if (!(await coreStore.exists(remoteScaledFile))) {
+			if (!(await existFile(coreStore, remoteScaledFile))) {
 				const tempDir = `temp/${newUuid()}/`;
 				await mkdir(tempDir, { recursive: true });
 
@@ -76,8 +76,6 @@ async function start() {
 
 				await coreStore.upload(localScaledFile, remoteScaledFile);
 
-				// send the data event
-				await mediaScaledMp4Queue.add({ type: 'MediaScaledMp4', mediaId, orgId, res });
 			}
 
 			// update the sd if not present
@@ -87,6 +85,12 @@ async function start() {
 			}
 
 			await vidScalerJobQueue.done(entry);
+
+			// if media is a video, trigger audio extraction
+			if (media.type == 'video') {
+				// send the data event
+				await mediaScaledMp4Queue.add({ type: 'MediaScaledMp4', mediaId, orgId, res });
+			}
 
 		} catch (ex) {
 			const msg = `ERROR - vid-scaler  ${ex} (ffmepg error: ${ffmpegResult?.stderr}) (skip and go next) - cause: ${ex}`;

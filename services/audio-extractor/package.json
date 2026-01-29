@@ -1,5 +1,5 @@
 {
-  "name": "agent",
+  "name": "audio-extractor",
   "type": "module",
   "version": "0.0.0",
   "description": "none",
@@ -7,15 +7,15 @@
     "type": "git",
     "url": "https://no-repo/yet.git"
   },
-  "main": "dist/vid-init/src/start.js",
+  "main": "dist/services/audio-extractor/src/start.js",
   "imports": {
     "#common/*": "./dist/services/_common/src/*",
     "#shared/*": "./dist/shared/src/*"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node dist/services/vid-init/src/start",
-    "dstart": "node --inspect dist/services/vid-init/src/start"
+    "start": "node dist/services/audio-extractor/src/start",
+    "dstart": "node --inspect dist/services/audio-extractor/src/start"
   },
   "author": "",
   "license": "ISC",
@@ -24,6 +24,7 @@
     "cloud-bucket": "^0.5.0",
     "execa": "^9.6.1",
     "fs-aux": "^0.2.0",
+    "ioredis": "^5.9.2",
     "knex": "^3.1.0",
     "moment": "^2.30.1",
     "nodemon": "^3.1.11",

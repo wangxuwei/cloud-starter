@@ -75,6 +75,10 @@ export function getResMp4Name(fileName: string, res: MediaResolution) {
 	return Path.parse(fileName).name + `-${res}.mp4`;
 }
 
+export function getAudioName(fileName: string) {
+	return Path.parse(fileName).name + `-audio.mp3`;
+}
+
 export function getMediaType(fileName: string): MediaType {
 	const mimeType = getMimeType(fileName);
 	const [type, subType] = mimeType.split('/');

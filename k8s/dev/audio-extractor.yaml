@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cstar-audio-extractor-dep
+  namespace: default
+  labels:
+    run: cstar-audio-extractor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: cstar-audio-extractor
+  template:
+    metadata:
+      labels:
+        run: cstar-audio-extractor
+    spec:
+      volumes:
+        # Those volumes are for development, it allow REPL dev from local build
+        - name: cstar-audio-extractor-src
+          hostPath:
+            path: '{{dir_abs}}/services/audio-extractor/src'
+            type: Directory
+        - name: cstar-audio-extractor-dist
+          hostPath:
+            path: '{{dir_abs}}/services/audio-extractor/dist'
+            type: Directory
+      containers:
+        - image: "localhost:5000/cstar-audio-extractor:{{image_tag}}"
+          name: cstar-audio-extractor-ctn
+          imagePullPolicy: Always
+          envFrom:
+            - configMapRef:
+                name: cstar-config
+            - secretRef:
+                name: cstar-secret
+          env:
+            - name: service_name
+              value: audio-extractor
+          volumeMounts:
+            - mountPath: /service/src
+              name: cstar-audio-extractor-src
+            - mountPath: /service/dist
+              name: cstar-audio-extractor-dist
+      restartPolicy: Always

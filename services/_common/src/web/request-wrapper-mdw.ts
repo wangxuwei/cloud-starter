@@ -34,6 +34,7 @@ export async function handleRequestWrapperMdw(ktx: Ktx, next: Next) {
 		}
 
 	} catch (ex: any) {
+		console.log(ex);
 		let errRec: ErrRec;
 
 		//// extract/build the errRec

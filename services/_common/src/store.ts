@@ -67,3 +67,14 @@ export function getBucketEventStream(bucketName: string, dedicatedClient = false
 }
 //#endregion ---------- /Bucket Streams ----------
 
+
+
+// FIXME:
+export async function existFile(bucket:Bucket, path:string): Promise<boolean>{
+	let exist = false;
+	try{
+		exist = await bucket.exists(path);
+	}catch(e){
+	}
+	return exist;
+}

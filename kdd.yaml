@@ -43,6 +43,8 @@ blocks:
     dependencies: _common
   - name: vid-scaler
     dependencies: _common    
+  - name: audio-extractor
+    dependencies: _common   
   - name: vid-init
     dependencies: _common  
   - name: web 
