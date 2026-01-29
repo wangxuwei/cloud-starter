@@ -48,6 +48,26 @@ export interface OrgScopedEntity {
 	orgId: number;
 }
 
+
+/**
+ * Project entity model when read from the DAO
+ * table name: 'project'
+ */
+export interface Project extends StampedEntity, OrgScopedEntity {
+  /**
+   * @access some stuff
+   * @minimum 123
+   */
+  id: number,
+  uuid: string,
+	orgId: number;
+  wksId?: number,
+
+  name: string,
+
+  desc?: string,
+}
+
 //#region    ---------- Media ---------- 
 export type MediaType = 'video' | 'image';
 export type MediaResolution = '480p30' | '360p30';

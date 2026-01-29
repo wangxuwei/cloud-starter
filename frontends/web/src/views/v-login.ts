@@ -122,6 +122,12 @@ export class LoginView extends BaseViewElement {
 
 		try {
 			const result = await webPost('/api/register', { body: data });
+			if (result.success) {
+				window.location.href = '/';
+				return;
+			} else {
+				this.footerMessage.textContent = result.error.code;
+			}
 		} catch (ex: any) {
 			console.log('error register', ex);
 			this.footerMessage.textContent = ex.error || ex.message;
@@ -140,7 +146,7 @@ function _render() {
 		<section class="content">
 			<d-input name="username" placeholder="username"></d-input>
 			<d-input name="pwd" password placeholder="password" ico-trail="d-ico-visible"></d-input>
-			<d-input name="repeat-pwd" placeholder="Repeat Password" class="for-register"></d-input>
+			<d-input name="repeat-pwd" placeholder="Repeat Password" class="for-register"  ico-trail="d-ico-visible"></d-input>
 			<div></div>
 			<button class="do high for-login">Login</button>
 			<button class="do high for-register">Register</button>

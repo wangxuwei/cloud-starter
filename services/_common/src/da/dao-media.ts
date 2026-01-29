@@ -66,7 +66,6 @@ export class MediaDao extends OrgScopedDao<Media, number> {
 			mediaId,
 			mediaMimeType
 		});
-
 		return mediaId;
 	}
 	//#endregion ---------- /Media Specific Methods ---------- 

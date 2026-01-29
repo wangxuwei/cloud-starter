@@ -143,23 +143,6 @@ CREATE TABLE "org" (
 );
 ALTER SEQUENCE org_id_seq
   RESTART WITH 1000;
-
-CREATE TABLE "org_user" (
-  "userId" bigint NOT NULL,
-  "orgId" bigint NOT NULL,
-  "role" org_role_name NOT NULL,
-
-  -- timestamps 
-  cid bigint,
-  ctime timestamp with time zone,  
-  mid bigint,
-  mtime timestamp with time zone,
-
-  -- rels  
-  PRIMARY KEY ("userId", "orgId"),
-  FOREIGN KEY ("userId") REFERENCES "user" (id) ON DELETE CASCADE,
-  FOREIGN KEY ("orgId") REFERENCES "org" (id) ON DELETE CASCADE
-);
 -- #endregion: --- Org
 
 
@@ -211,74 +194,6 @@ ALTER SEQUENCE project_id_seq
   RESTART WITH 1000;
 -- #endregion: --- Project
 
-
--- #region:    --- Ticket
-CREATE TABLE "ticket" (  
-  id bigserial PRIMARY KEY,
-  "orgId" bigint NOT NULL,  
-  uuid uuid NOT NULL UNIQUE DEFAULT gen_random_uuid (),
-  title varchar(64),
-  "desc" text,
-
-  -- timestamps 
-  cid bigint,
-  ctime timestamp with time zone,
-  mid bigint,
-  mtime timestamp with time zone
-);
-
-ALTER SEQUENCE ticket_id_seq
-  RESTART WITH 1000;
-
-CREATE TABLE "ticket_project" (
-  "ticketId" bigint NOT NULL,
-  "projectId" bigint NOT NULL,
-
-  -- timestamps 
-  cid bigint,
-  ctime timestamp with time zone,  
-  mid bigint,
-  mtime timestamp with time zone,
-
-  -- rels  
-  PRIMARY KEY ("ticketId", "projectId"),
-  FOREIGN KEY ("ticketId") REFERENCES "ticket" (id) ON DELETE CASCADE,
-  FOREIGN KEY ("projectId") REFERENCES "project" (id) ON DELETE CASCADE
-);  
--- #endregion: --- Ticket
-
--- #region:    --- Label
-CREATE TABLE "label" (  
-  id bigserial PRIMARY KEY,
-  "orgId" bigint NOT NULL,  
-  name varchar(64),
-
-  -- timestamps 
-  cid bigint,
-  ctime timestamp with time zone,
-  mid bigint,
-  mtime timestamp with time zone
-);
-
-ALTER SEQUENCE label_id_seq
-  RESTART WITH 1000;
-
-CREATE TABLE "label_ticket" (
-  "labelId" bigint NOT NULL,
-  "ticketId" bigint NOT NULL,
-
-  -- timestamps 
-  cid bigint,
-  ctime timestamp with time zone,  
-  mid bigint,
-  mtime timestamp with time zone,
-
-  -- rels  
-  PRIMARY KEY ("labelId", "ticketId"),
-  FOREIGN KEY ("labelId") REFERENCES "label" (id) ON DELETE CASCADE,
-  FOREIGN KEY ("ticketId") REFERENCES "ticket" (id) ON DELETE CASCADE
-);    
--- #endregion: --- Label
 
 -- #region:    --- Media
 CREATE TYPE media_type AS ENUM (

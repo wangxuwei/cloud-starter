@@ -65,7 +65,7 @@ class AuthLoginRegisterRouter extends AppRouter {
 			throw new AuthFailErr(ERROR.USERNAME_OR_PWD_EMPTY);
 		}
 
-		const id = await userDao.createUser(sysCtx, clearPwd);
+		const id = await userDao.createUser(sysCtx, {username, clearPwd});
 		const user = userDao.get(sysCtx, id);
 
 		return { success: true, data: user };
