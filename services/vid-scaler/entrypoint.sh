@@ -22,13 +22,13 @@ debug_inspect() {
 # by changing a /service/nodemon-restart.json (can be empty) from the scripts/cmd-watch.ts
 debug_demon() {
   echo "run mode: DEBUG_DEMON"
-  /service/node_modules/.bin/nodemon --ignore 'dist/*' --ignore 'test/*' --ignore 'src/*' dist/services/web-server/src/start
+  /service/node_modules/.bin/nodemon --ignore 'dist/*' --ignore 'test/*' --ignore 'src/*' dist/services/vid-scaler/src/start
 }
 
 # Similar as above, but start the node with --inspect for breakpoint debug
 debug_demon_inspect() {
   echo "run mode: DEBUG_DEMON_INSPECT"
-  /service/node_modules/.bin/nodemon --inspect --ignore 'dist/*' --ignore 'test/*' --ignore 'src/*' dist/services/web-server/src/start
+  /service/node_modules/.bin/nodemon --inspect --ignore 'dist/*' --ignore 'test/*' --ignore 'src/*' dist/services/vid-scaler/src/start
 }
 
 case "$RUN_MODE" in

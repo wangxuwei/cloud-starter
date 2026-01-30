@@ -7,7 +7,7 @@
 import { CORE_STORE_ROOT_DIR, __version__ } from '#common/conf.js';
 import { mediaDao } from '#common/da/daos.js';
 import { getAppQueue, getJobQueue } from '#common/queue.js';
-import { getCoreBucket } from '#common/store.js';
+import { existFile, getCoreBucket } from '#common/store.js';
 import { getSysContext } from '#common/user-context.js';
 import { execa } from 'execa';
 import { mkdir } from 'fs/promises';
@@ -58,7 +58,7 @@ async function start() {
 				const tempSrcFile = Path.join(tempDir, mediaName);
 				const tempMp4File = Path.join(tempDir, mp4Name);
 
-				if (!(await coreStore.exists(remoteMp4File))) {
+				if (!(await existFile(coreStore, remoteMp4File))) {
 					await mkdir(tempDir, { recursive: true });
 					await coreStore.download(remoteSrcFile, tempSrcFile);
 

@@ -7,7 +7,7 @@
     "type": "git",
     "url": "https://no-repo/yet.git"
   },
-  "main": "dist/vid-init/src/start.js",
+  "main": "dist/vid-scaler/src/start.js",
   "imports": {
     "#common/*": "./dist/services/_common/src/*",
     "#shared/*": "./dist/shared/src/*"
