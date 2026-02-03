@@ -60,10 +60,16 @@ export const LOG_MAX_TIME = envAsNumOr('log_max_time', 6 * 60); // every 6 minut
 export const LOGS_STORE_BUCKET_NAME = envAsStr('logs_store_bucket_name');
 export const LOGS_STORE_ROOT_DIR = envAsStr('logs_store_root_dir');
 
+
+//// ASR
+export const GLM_ASR_API_KEY = envAsStr('glm_asr_api_key');
+export const GLM_ASR_MODEL = envAsStr('glm_asr_model');
+
 //// OTHERS
 export const PERF_LOG_THRESHOLD_WEB = 1000; // in ms. Threshold when utx.perfContext.items should be logged
 
 export const CDN_BASE_URL = envAsStr('core_store_cdn_base_url');
+
 
 
 // #region    --- Env Getter Functions

@@ -79,6 +79,10 @@ export function getAudioName(fileName: string) {
 	return Path.parse(fileName).name + `-audio.mp3`;
 }
 
+export function getAudioTextName(fileName: string) {
+	return Path.parse(fileName).name + `-audio-text.txt`;
+}
+
 export function getMediaType(fileName: string): MediaType {
 	const mimeType = getMimeType(fileName);
 	const [type, subType] = mimeType.split('/');

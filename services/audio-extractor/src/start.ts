@@ -29,6 +29,8 @@ async function start() {
 
 	const vidAudioJobQueue = getJobQueue('VidAudioJob');
 
+	const vidTextJobQueue = getJobQueue('VidTextJob');
+
 	for (; ;) {
 		const entry = await vidAudioJobQueue.nextJob();
 		let ffmpegResult: any = null;
@@ -64,6 +66,8 @@ async function start() {
 				await mediaAudioMp4Queue.add({ type: 'MediaAudioMp4', mediaId, orgId });
 			}
 
+			await vidTextJobQueue.add({ type: 'VidTextJob', orgId, mediaId });
+
 			await vidAudioJobQueue.done(entry);
 
 		} catch (ex) {
@@ -76,3 +80,4 @@ async function start() {
 
 
 }
+

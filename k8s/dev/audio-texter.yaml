@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cstar-audio-texter-dep
+  namespace: default
+  labels:
+    run: cstar-audio-texter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: cstar-audio-texter
+  template:
+    metadata:
+      labels:
+        run: cstar-audio-texter
+    spec:
+      volumes:
+        # Those volumes are for development, it allow REPL dev from local build
+        - name: cstar-audio-texter-src
+          hostPath:
+            path: '{{dir_abs}}/services/audio-texter/src'
+            type: Directory
+        - name: cstar-audio-texter-dist
+          hostPath:
+            path: '{{dir_abs}}/services/audio-texter/dist'
+            type: Directory
+      containers:
+        - image: "localhost:5000/cstar-audio-texter:{{image_tag}}"
+          name: cstar-audio-texter-ctn
+          imagePullPolicy: Always
+          envFrom:
+            - configMapRef:
+                name: cstar-config
+            - secretRef:
+                name: cstar-secret
+          env:
+            - name: service_name
+              value: audio-texter
+          volumeMounts:
+            - mountPath: /service/src
+              name: cstar-audio-texter-src
+            - mountPath: /service/dist
+              name: cstar-audio-texter-dist
+      restartPolicy: Always

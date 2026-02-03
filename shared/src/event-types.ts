@@ -21,11 +21,13 @@ export type AppEventDic = {
 	'MediaMainMp4': MediaMainMp4
 	'MediaScaledMp4': MediaScaledMp4,
 	'MediaAudioMp4': MediaAudioMp4,
+	'MediaText': MediaText,
 
 	// app job done events
 	'VidInitDone': VidInitDone
 	'VidScalerDone': VidScalerDone
 	'VidAudioDone': VidAudioDone
+	'VidTextDone': VidTextDone
 }
 
 export type AppEvent = AppEventDic[keyof AppEventDic];
@@ -53,6 +55,11 @@ export interface MediaAudioMp4 extends MediaEvent {
 	type: 'MediaAudioMp4';
 }
 
+/** DataEvent - Sent when text has been transcribed from audio */
+export interface MediaText extends MediaEvent {
+	type: 'MediaText';
+}
+
 //// App Notification Events
 
 /** Base interface for job done queue messages */
@@ -77,6 +84,11 @@ export interface VidScalerDone extends JobMediaBase, JobDoneBase {
 export interface VidAudioDone extends JobMediaBase, JobDoneBase {
 	type: 'VidAudioDone';
 }
+
+/** NotificationEvent - Sent when VidTextJob is done */
+export interface VidTextDone extends JobMediaBase, JobDoneBase {
+	type: 'VidTextDone';
+}
 //#endregion ---------- /App Events ---------- 
 
 
@@ -85,6 +97,7 @@ export type JobEventDic = {
 	'VidInitJob': VidInitJob
 	'VidScalerJob': VidScalerJob
 	'VidAudioJob': VidAudioJob
+	'VidTextJob': VidTextJob
 }
 
 export type JobEvent = JobEventDic[keyof JobEventDic];
@@ -117,5 +130,12 @@ export interface VidScalerJob extends JobMediaBase {
  */
 export interface VidAudioJob extends JobMediaBase {
 	type: 'VidAudioJob';
+}
+
+/** 
+ * Job: Transcribe audio to text using Whisper API
+ */
+export interface VidTextJob extends JobMediaBase {
+	type: 'VidTextJob';
 }
 //#endregion ---------- /Job Events ----------

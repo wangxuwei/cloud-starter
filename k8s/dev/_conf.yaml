@@ -16,6 +16,12 @@ data:
   # For google OAuth, uncomment values below and set the value (base64 encoded)
   # google_oauth_client_id: __BASE64_ENCODEC_GOOGLE_CLIENT_ID__
   # google_oauth_client_secret: __BASE64_ENCODEC_GOOGLE_CLIENT_SECRET__
+
+  # ASR
+  ## GLM
+  ## for now are __BASE_API_KEY__
+  glm_asr_api_key: X19CQVNFX0FQSV9LRVlfXw==
+
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -57,3 +63,7 @@ data:
 
   # Google
   google_oauth_redirect_url: http://localhost:8080/goauth-redirect
+
+  # ASR
+  ## GLM
+  glm_asr_model: glm-asr-2512
