@@ -20,7 +20,7 @@ data:
   # ASR
   ## GLM
   ## for now are __BASE_API_KEY__
-  glm_asr_api_key: X19CQVNFX0FQSV9LRVlfXw==
+  asr_api_key: X19CQVNFX0FQSV9LRVlfXw==
 
 ---
 apiVersion: v1
@@ -66,4 +66,4 @@ data:
 
   # ASR
   ## GLM
-  glm_asr_model: glm-asr-2512
+  asr_model: glm-asr-2512

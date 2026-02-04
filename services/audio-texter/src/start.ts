@@ -1,12 +1,12 @@
-import { __version__, CORE_STORE_ROOT_DIR, GLM_ASR_API_KEY, GLM_ASR_MODEL } from '#common/conf.js';
+import { __version__, ASR_API_KEY, ASR_MODEL, CORE_STORE_ROOT_DIR } from '#common/conf.js';
 import { getAudioName, getAudioTextName } from '#common/da/dao-media.js';
 import { mediaDao } from '#common/da/daos.js';
 import { getAppQueue, getJobQueue } from '#common/queue.js';
 import { existFile, getCoreBucket } from '#common/store.js';
 import { getSysContext } from '#common/user-context.js';
 import { execa } from 'execa';
-import FormData from 'form-data';
-import { createReadStream } from 'fs';
+import { FormData } from 'formdata-node';
+import { fileFromPath } from 'formdata-node/file-from-path';
 import { mkdir, rm, writeFile } from 'fs/promises';
 import fetch from "node-fetch";
 import * as Path from 'path';
@@ -16,21 +16,19 @@ import { Worker } from 'worker_threads';
 start();
 
 async function transcribeWithGlm(audioFile:string): Promise<string> {
-	if (!GLM_ASR_API_KEY) {
+	if (!ASR_API_KEY) {
 		throw new Error('GLM_API_KEY environment variable is not set');
 	}
 
-	const fileStream = createReadStream(audioFile);
-	const audioName = Path.basename(audioFile);
-
+	const file = await fileFromPath(audioFile);
 	const form = new FormData();
-	form.append('model', GLM_ASR_MODEL);
-	form.append('file', fileStream, audioName);
+	form.append('model', ASR_MODEL);
+	form.append('file', file);
 	
 	const response = await fetch('https://open.bigmodel.cn/api/paas/v4/audio/transcriptions', {
 		method: 'POST',
 		headers: {
-			'Authorization': `Bearer ${GLM_ASR_API_KEY}`
+			'Authorization': `Bearer ${ASR_API_KEY}`
 		},
 		body: form as any
 	});
@@ -54,8 +52,7 @@ async function getAudioDuration(inputPath: string): Promise<number> {
 	return parseFloat(result.stdout.trim());
 }
 
-async function splitAudioIntoChunks(inputPath: string, outputDir: string, chunkDuration: number = 30): Promise<string[]> {
-	const duration = await getAudioDuration(inputPath);
+async function splitAudioIntoChunks(inputPath: string, outputDir: string, duration:number, chunkDuration: number = 30): Promise<string[]> {
 	const chunkPaths: string[] = [];
 	const numChunks = Math.ceil(duration / chunkDuration);
 
@@ -85,8 +82,9 @@ async function transcribeToText(audioFile: string): Promise<string> {
 		return await transcribeWithGlm(audioFile);
 	}
 
+	const verifyDuration = Math.floor(duration);
 	const outputDir = Path.dirname(audioFile);
-	const chunkPaths = await splitAudioIntoChunks(audioFile, outputDir);
+	const chunkPaths = await splitAudioIntoChunks(audioFile, outputDir, verifyDuration);
 	const transcriptions: string[] = [];
 
 	for (const chunkPath of chunkPaths) {

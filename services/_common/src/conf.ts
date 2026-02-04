@@ -62,8 +62,8 @@ export const LOGS_STORE_ROOT_DIR = envAsStr('logs_store_root_dir');
 
 
 //// ASR
-export const GLM_ASR_API_KEY = envAsStr('glm_asr_api_key');
-export const GLM_ASR_MODEL = envAsStr('glm_asr_model');
+export const ASR_API_KEY = envAsStr('asr_api_key');
+export const ASR_MODEL = envAsStr('asr_model');
 
 //// OTHERS
 export const PERF_LOG_THRESHOLD_WEB = 1000; // in ms. Threshold when utx.perfContext.items should be logged
