@@ -16,10 +16,6 @@ export async function transcribeAudio(audioFilePath: string, duration: number, c
         '-i', audioFilePath,
         '-ss', `${i * chunkDuration}`,
         '-t', `${chunkDuration}`,
-        '-c:a', 'libmp3lame',
-        '-ar', '16000',
-        '-b:a', '64k',
-        '-ac', '1',
         '-y',
         chunkPath
       ]);

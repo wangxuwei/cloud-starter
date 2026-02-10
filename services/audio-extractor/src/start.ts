@@ -59,7 +59,7 @@ async function start() {
 
 				await coreStore.download(remoteOrginalFile, localOriginalFile);
 
-				ffmpegResult = await execa('ffmpeg', split(`-i ${localOriginalFile} -vn -acodec libmp3lame -ab 128k -f mp3 -y ${localAudioFile}`, ' '));
+				ffmpegResult = await execa('ffmpeg', split(`-i ${localOriginalFile} -vn -acodec libmp3lame -ac 1 -ab 128k -ar 16000 -f mp3 -y ${localAudioFile}`, ' '));
 
 				await coreStore.upload(localAudioFile, remoteAudioFile);
 
