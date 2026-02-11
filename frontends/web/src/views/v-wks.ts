@@ -46,14 +46,14 @@ export class wksListView extends BaseViewElement {
 				if (id == null) {
 					throw new Error(`UI ERROR - cannot find data-type Case data-id on element ${cardEl}`);
 				}
-				await wksDco.remove(id);
+				await wksDco.delete(id);
 			})
 		}
 	}
 	//#endregion ---------- /Events---------- 
 
 	//#region    ---------- Hub Events ---------- 
-	@onHub('dcoHub', 'Wks', 'create, update, remove')
+	@onHub('dcoHub', 'wks', 'create, update, delete')
 	async onWksChange() {
 		this.refresh(true);
 	}

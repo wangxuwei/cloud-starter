@@ -66,7 +66,7 @@ export class ExampleView extends BaseViewElement {
     //#endregion ---------- /Events---------- 
 
     //#region    ---------- Hub Events ---------- 
-    @onHub('dcoHub', 'Item', 'create, update, remove')
+    @onHub('dcoHub', 'Item', 'create, update, delete')
     async onItemChange() { ... }
     //#endregion ---------- /Hub Events ---------- 
 
@@ -160,7 +160,7 @@ Event types to combine:
 Use `@onHub` for data change events:
 
 ```typescript
-@onHub('dcoHub', 'EntityName', 'create, update, remove')
+@onHub('dcoHub', 'EntityName', 'create, update, delete')
 async onEntityChange() { }
 ```
 

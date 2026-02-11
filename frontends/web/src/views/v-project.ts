@@ -47,14 +47,14 @@ export class projectListView extends BaseViewElement {
 				if (id == null) {
 					throw new Error(`UI ERROR - cannot find data-type Case data-id on element ${cardEl}`);
 				}
-				await projectDco.remove(id);
+				await projectDco.delete(id);
 			})
 		}
 	}
 	//#endregion ---------- /Events---------- 
 
 	//#region    ---------- Hub Events ---------- 
-	@onHub('dcoHub', 'Project', 'create, update, remove')
+	@onHub('dcoHub', 'project', 'create, update, delete')
 	async onProjectChange() {
 		this.refresh(true);
 	}

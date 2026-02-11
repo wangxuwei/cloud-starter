@@ -1,20 +1,21 @@
-// <origin src="https://raw.githubusercontent.com/BriteSnow/cloud-starter/master/services/web-server/src/web/dse-media.ts" />
+// <origin src="https://raw.githubusercontent.com/BriteSnow/cloud-starter/master/services/web-server/src/web/router-auth-google-oauth.ts" />
 // (c) 2019 BriteSnow, inc - This code is licensed under MIT license (see LICENSE for details)
 
 import { mediaDao } from '#common/da/daos.js';
 import { Err } from '#common/error.js';
-import { ApiKtx, ApiRouter, routePost, success } from '#common/web/koa-utils.js';
-import { symbolDic } from '../../../_common/src/utils.js';
+import { symbolDic } from '#common/utils.js';
+import { ApiKtx, AppRouter, routePost, success } from '#common/web/koa-utils.js';
 
+
+// Module Error Code
 const ERROR = symbolDic(
 	'FILE_NOT_FOUND'
-);
+)
 
 
+class MediaRouter extends AppRouter {
 
-class MediaDse extends ApiRouter {
-
-	@routePost('/dse/Media')
+	@routePost('/upload-media')
 	async create(ktx: ApiKtx) {
 		const utx = ktx.state.utx;
 		const body = ktx.request.body as any;
@@ -32,6 +33,4 @@ class MediaDse extends ApiRouter {
 
 }
 
-
-
-export default function apiRouter(prefix?: string) { return new MediaDse(prefix) };
+export default function apiRouter(prefix?: string) { return new MediaRouter(prefix) };

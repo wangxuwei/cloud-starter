@@ -42,14 +42,14 @@ export class orgListView extends BaseViewElement {
 				if (id == null) {
 					throw new Error(`UI ERROR - cannot find data-type Case data-id on element ${cardEl}`);
 				}
-				await orgDco.remove(id);
+				await orgDco.delete(id);
 			})
 		}
 	}
 	//#endregion ---------- /Events---------- 
 
 	//#region    ---------- Hub Events ---------- 
-	@onHub('dcoHub', 'Org', 'create, update, remove')
+	@onHub('dcoHub', 'org', 'create,update,delete')
 	async onOrgChange() {
 		const orgList = await orgDco.list();
 		this.refresh(orgList);

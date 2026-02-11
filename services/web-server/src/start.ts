@@ -1,11 +1,15 @@
 import { __version__ } from '#common/conf.js';
 import { KoaApp } from '#common/web/koa-app.js';
+import { RpcRouter } from '#common/web/rpc.js';
 import { execa } from 'execa';
 import { env } from 'process';
-import dseGenerics from './web/dse-generics.js';
-import dseMedia from './web/dse-media.js';
-import dseOrg from './web/dse-org.js';
 import routerAuthGoogleOAuth from './web/router-auth-google-oauth.js';
+import routerMedia from './web/router-media.js';
+// Import RPC handlers to register them
+import './web/rpc-media.js';
+import './web/rpc-org.js';
+import './web/rpc-project.js';
+import './web/rpc-wks.js';
 
 const PORT = 8080;
 
@@ -22,12 +26,12 @@ async function main() {
 	const app = new KoaApp({
 		token_name: 'token',
 		beforeAuthMdws: [
-			routerAuthGoogleOAuth().middleware()
+			routerAuthGoogleOAuth().middleware(),
 		],
 		apiMdws: [
-			dseOrg('/api').middleware(),
-			dseMedia('/api').middleware(),
-			dseGenerics('/api').middleware()
+			routerMedia("/api").middleware(),
+			// Authenticated RPC routes (requires authentication) - uses /rpc prefix
+			new RpcRouter('/wapi').middleware() 
 		]
 	});
 

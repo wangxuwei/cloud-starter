@@ -51,14 +51,14 @@ export class ImageView extends BaseViewElement {
 				if (id == null) {
 					throw new Error(`UI ERROR - cannot find data-type Media data-id on element ${cardEl}`);
 				}
-				await mediaDco.remove(id);
+				await mediaDco.delete(id);
 			})
 		}
 	}
 	//#endregion ---------- /Element Events ----------
 
 	//#region    ---------- Data Event ---------- 
-	@onHub('dcoHub', 'Media', 'create,update,remove')
+	@onHub('dcoHub', 'media', 'create,update,delete')
 	onMediaChange() {
 		this.refresh();
 	}

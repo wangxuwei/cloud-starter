@@ -102,7 +102,7 @@ The dom-native best practices for component communication use those three scheme
 - **app-to-components** communication, beyond the traditional parent to child or child to parents, used the dom-native pub/sub library, via the HUB API. For example, if a View or even Component element wants to listen to a data change, it can by having method such as:
 
 ```ts
-@onHub('dcoHub','Project', 'create, update')
+@onHub('dcoHub', 'project', 'create, update')
 projectChange(data: ...) { ...}
 ```
 
@@ -152,7 +152,7 @@ class MyView extends BaseHTMLElement{
   //#endregion ---------- /Doc/Win Events ---------- 
 
   //#region    ---------- Hub Events ---------- 
-  @onHub('dcoHub', 'Project', 'create')
+  @onHub('dcoHub', 'project', 'create')
   projectCreated(data: Project, info: {topic: string, label: string}){
     console.log(data, info.topic, info.label); 
   }

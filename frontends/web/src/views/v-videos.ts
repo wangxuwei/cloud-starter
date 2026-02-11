@@ -32,7 +32,7 @@ export class VideosView extends BaseViewElement {
 				if (id == null) {
 					throw new Error(`UI ERROR - cannot find data-type=Media ${cardEl}`);
 				}
-				await mediaDco.remove(id);
+				await mediaDco.delete(id);
 			})
 		}
 	}
@@ -65,7 +65,7 @@ export class VideosView extends BaseViewElement {
 	//#endregion ---------- /Element Events ----------
 
 	//#region    ---------- Data Event ---------- 
-	@onHub('dcoHub', 'Media', 'create,update,remove')
+	@onHub('dcoHub', 'media', 'create,update,delete')
 	onMediaChange() {
 		this.refresh();
 	}
