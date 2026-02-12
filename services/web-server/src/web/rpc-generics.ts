@@ -3,7 +3,7 @@
 
 import { BaseDao } from '#common/da/dao-base.js';
 import { mediaDao, orgDao, projectDao, userDao, wksDao } from '#common/da/daos.js';
-import { ApiKtx } from '#common/web/koa-utils.js';
+import { ApiKtx, success } from '#common/web/koa-utils.js';
 
 // region:    --- DAO Registry ---
 
@@ -37,7 +37,7 @@ export async function listEntities(ktx: ApiKtx, params: { type: string; matching
 	}
 
 	const entities = await dao.list(ctx, queryOptions);
-	return { success: true, data: entities };
+	return success(entities);
 }
 
 export async function getEntity(ktx: ApiKtx, params: { type: string; id: number }) {
@@ -50,7 +50,7 @@ export async function getEntity(ktx: ApiKtx, params: { type: string; id: number 
 	}
 
 	const entity = await dao.get(ctx, id);
-	return { success: true, data: entity };
+	return success(entity);
 }
 
 export async function createEntity(ktx: ApiKtx, params: { type: string; data: any }) {
@@ -64,7 +64,7 @@ export async function createEntity(ktx: ApiKtx, params: { type: string; data: an
 
 	const id = await dao.create(ctx, data);
 	const entity = await dao.get(ctx, id);
-	return { success: true, data: entity };
+	return success(entity);
 }
 
 export async function updateEntity(ktx: ApiKtx, params: { type: string; id: number; data: any }) {
@@ -78,7 +78,7 @@ export async function updateEntity(ktx: ApiKtx, params: { type: string; id: numb
 
 	await dao.update(ctx, id, data);
 	const entity = await dao.get(ctx, id);
-	return { success: true, data: entity };
+	return success(entity);
 }
 
 export async function deleteEntity(ktx: ApiKtx, params: { type: string; id: number }) {
@@ -91,7 +91,7 @@ export async function deleteEntity(ktx: ApiKtx, params: { type: string; id: numb
 	}
 
 	await dao.remove(ctx, id);
-	return { success: true };
+	return success();
 }
 
 // endregion: --- Generic Entity CRUD RPC Methods ---

@@ -9,37 +9,31 @@
 import { ApiKtx } from '#common/web/koa-utils.js';
 import { RpcMethod } from '#common/web/rpc.js';
 import { Media } from '#shared/entities.js';
-import { createEntity, deleteEntity, getEntity, listEntities, updateEntity } from './rpc-generics.js';
+import { deleteEntity, getEntity, listEntities, updateEntity } from './rpc-generics.js';
 
 // region:    --- Media RPC Methods ---
 
 class RpcHandlers{
 
-	@RpcMethod("list_medias")
+	@RpcMethod("media_list")
 	async listMedias(ktx: ApiKtx, params: { matching?: any }) {
 		const data = { type: 'media', ...params } as any;
 		return listEntities(ktx, data); 
 	}
 
-	@RpcMethod("get_media")
+	@RpcMethod("media_get")
 	async getMedia(ktx: ApiKtx, params: { id:number }) {
 		const data = { type: 'media', ...params } as any;
 		return getEntity(ktx, data); 
 	}
 
-	@RpcMethod("create_media")
-	async createMedia(ktx: ApiKtx, params: { data: Partial<Media>}) {
-		const data = { type: 'media', ...params } as any;
-		return createEntity(ktx, data); 
-	}
-
-	@RpcMethod("update_media")
+	@RpcMethod("media_update")
 	async updateMedia(ktx: ApiKtx, params: { id:number, data: Partial<Media>}) {
 		const data = { type: 'media', ...params } as any;
 		return updateEntity(ktx, data); 
 	}
 
-	@RpcMethod("delete_media")
+	@RpcMethod("media_delete")
 	async deleteMedia(ktx: ApiKtx, params: { id:number }) {
 		const data = { type: 'media', ...params } as any;
 		return deleteEntity(ktx, data); 

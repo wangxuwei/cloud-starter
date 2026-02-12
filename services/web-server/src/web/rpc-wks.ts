@@ -15,31 +15,31 @@ import { createEntity, deleteEntity, getEntity, listEntities, updateEntity } fro
 
 class RpcHandlers{
 
-	@RpcMethod("list_wkss")
+	@RpcMethod("wks_list")
 	async listWkss(ktx: ApiKtx, params: { matching?: any }) {
 		const data = { type: 'wks', ...params } as any;
 		return listEntities(ktx, data); 
 	}
 
-	@RpcMethod("get_wks")
+	@RpcMethod("wks_get")
 	async getWks(ktx: ApiKtx, params: {id:number}) {
 		const data = { type: 'wks', ...params } as any;
 		return getEntity(ktx, data); 
 	}
 
-	@RpcMethod("create_wks")
+	@RpcMethod("wks_create")
 	async createWks(ktx: ApiKtx, params: {data: Partial<Wks>}) {
 		const data = { type: 'wks', ...params } as any;
 		return createEntity(ktx, data); 
 	}
 
-	@RpcMethod("update_wks")
+	@RpcMethod("wks_update")
 	async updateWks(ktx: ApiKtx, params: {id:number, data: Partial<Wks>}) {
 		const data = { type: 'wks', ...params } as any;
 		return updateEntity(ktx, data); 
 	}
 
-	@RpcMethod("delete_wks")
+	@RpcMethod("wks_delete")
 	async deleteWks(ktx: ApiKtx, params: {id:number}) {
 		const data = { type: 'wks', ...params } as any;
 		return deleteEntity(ktx, data); 

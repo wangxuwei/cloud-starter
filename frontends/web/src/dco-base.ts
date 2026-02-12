@@ -8,25 +8,20 @@ export const dcoHub = hub("dcoHub");
 
 export class BaseDco<E, F> {
 	#cmd_suffix: string;
-	#plural?: string;
 
 	get cmd_suffix() {
 		return this.#cmd_suffix;
 	}
-	get plural() {
-		return this.#plural ? this.#plural : `${this.#cmd_suffix}s`;
-	}
 
-	constructor(cmd_suffix: string, plural?: string) {
+	constructor(cmd_suffix: string) {
 		this.#cmd_suffix = cmd_suffix;
-		this.#plural = plural;
 	}
 
 	//#region    ---------- Utils ----------
 
 	//#endregion ---------- /Utils ----------
 	async get(id: number): Promise<E> {
-		const result = await rpc_invoke(`get_${this.#cmd_suffix}`, { id });
+		const result = await rpc_invoke(`${this.#cmd_suffix}_get`, { id });
 		if (result.success) {
 			return result.data;
 		} else {
@@ -35,7 +30,7 @@ export class BaseDco<E, F> {
 	}
 
 	async list(qo?: F): Promise<E[]> {
-		const result = await rpc_invoke(`list_${this.plural}`, { ...qo });
+		const result = await rpc_invoke(`${this.#cmd_suffix}_list`, { ...qo });
 		if (result.success) {
 			return result.data;
 		} else {
@@ -44,7 +39,7 @@ export class BaseDco<E, F> {
 	}
 
 	async create(data: any): Promise<E> {
-		const result = await rpc_invoke(`create_${this.#cmd_suffix}`, { data });
+		const result = await rpc_invoke(`${this.#cmd_suffix}_create`, { data });
 		if (result.success) {
 			dcoHub.pub(this.#cmd_suffix, "create", result.data);
 			return result.data;
@@ -54,7 +49,7 @@ export class BaseDco<E, F> {
 	}
 
 	async update(id: number, data: Partial<E>): Promise<any> {
-		const result = await rpc_invoke(`update_${this.#cmd_suffix}`, { id, data });
+		const result = await rpc_invoke(`${this.#cmd_suffix}_update`, { id, data });
 		if (result.success) {
 			dcoHub.pub(this.#cmd_suffix, "update", result.data);
 			return result.data;
@@ -64,7 +59,7 @@ export class BaseDco<E, F> {
 	}
 
 	async delete(id: number): Promise<any> {
-		const result = await rpc_invoke(`delete_${this.#cmd_suffix}`, { id });
+		const result = await rpc_invoke(`${this.#cmd_suffix}_delete`, { id });
 		if (result.success) {
 			dcoHub.pub(this.#cmd_suffix, "delete", result.success);
 			return result.success;

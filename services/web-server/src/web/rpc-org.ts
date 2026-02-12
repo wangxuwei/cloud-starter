@@ -10,8 +10,8 @@ import { createEntity, deleteEntity, getEntity, updateEntity } from './rpc-gener
 // region:    --- Org RPC Methods ---
 
 class RpcHandlers{
-	
-	@RpcMethod("list_orgs")
+
+	@RpcMethod("org_list")
 	async listOrgs(ktx: ApiKtx, params: { matching?: any }) {
 		const ctx = ktx.state.utx;
 		const { matching } = params;
@@ -26,25 +26,25 @@ class RpcHandlers{
 		return { success: true, data: entities };
 	}
 
-	@RpcMethod("get_org")
+	@RpcMethod("org_get")
 	async getOrg(ktx: ApiKtx, params: {name:string}) {
 		const data = { type: 'org', ...params } as any;
 		return getEntity(ktx, data); 
 	}
 
-	@RpcMethod("create_org")
+	@RpcMethod("org_create")
 	async createOrg(ktx: ApiKtx, params: {name:string}) {
 		const data = { type: 'org', ...params } as any;
 		return createEntity(ktx, data); 
 	}
 
-	@RpcMethod("update_org")
+	@RpcMethod("org_update")
 	async updateOrg(ktx: ApiKtx, params: {name:string}) {
 		const data = { type: 'org', ...params } as any;
 		return updateEntity(ktx, data); 
 	}
 
-	@RpcMethod("delete_org")
+	@RpcMethod("org_delete")
 	async deleteOrg(ktx: ApiKtx, params: {name:string}) {
 		const data = { type: 'org', ...params } as any;
 		return deleteEntity(ktx, data); 

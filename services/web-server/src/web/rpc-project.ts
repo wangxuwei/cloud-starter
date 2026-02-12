@@ -15,31 +15,31 @@ import { createEntity, deleteEntity, getEntity, listEntities, updateEntity } fro
 
 class RpcHandlers{
 
-	@RpcMethod("list_projects")
+	@RpcMethod("project_list")
 	async listProjects(ktx: ApiKtx, params: { matching?: any }) {
 		const data = { type: 'project', ...params } as any;
 		return listEntities(ktx, data); 
 	}
 
-	@RpcMethod("get_project")
+	@RpcMethod("project_get")
 	async getProject(ktx: ApiKtx, params: { id:number }) {
 		const data = { type: 'project', ...params } as any;
 		return getEntity(ktx, data); 
 	}
 
-	@RpcMethod("create_project")
+	@RpcMethod("project_create")
 	async createProject(ktx: ApiKtx, params: { data: Partial<Project>}) {
 		const data = { type: 'project', ...params } as any;
 		return createEntity(ktx, data); 
 	}
 
-	@RpcMethod("update_project")
+	@RpcMethod("project_update")
 	async updateProject(ktx: ApiKtx, params: { id:number, data: Partial<Project>}) {
 		const data = { type: 'project', ...params } as any;
 		return updateEntity(ktx, data); 
 	}
 
-	@RpcMethod("delete_project")
+	@RpcMethod("project_delete")
 	async deleteProject(ktx: ApiKtx, params: { id:number }) {
 		const data = { type: 'project', ...params } as any;
 		return deleteEntity(ktx, data); 
