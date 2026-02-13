@@ -1,6 +1,5 @@
-import { adoptStyleSheets, css, customElement, first, onEvent, pull, trigger } from 'dom-native';
+import { adoptStyleSheets, css, customElement, first, html, onEvent, pull, trigger } from 'dom-native';
 import { DgDialog } from '../dialog/dg-dialog.js';
-const { assign } = Object;
 
 
 const _compCss = css`
@@ -10,6 +9,17 @@ const _compCss = css`
 		grid-auto-rows: min-content; 
 		grid-gap: 1rem;
 	}
+`;
+
+const PROJECT_ADD_HTML = html`
+	<div slot="title">Add Project!!</div>
+
+	<div class="dialog-content">
+		<d-input label="name" name="name"> </d-input>
+	</div>
+	
+	<button slot="footer" class="do-cancel">CANCEL</button>
+	<button slot="footer" class="do-ok medium">OK</button>
 `;
 
 
@@ -31,20 +41,10 @@ export class DgProjectAdd extends DgDialog {
 
 	init() {
 		// add the content to be slotted
-		this.innerHTML = `
-			<div slot="title">Add Project!!</div>
-
-			<div class="dialog-content">
-				<d-input label="name" name="name"> </d-input>
-			</div>
-			
-			<button slot="footer" class="do-cancel">CANCEL</button>
-			<button slot="footer" class="do-ok medium">OK</button>
-		`;
+		this.replaceChildren(document.importNode(PROJECT_ADD_HTML, true));
 	}
 
 	postDisplay() {
 		first(this, 'd-input')?.focus();
 	}
 }
-

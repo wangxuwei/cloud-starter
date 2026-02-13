@@ -24,7 +24,7 @@ This document outlines the coding standards and best practices for TypeScript vi
 - **Element event handlers**: camelCase, starting with event type or action
   - Example: `clickAddOrg()`, `onShowClick()`, `onCardShowMenuUp()`
 - **Hub event handlers**: camelCase, starting with `on` and entity name
-  - Example: `onOrgChange()`, `onMediaChange()`
+  - Example: `onOrgChange()`, `onMediaChange()`, `routeChange()`
 
 #### Render Functions
 - Use underscore prefix to indicate private/internal
@@ -66,8 +66,11 @@ export class ExampleView extends BaseViewElement {
     //#endregion ---------- /Events---------- 
 
     //#region    ---------- Hub Events ---------- 
-    @onHub('dcoHub', 'Item', 'create, update, delete')
-    async onItemChange() { ... }
+    @onHub('dcoHub', 'EntityName', 'create, update, delete')
+    async onEntityChange() { ... }
+
+    @onHub('routeHub', 'CHANGE')
+    routeChange() { ... }
     //#endregion ---------- /Hub Events ---------- 
 
     async init() {
@@ -165,9 +168,29 @@ async onEntityChange() { }
 ```
 
 Hub parameters:
-- First: hub name (e.g., `'dcoHub'`)
-- Second: entity type (e.g., `'Org'`, `'Media'`)
+- First: hub name (e.g., `'dcoHub'`, `'routeHub'`)
+- Second: entity type (e.g., `'Org'`, `'Media'`) or event type (e.g., `'CHANGE'`)
 - Third: comma-separated action list (e.g., `'create,update,remove'`)
+
+#### Route Change Events
+For views that need to update when navigation occurs, use route hub events:
+
+```typescript
+@onHub('routeHub', 'CHANGE')
+routeChange() {
+    this.refresh();
+}
+```
+
+Use `hasPathChanged()` in `refresh()` to check if the path segment affecting this view has actually changed, avoiding unnecessary re-renders:
+
+```typescript
+async refresh() {
+    if (this.hasPathChanged(0)) {
+        // refresh logic
+    }
+}
+```
 
 ### Lifecycle Methods
 
@@ -195,6 +218,16 @@ async refresh(dataList?: DataType[]) {
         dataList = await dataDco.list();
     }
     this.innerHTML = _render(dataList);
+}
+```
+
+For views with route path dependencies, use `hasPathChanged()` to avoid unnecessary refreshes:
+
+```typescript
+async refresh(force?:boolean) {
+    if ((this.hasPathChanged(2) || force) && pathAt(1)) {
+        // refresh logic
+    }
 }
 ```
 
@@ -469,6 +502,7 @@ For content cards:
 - [ ] `refresh()` handles both sync and async cases
 - [ ] Render functions use underscore prefix
 - [ ] Comments are meaningful and properly formatted
+- [ ] Route change events handled for navigation-dependent views
 
 ### PostCSS
 - [ ] Element selector matches custom element name

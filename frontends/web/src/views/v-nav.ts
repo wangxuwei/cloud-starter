@@ -1,11 +1,15 @@
 import { pathAt } from 'common/route.js';
 import { BaseViewElement } from 'common/v-base.js';
-import { all, customElement, onHub } from 'dom-native';
+import { all, customElement, frag, html, onHub } from 'dom-native';
 import { ProjectMainView } from './v-project-main.js';
 import { projectListView } from './v-project.js';
 import { wksListView } from './v-wks.js';
 
-const defaultPath = '';
+const NAV_HTML = html`
+	<a><span class='bar'></span><d-ico name="ico-images"></d-ico><label>Images</label></a>
+	<a><span class='bar'></span><d-ico name="ico-videos"></d-ico><label>Videos</label></a>
+	<a><span class='bar'></span><d-ico name="ico-videos"></d-ico><label>Timelines</label></a>
+`;
 
 @customElement('v-nav')
 export class NavView extends BaseViewElement {
@@ -23,8 +27,19 @@ export class NavView extends BaseViewElement {
 
 	init() {
 		super.init();
-		this.innerHTML = _render(this.orgId, this.wksId, this.projectId);
+		this.replaceChildren(this.getNavContent());
 		this.refresh();
+	}
+
+	getNavContent() {
+		const orgId = this.orgId;
+		const wksId = this.wksId;
+		const projectId = this.projectId;
+
+		return frag(
+			['image', 'video' ,'timeline'], 
+			item => html`<a href="/${orgId}/${wksId}/${projectId}/${item}s"><span class='bar'></span><d-ico name="ico-${item}s"></d-ico><label>${item[0].toUpperCase()}${item.slice(1)}s</label></a>`
+		);
 	}
 
 	refresh() {
@@ -42,12 +57,4 @@ export class NavView extends BaseViewElement {
 		}
 	}
 
-}
-
-//// HTML
-function _render(orgId: number | null, wksId: number | null, projectId: number | null) {
-	return `<a href="/${orgId}/${wksId}/${projectId}/images"><span class='bar'></span><d-ico name="ico-images"></d-ico><label>Images</label></a>
-			<a href="/${orgId}/${wksId}/${projectId}/videos"><span class='bar'></span><d-ico name="ico-videos"></d-ico><label>Videos</label></a>
-			<a href="/${orgId}/${wksId}/${projectId}/timelines"><span class='bar'></span><d-ico name="ico-videos"></d-ico><label>Timelines</label></a>
-			`;
 }

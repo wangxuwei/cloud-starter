@@ -1,9 +1,19 @@
 import { position } from '@dom-native/draggable';
 import { BaseViewElement } from 'common/v-base.js';
 import { orgDco } from 'dcos';
-import { append, closest, customElement, elem, first, on, OnEvent, onEvent, onHub } from 'dom-native';
+import { append, cherryChild, closest, customElement, elem, first, frag, html, on, OnEvent, onEvent, onHub } from 'dom-native';
 import { Org } from 'shared/entities.js';
 import { asNum } from 'utils-min';
+
+const HOME_HTML = html`
+	<header><h1>Organizations</h1></header>
+	<section>
+		<div class="card org-add">
+			<c-ico src="#ico-add"></c-ico>
+			<h3>Add New Organization</h3>
+		</div>
+	</section>
+`;
 
 @customElement('v-home')
 export class orgListView extends BaseViewElement {
@@ -54,7 +64,7 @@ export class orgListView extends BaseViewElement {
 		const orgList = await orgDco.list();
 		this.refresh(orgList);
 	}
-	//#endregion ---------- /Hub Events ---------- 
+	//#endregion ---------- /Hub Events---------- 
 
 
 	async init() {
@@ -74,32 +84,25 @@ export class orgListView extends BaseViewElement {
 		if (orgList == null) {
 			orgList = await orgDco.list();
 		}
-		this.innerHTML = _render(orgList);
+
+		console.log(orgList);
+		// create the content from header and org list
+		const content = frag(orgList, org => {
+			const innerContent = html`
+				<header>
+					<h2>${org.name}</h2>
+					<c-ico src="#ico-more" class="show-menu"></c-ico>
+				</header>
+			`;
+
+			const item = elem('a', { class: 'card org', 'data-type': 'Org', 'data-id': org.id, href: `/${org.id}`});
+			item.replaceChildren(document.importNode(innerContent, true));
+			return item;
+		});
+
+		const mainContent = document.importNode(HOME_HTML, true);
+		const sectionEl = cherryChild(mainContent, 'section');
+		sectionEl.append(content);
+		this.replaceChildren(mainContent);
 	}
-}
-
-//// HTMLs
-
-function _render(orgList: Org[] = []) {
-	let html = `	<header><h1>Organizations</h1></header>
-	<section>
-		<div class="card org-add">
-			<c-ico src="#ico-add"></c-ico>
-			<h3>Add New Organization</h3>
-		</div>
-	`;
-
-	for (const p of orgList) {
-		html += `	<a class="card org" data-type="Org" data-id="${p.id}" href="/${p.id}">
-		<header>
-			<h2>${p.name}</h2>
-			<c-ico src="#ico-more" class="show-menu"></c-ico>
-		</header>
-	</a>	`
-	};
-
-	html += `</section>`;
-
-	return html;
-
 }

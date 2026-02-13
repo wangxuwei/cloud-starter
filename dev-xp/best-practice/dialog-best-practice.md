@@ -21,15 +21,19 @@ This document outlines the coding standards and best practices for TypeScript di
 Organize class members in the following order:
 
 1. **CSS Styles** - Component-specific styles as constant
-2. **Custom Element Decorator** - At the top, immediately after imports
-3. **Constructor** - Initialize styles and super
-4. **Region: Events** - `@onEvent` decorated methods
-5. **Lifecycle Methods** - `init()`, `postDisplay()`
-6. **Private Methods** - Other internal methods
+2. **HTML Template** - Template literal for dialog content (if using `html` pattern)
+3. **Custom Element Decorator** - At the top, immediately after imports
+4. **Constructor** - Initialize styles and super
+5. **Region: Events** - `@onEvent` decorated methods
+6. **Lifecycle Methods** - `init()`, `postDisplay()`
+7. **Private Methods** - Other internal methods
 
 #### Example Structure
 
 ```typescript
+import { adoptStyleSheets, css, customElement, first, html, onEvent, pull, trigger } from 'dom-native';
+import { DgDialog } from '../dialog/dg-dialog.js';
+
 const _compCss = css`
     ::slotted(.dialog-content) {
         display: grid;
@@ -37,6 +41,15 @@ const _compCss = css`
         grid-auto-rows: min-content;
         grid-gap: 1rem;
     }
+`;
+
+const EXAMPLE_ADD_HTML = html`
+    <div slot="title">Add Example</div>
+    <div class="dialog-content">
+        <d-input label="name" name="name"></d-input>
+    </div>
+    <button slot="footer" class="do-cancel">CANCEL</button>
+    <button slot="footer" class="do-ok medium">OK</button>
 `;
 
 @customElement('dg-example-add')
@@ -57,14 +70,7 @@ export class DgExampleAdd extends DgDialog {
     //#endregion ---------- /Events ----------
 
     init() {
-        this.innerHTML = `
-            <div slot="title">Add Example</div>
-            <div class="dialog-content">
-                <d-input label="name" name="name"></d-input>
-            </div>
-            <button slot="footer" class="do-cancel">CANCEL</button>
-            <button slot="footer" class="do-ok medium">OK</button>
-        `;
+        this.replaceChildren(document.importNode(EXAMPLE_ADD_HTML, true));
     }
 
     postDisplay() {
@@ -167,18 +173,11 @@ When triggering events on dialog completion, use uppercase entity names with `_A
 ### Lifecycle Methods
 
 #### init()
-Set up the dialog HTML structure using slots:
+Set up the dialog HTML structure using `html` template literal with `document.importNode()`:
 
 ```typescript
 init() {
-    this.innerHTML = `
-        <div slot="title">Add Entity</div>
-        <div class="dialog-content">
-            <d-input label="name" name="name"></d-input>
-        </div>
-        <button slot="footer" class="do-cancel">CANCEL</button>
-        <button slot="footer" class="do-ok medium">OK</button>
-    `;
+    this.replaceChildren(document.importNode(EXAMPLE_ADD_HTML, true));
 }
 ```
 
@@ -191,36 +190,63 @@ postDisplay() {
 }
 ```
 
+### HTML Template Pattern
+
+Define dialog content as an `html` template literal constant at the top of the file:
+
+```typescript
+const EXAMPLE_ADD_HTML = html`
+    <div slot="title">Add Example</div>
+    <div class="dialog-content">
+        <d-input label="name" name="name"></d-input>
+    </div>
+    <button slot="footer" class="do-cancel">CANCEL</button>
+    <button slot="footer" class="do-ok medium">OK</button>
+`;
+```
+
+Then use `document.importNode()` in `init()` to create a clean clone:
+
+```typescript
+init() {
+    this.replaceChildren(document.importNode(EXAMPLE_ADD_HTML, true));
+}
+```
+
+Benefits:
+- Template literals provide syntax highlighting and better editor support
+- Content is defined once and can be reused
+- `document.importNode()` creates a clean clone without modifying the template
+
 ### How Other Views Use Dialogs
 
 Other views create and append dialog elements, then listen for completion events:
 
 ```typescript
+import { append, elem, on } from 'dom-native';
+
 @customElement('v-example')
 export class ExampleView extends BaseViewElement {
 
     @onEvent('click', '.example-add')
     clickAddExample() {
-        // Create dialog element
-        const dlg = document.createElement('dg-example-add') as DgExampleAdd;
+        // Create dialog element using elem helper
+        const dlg = append(document.body, elem('dg-example-add'));
         
         // Listen for completion event
         on(dlg, 'EXAMPLE_ADD', async (evt) => {
             const { detail } = evt;
             // Process the form data (e.g., create entity via API)
             await exampleDco.create(detail);
-            // Refresh view
+            // Refresh view if needed
             this.refresh();
         });
-        
-        // Append dialog to document body to show it
-        document.body.appendChild(dlg);
     }
 }
 ```
 
 Key steps:
-1. Create dialog element using `document.createElement()`
+1. Create dialog element using `elem('dg-example-add')` and `append()`
 2. Listen for custom event with entity-specific name
 3. Process the `detail` object containing form data
 4. Append dialog to `document.body` to display it
@@ -235,7 +261,7 @@ Order imports:
 3. Utility functions (assign, etc.)
 
 ```typescript
-import { adoptStyleSheets, css, customElement, first, onEvent, pull, trigger } from 'dom-native';
+import { adoptStyleSheets, css, customElement, first, html, onEvent, pull, trigger } from 'dom-native';
 import { DgDialog } from '../dialog/dg-dialog.js';
 const { assign } = Object;
 ```
@@ -299,6 +325,9 @@ dg-example-add {
 Basic pattern for adding entities:
 
 ```typescript
+import { adoptStyleSheets, css, customElement, first, html, onEvent, pull, trigger } from 'dom-native';
+import { DgDialog } from '../dialog/dg-dialog.js';
+
 const _compCss = css`
     ::slotted(.dialog-content) {
         display: grid;
@@ -306,6 +335,15 @@ const _compCss = css`
         grid-auto-rows: min-content;
         grid-gap: 1rem;
     }
+`;
+
+const EXAMPLE_ADD_HTML = html`
+    <div slot="title">Add Example</div>
+    <div class="dialog-content">
+        <d-input label="name" name="name"></d-input>
+    </div>
+    <button slot="footer" class="do-cancel">CANCEL</button>
+    <button slot="footer" class="do-ok medium">OK</button>
 `;
 
 @customElement('dg-example-add')
@@ -324,14 +362,7 @@ export class DgExampleAdd extends DgDialog {
     }
 
     init() {
-        this.innerHTML = `
-            <div slot="title">Add Example</div>
-            <div class="dialog-content">
-                <d-input label="name" name="name"></d-input>
-            </div>
-            <button slot="footer" class="do-cancel">CANCEL</button>
-            <button slot="footer" class="do-ok medium">OK</button>
-        `;
+        this.replaceChildren(document.importNode(EXAMPLE_ADD_HTML, true));
     }
 
     postDisplay() {
@@ -344,24 +375,34 @@ export class DgExampleAdd extends DgDialog {
 For dialogs with multiple form inputs:
 
 ```typescript
-init() {
-    this.innerHTML = `
-        <div slot="title">Add Project</div>
-        <div class="dialog-content">
-            <d-input label="name" name="name"></d-input>
-            <d-input label="description" name="description"></d-input>
-            <d-input label="tags" name="tags"></d-input>
-        </div>
-        <button slot="footer" class="do-cancel">CANCEL</button>
-        <button slot="footer" class="do-ok medium">OK</button>
-    `;
-}
+const EXAMPLE_ADD_HTML = html`
+    <div slot="title">Add Example</div>
+    <div class="dialog-content">
+        <d-input label="name" name="name"></d-input>
+        <d-input label="description" name="description"></d-input>
+        <d-input label="tags" name="tags"></d-input>
+    </div>
+    <button slot="footer" class="do-cancel">CANCEL</button>
+    <button slot="footer" class="do-ok medium">OK</button>
+`;
 ```
 
 ### View Integration Example
 Complete example of a view using a dialog:
 
 ```typescript
+import { append, customElement, elem, frag, html, on, onEvent } from 'dom-native';
+import { BaseViewElement } from 'common/v-base.js';
+import { exampleDco } from 'dcos';
+
+const PROJECTS_HTML = html`
+    <header>
+        <h1>Projects</h1>
+        <button class="project-add medium">Add Project</button>
+    </header>
+    <section class="content"></section>
+`;
+
 @customElement('v-projects')
 export class ProjectsView extends BaseViewElement {
 
@@ -369,39 +410,27 @@ export class ProjectsView extends BaseViewElement {
 
     @onEvent('click', '.project-add')
     clickAddProject() {
-        const dlg = document.createElement('dg-project-add') as DgProjectAdd;
+        const dlg = append(document.body, elem('dg-project-add'));
         
         on(dlg, 'PROJECT_ADD', async (evt) => {
             const { detail } = evt;
             await projectDco.create(detail);
             this.refresh();
         });
-        
-        document.body.appendChild(dlg);
     }
 
     async init() {
         super.init();
+        this.innerHTML = document.importNode(PROJECTS_HTML, true).textContent!;
         this.refresh();
     }
 
     async refresh() {
         const projects = await projectDco.list();
-        this.innerHTML = _render(projects);
+        this.contentEl.replaceChildren(frag(projects, p => 
+            elem('div', { class: 'card', 'data-id': p.id, $: { textContent: p.name } })
+        ));
     }
-
-}
-
-function _render(projects: Project[] = []) {
-    return `
-        <header>
-            <h1>Projects</h1>
-            <button class="project-add medium">Add Project</button>
-        </header>
-        <section class="content">
-            ${projects.map(p => `<div class="card" data-id="${p.id}">${p.name}</div>`).join('')}
-        </section>
-    `;
 }
 ```
 
@@ -418,6 +447,8 @@ function _render(projects: Project[] = []) {
 - [ ] Uses `pull(this)` to extract form data
 - [ ] Triggers custom event with uppercase entity name
 - [ ] `postDisplay()` focuses first input
+- [ ] Content defined as `html` template literal constant
+- [ ] `init()` uses `document.importNode()` with template
 
 ### PostCSS
 - [ ] Element selector matches custom element name
@@ -425,7 +456,7 @@ function _render(projects: Project[] = []) {
 - [ ] Form inputs properly styled within content
 
 ### View Integration
-- [ ] Creates dialog element with `document.createElement()`
+- [ ] Creates dialog element with `elem()` and `append()`
 - [ ] Listens for entity-specific completion event
 - [ ] Processes `detail` object from event
 - [ ] Appends dialog to `document.body`

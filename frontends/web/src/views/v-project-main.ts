@@ -1,6 +1,6 @@
 import { pathAt } from 'common/route.js';
 import { BaseViewElement } from 'common/v-base.js';
-import { all, append, className, customElement, elem, getAttr, onHub } from 'dom-native';
+import { all, customElement, elem, getAttr, onHub, setClass } from 'dom-native';
 import { asNum } from 'utils-min';
 
 const subViews: any = {
@@ -8,6 +8,7 @@ const subViews: any = {
 	'videos': 'v-videos',
 	'timelines': 'v-timeline-main'
 }
+
 @customElement('v-project-main')
 export class ProjectMainView extends BaseViewElement {
 
@@ -24,27 +25,19 @@ export class ProjectMainView extends BaseViewElement {
 	//#endregion ---------- /Data Event ---------- 
 	async init() {
 		// then initial render
-		this.innerHTML = _render(this.projectId);
 		this.refresh();
 	}
 
 	async refresh() {
-
 		if (this.hasPathChanged(3)) {
 			const newPath = pathAt(3) ?? 'videos';
 			if (newPath) {
 				all(this, ':scope > *')[1]?.remove();
-				append(this, className(elem(subViews[newPath]), { screen: true }));
+				const contentEl = document.createDocumentFragment();
+				contentEl.appendChild(elem("v-nav"));
+				contentEl.appendChild(setClass(elem(subViews[newPath]), { screen: true }));
+				this.replaceChildren(contentEl);
 			}
 		}
-
-
 	}
-
-
-}
-
-
-function _render(projectId: number | null) {
-	return `<v-nav></v-nav>`
 }

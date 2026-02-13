@@ -1,61 +1,9 @@
 import { activateDrag, draggable } from '@dom-native/draggable';
 import { BaseViewElement } from 'common/v-base.js';
-import { customElement, OnEvent, onEvent } from 'dom-native';
+import { customElement, html, OnEvent, onEvent } from 'dom-native';
 
 
-@customElement('v-timeline-main')
-export class TimelineMainView extends BaseViewElement {
-
-	//// key elements
-	get tmZoomEl():HTMLElement { return this.cacheFirst('tm-zoom')! };
-	get tmZoomHeadEl():HTMLElement { return this.cacheFirst('tm-zoom .tm-head')! };
-	get tmZoomZoneEl():HTMLElement { return this.cacheFirst('tm-zone')! };
-	get tmPlayEl():HTMLElement { return this.cacheFirst('tm-play')! };
-	get tmPlayHeadEl():HTMLElement { return this.cacheFirst('tm-play .tm-head')! };
-
-
-	@onEvent('pointerdown', 'tm-play tm-zone')
-	onTmMarkerPointerDown(evt: PointerEvent & OnEvent) {
-		const tmZoneEl = evt.selectTarget;
-
-		const tmZoomRec = this.tmZoomEl;
-		const tmZoneRec = tmZoneEl.getBoundingClientRect();
-		activateDrag(tmZoneEl, evt, {
-			drag: 'none',
-			onDrag: (evt) => {
-				const pointerEvent = evt.detail.pointerEvent;
-			}
-		});
-
-
-	}
-
-	async init() {
-		this.innerHTML = _render();
-	}
-
-	postDisplay() {
-		draggable(this, 'tm-zone', {
-			constraints: {
-				container: 'tm-bar',
-				y: false,
-				hitbox: 'box'
-			}
-		});
-		draggable(this, '.tm-head', {
-			constraints: {
-				container: 'tm-play, tm-zoom',
-				y: false,
-				hitbox: 'center'
-			}
-		});
-	}
-}
-
-//// HTMLs
-
-function _render() {
-	let html = `
+const TIMELINE_MAIN_HTML = html`
 	<header>
 	<h1>Timelines</h1>
 	</header>
@@ -91,6 +39,53 @@ function _render() {
 	</section>
 `;
 
-	return html;
+@customElement('v-timeline-main')
+export class TimelineMainView extends BaseViewElement {
 
+	//// key elements
+	get tmZoomEl():HTMLElement { return this.cacheFirst('tm-zoom')! };
+	get tmZoomHeadEl():HTMLElement { return this.cacheFirst('tm-zoom .tm-head')! };
+	get tmZoomZoneEl():HTMLElement { return this.cacheFirst('tm-zone')! };
+	get tmPlayEl():HTMLElement { return this.cacheFirst('tm-play')! };
+	get tmPlayHeadEl():HTMLElement { return this.cacheFirst('tm-play .tm-head')! };
+
+
+	@onEvent('pointerdown', 'tm-play tm-zone')
+	onTmMarkerPointerDown(evt: PointerEvent & OnEvent) {
+		const tmZoneEl = evt.selectTarget;
+
+		const tmZoomRec = this.tmZoomEl;
+		const tmZoneRec = tmZoneEl.getBoundingClientRect();
+		activateDrag(tmZoneEl, evt, {
+			drag: 'none',
+			onDrag: (evt) => {
+				const pointerEvent = evt.detail.pointerEvent;
+			}
+		});
+
+
+	}
+
+	async init() {
+		const content = document.importNode(TIMELINE_MAIN_HTML, true);
+		this.replaceChildren(content);
+	}
+
+	postDisplay() {
+		draggable(this, 'tm-zone', {
+			constraints: {
+				container: 'tm-bar',
+				y: false,
+				hitbox: 'box'
+			}
+		});
+		draggable(this, '.tm-head', {
+			constraints: {
+				container: 'tm-play, tm-zoom',
+				y: false,
+				hitbox: 'center'
+			}
+		});
+	}
 }
+

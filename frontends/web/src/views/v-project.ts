@@ -2,10 +2,29 @@ import { position } from '@dom-native/draggable';
 import { getRouteOrgId, pathAsNum, pathAt } from 'common/route';
 import { BaseViewElement } from 'common/v-base.js';
 import { orgDco, projectDco, wksDco } from 'dcos';
-import { append, closest, customElement, elem, first, getAttr, on, OnEvent, onEvent, onHub } from 'dom-native';
-import { Org, Wks } from 'shared/entities';
-import { Project } from 'shared/entities.js';
+import { append, closest, customElement, elem, first, frag, getAttr, html, on, OnEvent, onEvent, onHub } from 'dom-native';
 import { asNum } from 'utils-min';
+
+const PROJECT_HTML = html`
+	<div class="breadcrumbs">
+		<a href="/">Organizations</a>
+		<span class="sep">/</span>
+		<a href=""> </a>
+		<span class="sep">/</span>
+		<span> </span>
+	</div>
+	<header><h1>Projects</h1></header>
+	<section>
+		<div class="card project-add">
+			<c-ico src="#ico-add"></c-ico>
+			<h3>Add New Project</h3>
+		</div>
+	</section>
+`;
+
+const PROJECT_MAIN_HTML = html`
+	<v-project-main></v-project-main>
+`;
 
 @customElement('v-project')
 export class projectListView extends BaseViewElement {
@@ -78,44 +97,44 @@ export class projectListView extends BaseViewElement {
 				const wks = await wksDco.get(this.wksId!);
 				const org = await orgDco.get(wks.orgId!);
 				const projectList = await projectDco.list({matching: {wksId: this.wksId!}});
-				this.innerHTML = _render(org, wks, projectList);
+				
+				// create the content with breadcrumbs and project list
+				const content = document.importNode(PROJECT_HTML, true);
+				
+				// update breadcrumb org link and text
+				const breadcrumbOrgLink = first(content, '.breadcrumbs a:nth-child(1)')!;
+				breadcrumbOrgLink.setAttribute('href', `/${org.id}`);
+				breadcrumbOrgLink.textContent = org.name;
+				
+				// update breadcrumb span for wks name
+				const breadcrumbWksSpan = first(content, '.breadcrumbs span:nth-child(4)')!;
+				breadcrumbWksSpan.textContent = wks.name;
+				
+				// create project cards
+				const sectionEl = first(content, 'section')!;
+				const orgId = getRouteOrgId();
+
+				const projectFrag = frag(projectList, p => {
+					const innerContent = html`
+						<header>
+							<h2>${p.name}</h2>
+							<c-ico src="#ico-more" class="show-menu"></c-ico>
+						</header>
+					`;
+
+					const item = elem('a', { class: 'card project', 'data-type': 'Project', 'data-id': p.id, href: `/${orgId}/${wks.id}/${p.id}`});
+					item.replaceChildren(document.importNode(innerContent, true));
+					return item;
+				});
+				
+				sectionEl.appendChild(projectFrag);
+				this.replaceChildren(content);
 			}else{
-				this.innerHTML = `<v-project-main project-id='${projectId}'></v-project-main>`;
+				const content = document.importNode(PROJECT_MAIN_HTML, true);
+				const projectMainEl = first(content, 'v-project-main')!;
+				projectMainEl.setAttribute('project-id', String(projectId));
+				this.replaceChildren(content);
 			}
 		}
 	}
-}
-
-//// HTMLs
-
-function _render(org:Org, wks: Wks, projectList: Project[] = []) {
-	let html = `
-	<div class="breadcrumbs">
-		<a href="/">Organizations</a>
-		<span class="sep">/</span>
-		<a href="/${org.id}">${org.name}</a>
-		<span class="sep">/</span>
-		<span>${wks.name}</span>
-	</div>
-	<header><h1>Projects</h1></header>
-	<section>
-		<div class="card project-add">
-			<c-ico src="#ico-add"></c-ico>
-			<h3>Add New Project</h3>
-		</div>
-	`;
-	const orgId = getRouteOrgId();
-	for (const p of projectList) {
-		html += `	<a class="card project" data-type="Project" data-id="${p.id}" href="/${orgId}/${wks.id}/${p.id}">
-		<header>
-			<h2>${p.name}</h2>
-			<c-ico src="#ico-more" class="show-menu"></c-ico>
-		</header>
-	</a>	`
-	};
-
-	html += `</section>`;
-
-	return html;
-
 }

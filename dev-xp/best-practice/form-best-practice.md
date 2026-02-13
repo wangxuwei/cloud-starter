@@ -83,7 +83,7 @@ Components:
 ```html
 <div class="dialog-content">
     <d-input label="Name" name="name"></d-input>
-    <d-text label="Description" name="description"></d-input>
+    <d-text label="Description" name="description"></d-text>
     <d-select label="Status" name="status">
         <option value="planning">Planning</option>
         <option value="active">Active</option>
@@ -153,7 +153,7 @@ For edit dialogs, populate form with existing data:
 init() {
     const record = this.record; // assume passed in
     
-    this.innerHTML = `
+    const EDIT_HTML = html`
         <div slot="title">Edit Project</div>
         
         <div class="dialog-content">
@@ -164,6 +164,8 @@ init() {
         <button slot="footer" class="do-cancel">CANCEL</button>
         <button slot="footer" class="do-ok medium">SAVE</button>
     `;
+    
+    this.replaceChildren(document.importNode(EDIT_HTML, true));
 }
 ```
 
@@ -196,3 +198,5 @@ init() {
 - [ ] Clear cancel/ok buttons
 - [ ] Descriptive dialog title
 - [ ] Appropriate button labels
+
+

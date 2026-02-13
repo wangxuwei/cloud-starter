@@ -1,10 +1,22 @@
 import { position } from '@dom-native/draggable';
 import { BaseViewElement } from 'common/v-base.js';
 import { mediaDco } from 'dcos';
-import { append, closest, customElement, first, getAttr, on, onEvent, OnEvent, onHub } from 'dom-native';
+import { append, closest, customElement, elem, first, frag, getAttr, html, on, onEvent, OnEvent, onHub } from 'dom-native';
 import { Media } from 'shared/entities.js';
 import { asNum } from 'utils-min';
 import { wksListView } from './v-wks';
+
+const IMAGES_HTML = html`
+	<header>
+	<h1>Images</h1>
+	</header>	
+	<section class="content">
+		<div class="card-add media-add">
+			<d-ico name="ico-add"></d-ico>
+			<h3>Add Image</h3>
+		</div>
+	</section>
+`;
 
 @customElement('v-images')
 export class ImageView extends BaseViewElement {
@@ -71,34 +83,17 @@ export class ImageView extends BaseViewElement {
 
 	async refresh() {
 		const mediaList = await mediaDco.listImages();
-		this.contentEl.innerHTML = _renderContent(mediaList);
+		const content = frag(mediaList, m => elem('div', { class: 'card', 'data-id': m.id, 'data-type': 'Media', $: html`
+			<header>
+			<h2>${m.name}</h2>
+			<c-ico src="#ico-more" class="show-menu"></c-ico>
+			</header>
+			<section>
+				<img src="${m.url}"></img>
+			</section>
+		`}));
+		content.prepend(document.importNode(IMAGES_HTML, true));
+		this.replaceChildren(content);
 	}
 
-}
-
-
-
-function _renderContent(mediaList: Media[] = []) {
-	return `
-		<header>
-		<h1>Images</h1>
-		</header>	
-		<section class="content">
-			<div class="card-add media-add">
-				<d-ico name="ico-add"></d-ico>
-				<h3>Add Image</h3>
-			</div>
-			${mediaList.map(m => `
-				<div class="card" data-id="${m.id}" data-type="Media">
-					<header>
-					<h2>${m.name}</h2>
-					<c-ico src="#ico-more" class="show-menu"></c-ico>
-					</header>
-					<section>
-						<img src="${m.url}"></img>
-					</section>
-				</div>		
-			`).join('\n')}
-		</section>
-	`
 }

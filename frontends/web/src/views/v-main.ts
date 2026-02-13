@@ -2,7 +2,7 @@ import { position } from '@dom-native/draggable';
 import { getRouteOrgId, pathAt } from 'common/route.js';
 import { logoff, UserContext } from 'common/user-ctx.js';
 import { BaseViewElement } from 'common/v-base.js';
-import { append, customElement, first, html as frag, on, onEvent, onHub, push } from 'dom-native';
+import { append, customElement, elem, first, html, on, onEvent, onHub, push } from 'dom-native';
 import { isNotEmpty } from 'utils-min';
 
 const defaultPath = "";
@@ -11,6 +11,21 @@ const tagNameByPath: { [name: string]: string } = {
 	"": 'v-home',
 	"_spec": 'v-spec-main',
 };
+
+const MAIN_HTML = html`
+	<header>
+		<d-ico name="ico-menu">menu</d-ico>
+		<a href='/'><h3>CLOUD BIGAPP</h3></a>
+		<aside class="toogle-user-menu">
+			<c-ico>user</c-ico>
+			<div class="dx dx-name">Some name</div>
+		</aside>
+	</header>
+
+	<main>
+	</main>
+	<div class="__version__">${window.__version__}</div>
+`;
 
 
 @customElement('v-main')
@@ -27,7 +42,7 @@ export class MainView extends BaseViewElement {
 		this._userContext = v;
 		push(this.headerAsideEl, { name: this._userContext.name });
 	}
-	//#endn pregion ---------- /Data Setters ---------- 
+	//#endregion ---------- /Data Setters ---------- 
 
 
 	//#region    ---------- Element & Hub Events ---------- 
@@ -36,11 +51,11 @@ export class MainView extends BaseViewElement {
 		const menuId = 'user-menu-123';
 		if (first(`#user-menu-123`) == null) {
 
-			const [menu] = append(document.body, frag(`
-			<c-menu id='user-menu-123'>
-				<li class="do-logoff">Logoff</li>
-			</c-menu>
-			`));
+			const menu = append(document.body, elem('c-menu', { id: 'user-menu-123', $: {
+				children: [
+					elem('li', { class: 'do-logoff', $: { textContent: 'Logoff' } })
+				]
+			}}));
 
 			position(menu, this.headerAsideEl, { at: 'bottom', align: 'right' });
 
@@ -60,7 +75,8 @@ export class MainView extends BaseViewElement {
 
 	init() {
 		super.init();
-		this.innerHTML = _render();
+		const content = document.importNode(MAIN_HTML, true);
+		this.replaceChildren(content);
 		this.refresh();
 	}
 
@@ -71,34 +87,16 @@ export class MainView extends BaseViewElement {
 			const newPath = pathAt(0);
 
 			if (newPath != null && orgId != null) {
-				this.mainEl.innerHTML = `<v-wks org-id="${orgId}"></v-wks>`;
+				this.mainEl.replaceChildren(elem('v-wks', { 'org-id': orgId }));
 			}
 			else {
 				const name = isNotEmpty(newPath) ? newPath : '';
 
 				const tagName = tagNameByPath[name];
-				this.mainEl.innerHTML = `<${tagName}></${tagName}>`;
+				this.mainEl.replaceChildren(elem(tagName));
 			}
 		}
 
 	}
 
-}
-
-//// HTML
-function _render() {
-	return `
-	<header>
-		<d-ico name="ico-menu">menu</d-ico>
-		<a href='/'><h3>CLOUD BIGAPP</h3></a>
-		<aside class="toogle-user-menu">
-			<c-ico>user</c-ico>
-			<div class="dx dx-name">Some name</div>
-		</aside>
-	</header>
-
-	<main>
-	</main>
-	<div class="__version__">${window.__version__}</div>
-	`
 }

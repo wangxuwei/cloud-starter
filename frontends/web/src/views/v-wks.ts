@@ -2,9 +2,23 @@ import { position } from '@dom-native/draggable';
 import { getRouteOrgId, pathAsNum, pathAt } from 'common/route';
 import { BaseViewElement } from 'common/v-base.js';
 import { orgDco, wksDco } from 'dcos';
-import { append, closest, customElement, elem, first, getAttr, on, OnEvent, onEvent, onHub } from 'dom-native';
-import { Org, Wks } from 'shared/entities.js';
+import { append, closest, customElement, elem, first, frag, getAttr, html, on, OnEvent, onEvent, onHub } from 'dom-native';
 import { asNum } from 'utils-min';
+
+const WKS_HTML = html`
+	<div class="breadcrumbs">
+		<a href="/">Organizations</a>
+		<span class="sep">/</span>
+		<span> </span>
+	</div>
+	<header><h1>Workspaces</h1></header>
+	<section>
+		<div class="card wks-add">
+			<c-ico src="#ico-add"></c-ico>
+			<h3>Add New Workspace</h3>
+		</div>
+	</section>
+`;
 
 @customElement('v-wks')
 export class wksListView extends BaseViewElement {
@@ -63,7 +77,7 @@ export class wksListView extends BaseViewElement {
 		this.refresh();
 	}
 
-	//#endregion ---------- /Hub Events ---------- 
+	//#endregion ---------- /Hub Events---------- 
 
 
 	async init() {
@@ -77,42 +91,35 @@ export class wksListView extends BaseViewElement {
 			if(!wksId || force){
 				const org = await orgDco.get(this.orgId!);
 				const wksList = await wksDco.list({matching: {orgId: this.orgId!}});
-				this.innerHTML = _render(org, wksList);
+
+				// create the content from header and wks list
+				const content = document.importNode(WKS_HTML, true);
+				
+				// update breadcrumb span for org name
+				const breadcrumbOrgSpan = first(content, '.breadcrumbs span:nth-child(3)')!;
+				breadcrumbOrgSpan.textContent = org.name;
+				
+				// create wks cards
+				const sectionEl = first(content, 'section')!;
+				const orgId = getRouteOrgId();
+				const wksFrag = frag(wksList, p => {
+					const innerContent = html`
+						<header>
+							<h2>${p.name}</h2>
+							<c-ico src="#ico-more" class="show-menu"></c-ico>
+						</header>
+					`;
+
+					const item = elem('a', { class: 'card wks', 'data-type': 'Wks', 'data-id': p.id, href: `/${orgId}/${p.id}`});
+					item.replaceChildren(document.importNode(innerContent, true));
+					return item;
+				});
+				
+				sectionEl.appendChild(wksFrag);
+				this.replaceChildren(content);
 			}else{
-				this.innerHTML = `<v-project wks-id='${wksId}'></v-project>`;
+				this.replaceChildren(elem('v-project', { 'wks-id': wksId }));
 			}
 		}
 	}
-}
-
-//// HTMLs
-
-function _render(org:Org,wksList: Wks[] = []) {
-	let html = `
-		<div class="breadcrumbs">
-			<a href="/">Organizations</a>
-			<span class="sep">/</span>
-			<span>${org.name}</span>
-		</div>
-		<header><h1>Workspaces</h1></header>
-		<section>
-		<div class="card wks-add">
-			<c-ico src="#ico-add"></c-ico>
-			<h3>Add New Workspace</h3>
-		</div>
-	`;
-	const orgId = getRouteOrgId();
-	for (const p of wksList) {
-		html += `	<a class="card wks" data-type="Wks" data-id="${p.id}" href="/${orgId}/${p.id}">
-		<header>
-			<h2>${p.name}</h2>
-			<c-ico src="#ico-more" class="show-menu"></c-ico>
-		</header>
-	</a>	`
-	};
-
-	html += `</section>`;
-
-	return html;
-
 }

@@ -1,9 +1,20 @@
 import { position } from '@dom-native/draggable';
 import { BaseViewElement } from 'common/v-base.js';
 import { mediaDco } from 'dcos';
-import { append, closest, customElement, first, on, onEvent, OnEvent, onHub } from 'dom-native';
-import { Media } from 'shared/entities.js';
+import { append, cherryChild, closest, customElement, elem, first, frag, html, on, onEvent, OnEvent, onHub } from 'dom-native';
 import { asNum } from 'utils-min';
+
+const VIDEOS_HTML = html`
+	<header>
+	<h1>Videos</h1>
+	</header>	
+	<section class="content">
+		<div class="card-add media-add">
+			<d-ico name="ico-add"></d-ico>
+			<h3>Add Video</h3>
+		</div>
+	</section>
+`;
 
 @customElement('v-videos')
 export class VideosView extends BaseViewElement {
@@ -78,34 +89,27 @@ export class VideosView extends BaseViewElement {
 
 	async refresh() {
 		const mediaList = await mediaDco.listVideos();
-		this.contentEl.innerHTML = _renderContent(mediaList);
+		const content = frag(mediaList, m => {
+			const itemContentEl = html`
+				<header>
+				<h2>${m.name}</h2>
+				<c-ico src="#ico-more" class="show-menu"></c-ico>
+				</header>
+				<section>
+					<video controls>
+						<source src="${m.sdUrl ?? m.url}" type="video/mp4">
+					</video>			
+				</section>
+			`;
+			const item = elem('div', { class: 'card', 'data-id': m.id, 'data-type': 'Media'});
+			item.replaceChildren(document.importNode(itemContentEl, true));
+			return item;
+		});
+
+		const mainContent = document.importNode(VIDEOS_HTML, true);
+		const sectionEl = cherryChild(mainContent, "section");
+		sectionEl.append(content);
+		this.replaceChildren(mainContent);
 	}
 
-}
-
-function _renderContent(mediaList: Media[] = []) {
-	return `
-		<header>
-		<h1>Videos</h1>
-		</header>	
-		<section class="content">
-			<div class="card-add media-add">
-				<d-ico name="ico-add"></d-ico>
-				<h3>Add Video</h3>
-			</div>
-			${mediaList.map(m => `
-				<div class="card" data-id="${m.id}" data-type="Media">
-					<header>
-					<h2>${m.name}</h2>
-					<c-ico src="#ico-more" class="show-menu"></c-ico>
-					</header>
-					<section>
-						<video controls>
-							<source src="${m.sdUrl ?? m.url}" type="video/mp4">
-						</video>			
-					</section>
-				</div>		
-			`).join('\n')}
-		</section>
-	`
 }

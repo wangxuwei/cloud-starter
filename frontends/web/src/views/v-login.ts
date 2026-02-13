@@ -1,9 +1,30 @@
 import { getGoogleOAuthUrl, login } from 'common/user-ctx.js';
 import { BaseViewElement } from 'common/v-base.js';
 import { webPost } from 'common/web-request.js';
-import { customElement, first, onEvent, OnEvent, pull, style } from 'dom-native';
+import { customElement, first, html, onEvent, OnEvent, pull, style } from 'dom-native';
 
 type Mode = 'login' | 'register';
+
+const LOGIN_HTML = html`
+	<div class="dialog">
+		<header>CLOUD-STARTER</header>
+		<section class="content">
+			<d-input name="username" placeholder="username"></d-input>
+			<d-input name="pwd" password placeholder="password" ico-trail="d-ico-visible"></d-input>
+			<d-input name="repeat-pwd" placeholder="Repeat Password" class="for-register"  ico-trail="d-ico-visible"></d-input>
+			<div></div>
+			<button class="do high for-login">Login</button>
+			<button class="do high for-register">Register</button>
+		</section>
+		<footer>
+			<div class="message"></div>
+			<a class="high to-register for-login">Register</a>
+			<a class="high to-login for-register">Login</a>
+			<span class="line"></span>
+			<a class="high google-oauth">Google Login</a>
+		</footer>
+	</div>
+`;
 
 @customElement('v-login')
 export class LoginView extends BaseViewElement {
@@ -85,7 +106,8 @@ export class LoginView extends BaseViewElement {
 	//#region    ---------- Lifecycle ---------- 
 	init() {
 		super.init();
-		this.innerHTML = _render();
+		const content = document.importNode(LOGIN_HTML, true);
+		this.replaceChildren(content);
 		this.mode = 'login';
 	}
 
@@ -133,30 +155,4 @@ export class LoginView extends BaseViewElement {
 			this.footerMessage.textContent = ex.error || ex.message;
 		}
 	}
-}
-
-
-
-// <div class="LoginView login-mode">
-
-function _render() {
-	return `
-	<div class="dialog">
-		<header>CLOUD-STARTER</header>
-		<section class="content">
-			<d-input name="username" placeholder="username"></d-input>
-			<d-input name="pwd" password placeholder="password" ico-trail="d-ico-visible"></d-input>
-			<d-input name="repeat-pwd" placeholder="Repeat Password" class="for-register"  ico-trail="d-ico-visible"></d-input>
-			<div></div>
-			<button class="do high for-login">Login</button>
-			<button class="do high for-register">Register</button>
-		</section>
-		<footer>
-			<div class="message"></div>
-			<a class="high to-register for-login">Register</a>
-			<a class="high to-login for-register">Login</a>
-			<span class="line"></span>
-			<a class="high google-oauth">Google Login</a>
-		</footer>
-	</div>`;
 }
