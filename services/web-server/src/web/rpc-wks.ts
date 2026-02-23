@@ -16,7 +16,7 @@ import { createEntity, deleteEntity, getEntity, listEntities, updateEntity } fro
 class RpcHandlers{
 
 	@RpcMethod("wks_list")
-	async listWkss(ktx: ApiKtx, params: { matching?: any }) {
+	async listWkss(ktx: ApiKtx, params: { filters?: any }) {
 		const data = { type: 'wks', ...params } as any;
 		return listEntities(ktx, data); 
 	}

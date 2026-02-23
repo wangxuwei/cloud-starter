@@ -16,7 +16,7 @@ import { deleteEntity, getEntity, listEntities, updateEntity } from './rpc-gener
 class RpcHandlers{
 
 	@RpcMethod("media_list")
-	async listMedias(ktx: ApiKtx, params: { matching?: any }) {
+	async listMedias(ktx: ApiKtx, params: { filters?: any }) {
 		const data = { type: 'media', ...params } as any;
 		return listEntities(ktx, data); 
 	}

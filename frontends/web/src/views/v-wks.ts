@@ -90,7 +90,7 @@ export class wksListView extends BaseViewElement {
 			const wksId = pathAsNum(1);
 			if(!wksId || force){
 				const org = await orgDco.get(this.orgId!);
-				const wksList = await wksDco.list({matching: {orgId: this.orgId!}});
+				const wksList = await wksDco.list({filters: {orgId: this.orgId!}});
 
 				// create the content from header and wks list
 				const content = document.importNode(WKS_HTML, true);

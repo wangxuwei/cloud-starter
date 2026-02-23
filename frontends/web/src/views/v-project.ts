@@ -96,7 +96,7 @@ export class projectListView extends BaseViewElement {
 			if(!projectId || force){
 				const wks = await wksDco.get(this.wksId!);
 				const org = await orgDco.get(wks.orgId!);
-				const projectList = await projectDco.list({matching: {wksId: this.wksId!}});
+				const projectList = await projectDco.list({filters: {wksId: this.wksId!}});
 				
 				// create the content with breadcrumbs and project list
 				const content = document.importNode(PROJECT_HTML, true);

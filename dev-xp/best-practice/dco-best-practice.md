@@ -73,11 +73,11 @@ class MediaDao extends BaseDco<Media, QueryOptions<Media>> {
   }
 
   async listImages(): Promise<Media[]> {
-    return super.list({ matching: { type: 'image' } });
+    return super.list({ filters: { type: 'image' } });
   }
 
   async listVideos(): Promise<Media[]> {
-    return super.list({ matching: { type: 'video' } });
+    return super.list({ filters: { type: 'video' } });
   }
 }
 ```
@@ -211,11 +211,11 @@ class MediaDao extends BaseDco<Media, QueryOptions<Media>> {
 
   // Convenience methods for common queries
   async listImages(): Promise<Media[]> {
-    return super.list({ matching: { type: 'image' } });
+    return super.list({ filters: { type: 'image' } });
   }
 
   async listVideos(): Promise<Media[]> {
-    return super.list({ matching: { type: 'video' } });
+    return super.list({ filters: { type: 'video' } });
   }
 
   // Custom method for batch operations

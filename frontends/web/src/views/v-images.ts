@@ -1,8 +1,7 @@
 import { position } from '@dom-native/draggable';
 import { BaseViewElement } from 'common/v-base.js';
 import { mediaDco } from 'dcos';
-import { append, closest, customElement, elem, first, frag, getAttr, html, on, onEvent, OnEvent, onHub } from 'dom-native';
-import { Media } from 'shared/entities.js';
+import { append, cherryChild, closest, customElement, elem, first, frag, getAttr, html, on, onEvent, OnEvent, onHub } from 'dom-native';
 import { asNum } from 'utils-min';
 import { wksListView } from './v-wks';
 
@@ -26,7 +25,7 @@ export class ImageView extends BaseViewElement {
 	get mediaAddEl():HTMLElement { return this.cacheFirst('.media-add')! }
 
 	//// properties
-	get projectId() { return asNum(getAttr(this, 'project-id')) }
+	get projectId() { return asNum(getAttr(closest(this, "v-project-main")!, 'project-id')) }
 	get orgId() { return (<wksListView>this.closest('v-wks'))?.orgId }
 
 	//#region    ---------- Element Events ---------- 
@@ -82,18 +81,27 @@ export class ImageView extends BaseViewElement {
 	}
 
 	async refresh() {
-		const mediaList = await mediaDco.listImages();
-		const content = frag(mediaList, m => elem('div', { class: 'card', 'data-id': m.id, 'data-type': 'Media', $: html`
-			<header>
-			<h2>${m.name}</h2>
-			<c-ico src="#ico-more" class="show-menu"></c-ico>
-			</header>
-			<section>
-				<img src="${m.url}"></img>
-			</section>
-		`}));
-		content.prepend(document.importNode(IMAGES_HTML, true));
-		this.replaceChildren(content);
+		const projectId = this.projectId;
+		const mediaList = await mediaDco.listImages(projectId!);
+		const content = frag(mediaList, m => {
+			const itemContentEl = html`
+				<header>
+				<h2>${m.name}</h2>
+				<c-ico src="#ico-more" class="show-menu"></c-ico>
+				</header>
+				<section>
+					<img src="${m.url}"></img>
+				</section>
+			`;
+			const item = elem('div', { class: 'card', 'data-id': m.id, 'data-type': 'Media'});
+			item.replaceChildren(document.importNode(itemContentEl, true));
+			return item;
+		});
+
+		const mainContent = document.importNode(IMAGES_HTML, true);
+		const sectionEl = cherryChild(mainContent, "section");
+		sectionEl.append(content);
+		this.replaceChildren(mainContent);
 	}
 
 }

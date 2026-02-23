@@ -131,24 +131,170 @@ export interface Job {
 
 ## Query-Related Types
 
-Entities often work with query types defined in `entities-base.ts`:
+Entities often work with query types defined in `query_options.ts` and re-exported from `entities-base.ts`:
 
-### QueryOptions
+### QueryOptions Pattern
 
-Use `QueryOptions<E>` for typed query parameters:
+The new QueryOptions pattern uses MongoDB-style operators for flexible filtering:
+
+#### Operator Types
+
+Available operators:
+- `$eq` - Equals
+- `$in` - In array
+- `$not` - Not equals
+- `$notIn` - Not in array
+- `$contains` - Contains substring
+- `$containsAny` - Contains any of the substrings (OR)
+- `$containsAll` - Contains all substrings (AND)
+- `$notContains` - Does not contain substring
+- `$notContainsAny` - Does not contain any of the substrings (OR)
+- `$startsWith` - Starts with substring
+- `$startsWithAny` - Starts with any of the substrings (OR)
+- `$notStartsWith` - Does not start with substring
+- `$notStartsWithAny` - Does not start with any of the substrings (OR)
+- `$endsWith` - Ends with substring
+- `$endsWithAny` - Ends with any of the substrings (OR)
+- `$notEndsWith` - Does not end with substring
+- `$notEndsWithAny` - Does not end with any of the substrings (OR)
+- `$lt` - Less than
+- `$lte` - Less than or equal
+- `$gt` - Greater than
+- `$gte` - Greater than or equal
+- `$null` - Is null
+
+#### QueryFilter Type
+
+The `QueryFilter<E>` type uses mapped types to create typed filters:
+
+```typescript
+export type QueryFilter<E> = {
+	[C in keyof E]?: { [op: Op]: Val | Val[] } | Val;
+};
+```
+
+This allows:
+- Simple values: `{ name: 'John' }` (implicit `$eq`)
+- Operator objects: `{ age: { $gte: 18 } }`
+- Array operators: `{ status: { $in: ['active', 'pending'] } }`
+
+#### QueryOptions Interface
 
 ```typescript
 export interface QueryOptions<E> {
-	matching?: {
-		[C in keyof E]?: E[C] | { op: Op, val: E[C] };
-	};
-	ids?: number[];
-	orderBy?: string;
+	filters?: QueryFilter<E>[] | QueryFilter<E>;
+	list_options?: ListOptions;
+}
+
+export interface ListOptions {
 	limit?: number;
 	offset?: number;
-	filters?: QueryFilters;
+	order_bys?: string[];
 }
 ```
+
+### Usage Examples
+
+#### Basic Equality (implicit $eq)
+
+```typescript
+// Simple value comparison
+const users = await userDao.list(utx, {
+	filters: { name: 'John' }
+});
+```
+
+#### Comparison Operators
+
+```typescript
+// Greater than or equal
+const adults = await userDao.list(utx, {
+	filters: { age: { $gte: 18 } }
+});
+
+// Range queries
+const recent = await mediaDao.list(utx, {
+	filters: {
+		ctime: { $gte: '2024-01-01', $lt: '2024-02-01' }
+	}
+});
+```
+
+#### String Operators
+
+```typescript
+// Contains substring
+const search = await projectDao.list(utx, {
+	filters: { name: { $contains: 'test' } }
+});
+
+// Starts with
+const prefix = await userDao.list(utx, {
+	filters: { username: { $startsWith: 'admin' } }
+});
+```
+
+#### Array Operators
+
+```typescript
+// In list
+const activeUsers = await userDao.list(utx, {
+	filters: { status: { $in: ['active', 'pending'] } }
+});
+
+// Contains any (OR)
+const tags = await mediaDao.list(utx, {
+	filters: { tags: { $containsAny: ['video', 'audio'] } }
+});
+```
+
+#### Null Checks
+
+```typescript
+// Is null
+const unassigned = await projectDao.list(utx, {
+	filters: { ownerId: { $null: true } }
+});
+
+// Not null
+const assigned = await projectDao.list(utx, {
+	filters: { ownerId: { $not: null } }
+});
+```
+
+#### Multiple Filters (OR)
+
+```typescript
+// OR logic - matches either filter
+const results = await userDao.list(utx, {
+	filters: [
+		{ name: 'John' },
+		{ email: 'john@example.com' }
+	]
+});
+```
+
+#### List Options
+
+```typescript
+// With pagination and ordering
+const users = await userDao.list(utx, {
+	filters: { status: 'active' },
+	list_options: {
+		limit: 10,
+		offset: 0,
+		order_bys: ['name', '!ctime'] // ASC name, DESC ctime
+	}
+});
+```
+
+### Backward Compatibility
+
+The new QueryOptions pattern maintains backward compatibility with the old format:
+- Simple values still work: `{ name: 'John' }`
+- filters format: `{ filters: { name: 'John' } }`
+
+The `completeQueryFilter` function in `dao-base.ts` handles both formats automatically.
 
 ## Common Patterns
 

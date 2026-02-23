@@ -1,11 +1,11 @@
 // <origin src="https://raw.githubusercontent.com/BriteSnow/cloud-starter/master/services/_common/src/da/dao-base.ts" />
 // (c) 2019 BriteSnow, inc - This code is licensed under MIT license (see LICENSE for details)
 
-import { OpVal, QueryFilter, QueryOptions, StampedEntity, Val } from '#shared/entities.js';
+import { Op, QueryFilter, QueryOptions, StampedEntity, Val } from '#shared/entities.js';
 import { Knex } from 'knex';
 import { Monitor } from '../perf.js';
 import { UserContext } from '../user-context.js';
-import { nowTimestamp, removeProps } from '../utils.js';
+import { ensureArray, nowTimestamp, removeProps } from '../utils.js';
 import { AccessRequires } from './access.js';
 import { knexQuery } from './db.js';
 
@@ -141,7 +141,7 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 		const definedIds = ids.filter(v => v !== undefined) as I[]; // help typing system
 		// NOTE: here we forst the id property, as per limitationof this API
 		const entities = await this.getForIds(utx, definedIds);
-		// NOTE: here we need to explicity set the correct type (typescript get it wrong :(, they are working on it)
+		// NOTE: Also, here we need to explicity set the correct type (typescript get it wrong :(, they are working on it)
 		// NOTE: Also, here we assume that the entity as .id. Will  need to clean this up.
 		const a = entities.map((ent: E) => [(<any>ent).id, ent]) as [number, E][];
 		const entityById = new Map(a);
@@ -179,7 +179,7 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 		const { query } = await knexQuery({ utx, tableName: this.table });
 
 
-		const options = { matching: data, limit: 1 } as (QueryOptions<E> & Q); // needs typing int
+		const options = { filters: data, list_options: {limit: 1} } as (QueryOptions<E> & Q); // needs typing int
 		this.completeQueryBuilder(utx, query, options);
 		const entities = (await query.then()) as any[];
 
@@ -270,7 +270,7 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 		const { query } = await knexQuery({ utx, tableName: this.table });
 
 		this.completeQueryBuilder(utx, query, queryOptions);
-		const records = (await query.then()) as any[]; // TODO: need to check if this is the common way
+		const records = (await query.debug(true).then()) as any[]; // TODO: need to check if this is the common way
 		return this.parseRecords(records);
 	}
 
@@ -315,20 +315,16 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 
 		if (queryOptions) {
 
-			if (queryOptions.matching) {
-				completeQueryFilter(query, queryOptions.matching)
-			}
-
 			if (queryOptions.custom) {
 				queryOptions.custom(query);
 			}
 
-			if (queryOptions.limit != null) {
-				query.limit(queryOptions.limit);
+			if (queryOptions.list_options?.limit != null) {
+				query.limit(queryOptions.list_options?.limit);
 			}
 
-			if (queryOptions.offset != null) {
-				query.offset(queryOptions.offset);
+			if (queryOptions.list_options?.offset != null) {
+				query.offset(queryOptions.list_options?.offset);
 			}
 
 			//// add the filters
@@ -336,9 +332,8 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 				const filters = queryOptions.filters;
 				if (filters instanceof Array) {
 					for (const filter of filters) {
-						// TOTEST: need to unit test
-						query.orWhere(function () {
-							completeQueryFilter(query, filter);
+						query.andWhere(function () {
+							completeQueryFilter(this, filter);
 						});
 					}
 				} else {
@@ -347,14 +342,18 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 			}
 
 			//// add the orderBy
-			let orderBy = (queryOptions.orderBy !== undefined) ? queryOptions.orderBy : this.orderBy;
+			let orderBy = (queryOptions.list_options?.order_bys !== undefined) ? queryOptions.list_options?.order_bys : this.orderBy;
 			if (orderBy) {
-				let asc = true;
-				if (orderBy.startsWith('!')) {
-					asc = false;
-					orderBy = orderBy.substring(1);
+				const orderBys = ensureArray(orderBy);
+				for(const orderByColExpr of orderBys ){
+					let asc = true;
+					let orderByCol = orderByColExpr;
+					if (orderByColExpr.startsWith('!')) {
+						asc = false;
+						orderByCol = orderByColExpr.substring(1);
+					}
+					query.orderBy(orderByCol, (asc) ? 'ASC' : 'DESC');
 				}
-				query.orderBy(orderBy, (asc) ? 'ASC' : 'DESC');
 			}
 
 		}
@@ -393,40 +392,148 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 
 }
 
-function completeQueryFilter(query: Knex.QueryBuilder, filter: QueryFilter) {
-	// key can be 'firstName' or 'age;>'
+function completeQueryFilter<E>(query: Knex.QueryBuilder, filter: QueryFilter<E>) {
 	for (const column in filter) {
 
 		// value to match
 		const value = filter[column];
-		const opVal = ensureOpVal(value);
 
-		// first handle the new case. 
-		if (opVal.val === null) {
-			if (opVal.op === '=') {
-				query.whereNull(column);
-			} else if (opVal.op === '!=') {
-				query.whereNotNull(column);
+		// Check if value is an operator object (new format)
+		if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+			// New operator format: { "$eq": value } or { "$in": [val1, val2] }
+			const opValue = value as { [op: string]: Val | Val[] };
+			for (const op in opValue) {
+				const opVal = opValue[op];
+				applyOperator(query, column, op as Op, opVal);
 			}
 		}
-		// handle the case value is define
-		else if (value != null) {
-			query.andWhere(column, opVal.op, opVal.val);
+		// Handle simple value or null (backward compatibility)
+		else {
+			applyOperator(query, column, '$eq', value as Val);
 		}
 	}
 }
 
 
-export function ensureOpVal(value: Val | OpVal): OpVal {
-	// if val is null, then, the = null
-	if (value === null) {
-		return { op: '=', val: null };
-	}
-	// For now check type with the '.op'
-	// Note: needs some type hints
-	if ((<any>value).op) {
-		return value as OpVal;
-	} else {
-		return { op: '=', val: value as Val };
+function applyOperator(query: Knex.QueryBuilder, column: string, op: Op, value: Val | Val[]) {
+	switch (op) {
+		case '$eq':
+			if (value === null) {
+				query.whereNull(column);
+			} else {
+				query.where(column, value);
+			}
+			break;
+		case '$not':
+			if (value === null) {
+				query.whereNotNull(column);
+			} else {
+				query.whereNot(column, value);
+			}
+			break;
+		case '$in':
+			query.whereIn(column, value as Val[]);
+			break;
+		case '$notIn':
+			query.whereNotIn(column, value as Val[]);
+			break;
+		case '$contains':
+			query.where(column, 'like', `%${value}%`);
+			break;
+		case '$containsAny':
+			if (Array.isArray(value) && value.length > 0) {
+				query.andWhere(function () {
+					for (let i = 0; i < value.length; i++) {
+						this.orWhere(column, 'like', `%${value[i]}%`);
+					}
+				});
+			}
+			break;
+		case '$containsAll':
+			if (Array.isArray(value)) {
+				for (const v of value) {
+					query.where(column, 'like', `%${v}%`);
+				}
+			}
+			break;
+		case '$notContains':
+			query.whereNot(column, 'like', `%${value}%`);
+			break;
+		case '$notContainsAny':
+			if (Array.isArray(value) && value.length > 0) {
+				query.andWhere(function () {
+					for (let i = 0; i < value.length; i++) {
+						this.orWhereNot(column, 'like', `%${value[i]}%`);
+					}
+				});
+			}
+			break;
+		case '$startsWith':
+			query.where(column, 'like', `${value}%`);
+			break;
+		case '$startsWithAny':
+			if (Array.isArray(value) && value.length > 0) {
+				query.andWhere(function () {
+					for (let i = 0; i < value.length; i++) {
+						this.orWhere(column, 'like', `${value[i]}%`);
+					}
+				});
+			}
+			break;
+		case '$notStartsWith':
+			query.whereNot(column, 'like', `${value}%`);
+			break;
+		case '$notStartsWithAny':
+			if (Array.isArray(value) && value.length > 0) {
+				query.andWhere(function () {
+					for (let i = 0; i < value.length; i++) {
+						this.orWhereNot(column, 'like', `${value[i]}%`);
+					}
+				});
+			}
+			break;
+		case '$endsWith':
+			query.where(column, 'like', `%${value}`);
+			break;
+		case '$endsWithAny':
+			if (Array.isArray(value) && value.length > 0) {
+				query.andWhere(function () {
+					for (let i = 0; i < value.length; i++) {
+						this.orWhere(column, 'like', `%${value[i]}`);
+					}
+				});
+			}
+			break;
+		case '$notEndsWith':
+			query.whereNot(column, 'like', `%${value}`);
+			break;
+		case '$notEndsWithAny':
+			if (Array.isArray(value) && value.length > 0) {
+				query.andWhere(function () {
+					for (let i = 0; i < value.length; i++) {
+						this.orWhereNot(column, 'like', `%${value[i]}`);
+					}
+				});
+			}
+			break;
+		case '$lt':
+			query.where(column, '<', value);
+			break;
+		case '$lte':
+			query.where(column, '<=', value);
+			break;
+		case '$gt':
+			query.where(column, '>', value);
+			break;
+		case '$gte':
+			query.where(column, '>=', value);
+			break;
+		case '$null':
+			query.whereNull(column);
+			break;
+		default:
+			// For unknown operators, treat as equals (fallback for backward compatibility)
+			query.where(column, '=', value);
+			break;
 	}
 }

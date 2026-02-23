@@ -52,8 +52,8 @@ class MyEntityDse extends ApiRouter {
 
         // Build query options
         let queryOptions: any = {};
-        if (typeof ktx.query.matching == 'string') {
-            queryOptions.matching = JSON.parse(ktx.query.matching);
+        if (typeof ktx.query.filters == 'string') {
+            queryOptions.filters = JSON.parse(ktx.query.filters);
         }
 
         const entities = await myEntityDao.list(ctx, queryOptions);
@@ -184,8 +184,8 @@ class OrgDse extends ApiRouter {
         // Add default query options
         let queryOptions: OrgQueryOptions = { access: 'org_a_content_view' };
 
-        if (typeof ktx.query.matching == 'string') {
-            queryOptions.matching = JSON.parse(ktx.query.matching);
+        if (typeof ktx.query.filters == 'string') {
+            queryOptions.filters = JSON.parse(ktx.query.filters);
         }
 
         const entities = await orgDao.list(ctx, queryOptions);

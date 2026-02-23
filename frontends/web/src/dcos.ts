@@ -10,7 +10,9 @@ class MediaDao extends BaseDco<Media, QueryOptions<Media>>{
 		const file = props.file;
 		if (file) {
 			const formData = new FormData();
-			formData.append('file', file);
+			for(const prop in props){
+				formData.append(prop, props[prop]);
+			}
 			// TODO - needs to change URL
 			const webResult = await webRequest('POST', '/api/upload-media', { body: formData });
 			const media = (webResult.success) ? webResult.data as Media : null;
@@ -26,12 +28,12 @@ class MediaDao extends BaseDco<Media, QueryOptions<Media>>{
 		}
 	}
 
-	async listImages(): Promise<Media[]> {
-		return super.list({ matching: { type: 'image' } });
+	async listImages(projectId: number): Promise<Media[]> {
+		return super.list({ filters: { type: 'image', projectId } });
 	}
 
-	async listVideos(): Promise<Media[]> {
-		return super.list({ matching: { type: 'video' } });
+	async listVideos(projectId: number): Promise<Media[]> {
+		return super.list({ filters: { type: 'video', projectId } });
 	}
 }
 

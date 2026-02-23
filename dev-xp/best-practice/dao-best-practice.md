@@ -244,18 +244,19 @@ Use query options to filter, sort, and paginate results.
 ```typescript
 import { QueryOptions } from '#shared/entities.js';
 
-// Simple matching
+// Simple filters
 const result = await dao.list(utx, {
-  matching: { status: 'active' }
+  filters: { status: 'active' }
 });
 
 // With filters and sorting
 const result = await dao.list(utx, {
-  matching: { type: 'image' },
-  filters: { status: 'active' },
-  orderBy: '!ctime', // DESC by ctime
-  limit: 10,
-  offset: 20
+  filters: [{ type: 'image' }, { status: 'active' }],
+  list_options: {
+    orderBy: ['!ctime'] // DESC by ctime
+    limit: 10,
+    offset: 20
+  }
 });
 
 // With operators (using OpVal)
@@ -460,7 +461,7 @@ export class TicketDao extends OrgScopedDao<Ticket, number> {
 
   @AccessRequires('a_admin', 'org_a_ticket_view')
   async getByProject(utx: UserContext, projectId: number): Promise<Ticket[]> {
-    return this.list(utx, { matching: { projectId } });
+    return this.list(utx, { filters: { projectId } });
   }
 }
 ```

@@ -195,8 +195,8 @@ export class OrgScopedDao<E extends OrgScopedEntity, I> extends BaseDao<E, I> {
       throw new Err(ERROR.NO_ORGID_IN_UTX);
     }
     queryOptions = queryOptions ?? {};
-    queryOptions.matching = queryOptions.matching ?? {};
-    queryOptions.matching.orgId = orgId;  // Auto-scope to org
+		orgScopedQueryOptions.filters = ensureArray(orgScopedQueryOptions.filters ?? {});
+		orgScopedQueryOptions.filters.push({orgId: orgId});
   }
 
   scopeData(utx: UserContext, data?: Partial<OrgScopedEntity>) {

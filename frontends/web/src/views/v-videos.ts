@@ -1,7 +1,7 @@
 import { position } from '@dom-native/draggable';
 import { BaseViewElement } from 'common/v-base.js';
 import { mediaDco } from 'dcos';
-import { append, cherryChild, closest, customElement, elem, first, frag, html, on, onEvent, OnEvent, onHub } from 'dom-native';
+import { append, cherryChild, closest, customElement, elem, first, frag, getAttr, html, on, onEvent, OnEvent, onHub } from 'dom-native';
 import { asNum } from 'utils-min';
 
 const VIDEOS_HTML = html`
@@ -22,6 +22,7 @@ export class VideosView extends BaseViewElement {
 	//// Key Elements
 	get contentEl():BaseViewElement { return this } // for now the contentEl is this element
 	get mediaAddEl():HTMLElement { return this.cacheFirst('.media-add')! }
+	get projectId() { return asNum(getAttr(closest(this, "v-project-main")!, 'project-id')) }
 
 	//#region    ---------- Element Events ---------- 
 
@@ -68,7 +69,7 @@ export class VideosView extends BaseViewElement {
 		evt.stopPropagation();
 		const file = evt.dataTransfer?.files?.[0];
 		if (file != null && file.type.startsWith('video')) {
-			await mediaDco.create({ file });
+			await mediaDco.create({ file, projectId: this.projectId });
 		} else {
 			// TODO: show message not valid
 		}
@@ -88,7 +89,8 @@ export class VideosView extends BaseViewElement {
 	}
 
 	async refresh() {
-		const mediaList = await mediaDco.listVideos();
+		const projectId = this.projectId;
+		const mediaList = await mediaDco.listVideos(projectId!);
 		const content = frag(mediaList, m => {
 			const itemContentEl = html`
 				<header>

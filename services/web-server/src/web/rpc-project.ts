@@ -16,7 +16,7 @@ import { createEntity, deleteEntity, getEntity, listEntities, updateEntity } fro
 class RpcHandlers{
 
 	@RpcMethod("project_list")
-	async listProjects(ktx: ApiKtx, params: { matching?: any }) {
+	async listProjects(ktx: ApiKtx, params: { filters?: any }) {
 		const data = { type: 'project', ...params } as any;
 		return listEntities(ktx, data); 
 	}

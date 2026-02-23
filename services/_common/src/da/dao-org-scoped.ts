@@ -1,7 +1,7 @@
 import { OrgScopedEntity, QueryOptions } from '#shared/entities.js';
 import { Err } from '../error.js';
 import { UserContext } from '../user-context.js';
-import { symbolDic } from '../utils.js';
+import { ensureArray, symbolDic } from '../utils.js';
 import { AccessRequires } from './access.js';
 import { BaseDao, CustomQuery } from './dao-base.js';
 
@@ -49,8 +49,8 @@ export class OrgScopedDao<E extends OrgScopedEntity, I, Q extends QueryOptions<E
 		}
 		// TS NOTE: Here, cannot use Q, TS can't infer correctly.
 		const orgScopedQueryOptions: QueryOptions<E> & CustomQuery = queryOptions ?? {};
-		orgScopedQueryOptions.matching = orgScopedQueryOptions.matching ?? {};
-		orgScopedQueryOptions.matching.orgId = orgId;
+		orgScopedQueryOptions.filters = ensureArray(orgScopedQueryOptions.filters ?? {});
+		orgScopedQueryOptions.filters.push({orgId: orgId});
 	}
 
 	scopeData(utx: UserContext, data?: Partial<OrgScopedEntity>) {
