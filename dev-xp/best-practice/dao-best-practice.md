@@ -246,25 +246,37 @@ import { QueryOptions } from '#shared/entities.js';
 
 // Simple filters
 const result = await dao.list(utx, {
-  filters: { status: 'active' }
+	filters: { status: 'active' }
 });
 
 // With filters and sorting
 const result = await dao.list(utx, {
-  filters: [{ type: 'image' }, { status: 'active' }],
-  list_options: {
-    orderBy: ['!ctime'] // DESC by ctime
-    limit: 10,
-    offset: 20
-  }
+	filters: [{ type: 'image' }, { status: 'active' }],
+	list_options: {
+		order_bys: ['!ctime'] // DESC by ctime
+		limit: 10,
+		offset: 20
+	}
 });
 
-// With operators (using OpVal)
+// With operators (MongoDB-style)
 const result = await dao.list(utx, {
-  filters: { 
-    age: { op: '>', val: 18 },
-    name: { op: 'like', val: 'John%' }
-  }
+	filters: { 
+		age: { $gte: 18 },
+		name: { $startsWith: 'John' }
+	}
+});
+```
+
+### Custom Query
+
+```typescript
+import { Knex } from 'knex';
+
+const result = await dao.list(utx, {
+	custom: (query: Knex.QueryBuilder) => {
+		query.whereRaw('LOWER(name) = ?', ['john']);
+	}
 });
 ```
 

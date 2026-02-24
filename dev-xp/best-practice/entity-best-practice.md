@@ -1,6 +1,6 @@
 # Entity Best Practices
 
-This document outlines the best practices for creating entities in the codebase.
+This document outlines the best practices for creating entities in codebase.
 
 ## File Structure
 
@@ -77,8 +77,8 @@ export interface Media extends StampedEntity, OrgScopedEntity {
 	projectId: number;
 	type: MediaType;
 	uuid: string;
-	srcName: string; // the orginal source name
-	name: string;    // the name of the main media file
+	srcName: string; // The orginal source name
+	name: string;    // name of the main media file
 	folderPath: string;
 	sd: MediaResolution;
 	url: string;     // set by MediaDao.parseRecord
@@ -121,8 +121,8 @@ export interface Job {
 	state: JobState;
 	event: JobEventName;
 	orgId?: number; // can be undefined when not for a workspace
-	onEntity?: string; // the entity type name e.g., "Media"
-	onId?: number;    // the entity id
+	onEntity?: string; //	the entity type name e.g., "Media"
+	onId?: number;    //	the entity id
 	progress?: { [name: string]: number }; // step progress (0 to 100), names are snake format
 	err_code?: string; // only if state = failed
 	err_msg?: string;  // only if state = failed
@@ -133,14 +133,10 @@ export interface Job {
 
 Entities often work with query types defined in `query_options.ts` and re-exported from `entities-base.ts`:
 
-### QueryOptions Pattern
-
-The new QueryOptions pattern uses MongoDB-style operators for flexible filtering:
-
-#### Operator Types
+### Operator Types
 
 Available operators:
-- `$eq` - Equals
+- `$eq` - Equals (implicit when using direct value)
 - `$in` - In array
 - `$not` - Not equals
 - `$notIn` - Not in array
@@ -163,7 +159,7 @@ Available operators:
 - `$gte` - Greater than or equal
 - `$null` - Is null
 
-#### QueryFilter Type
+### QueryFilter Type
 
 The `QueryFilter<E>` type uses mapped types to create typed filters:
 
@@ -178,7 +174,7 @@ This allows:
 - Operator objects: `{ age: { $gte: 18 } }`
 - Array operators: `{ status: { $in: ['active', 'pending'] } }`
 
-#### QueryOptions Interface
+### QueryOptions Interface
 
 ```typescript
 export interface QueryOptions<E> {
@@ -288,14 +284,6 @@ const users = await userDao.list(utx, {
 });
 ```
 
-### Backward Compatibility
-
-The new QueryOptions pattern maintains backward compatibility with the old format:
-- Simple values still work: `{ name: 'John' }`
-- filters format: `{ filters: { name: 'John' } }`
-
-The `completeQueryFilter` function in `dao-base.ts` handles both formats automatically.
-
 ## Common Patterns
 
 ### UUID + ID Pattern
@@ -350,3 +338,4 @@ export * from './entities-base.js';
 ```
 
 This provides a single import point for consumers.
+
