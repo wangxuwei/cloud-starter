@@ -3,6 +3,8 @@ import { Monitor } from '../perf.js';
 import { UserContext } from '../user-context.js';
 import { AccessRequires } from './access.js';
 import { OrgScopedDao } from './dao-org-scoped.js';
+import { RelationshipConfig } from './include-utils.js';
+import { wksDao } from './daos.js';
 
 
 export const PROJECT_COLUMNS = Object.freeze(['id', 'cid', 'ctime', 'mid', 'mtime', 'name', "wksId"] as const);
@@ -39,4 +41,39 @@ export class ProjectDao extends OrgScopedDao<Project, number> {
 		return super.remove(utx, ids);
 	}
 	//#endregion ---------- /BaseDao Overrides ---------- 
+
+	//#region    ---------- Include Processor Options ---------- 
+	protected getIncludeProcessorOptions() {
+		const baseOptions = super.getIncludeProcessorOptions();
+		return {
+			...baseOptions,
+			columnGroups: {
+				...baseOptions.columnGroups,
+				_projectInfo: ['id', 'name', 'wksId'],
+				_details: ['id', 'name', 'description']
+			},
+			relationships: {
+				workspace: {
+					type: 'belongsTo',
+					targetTable: 'workspace',
+					foreignKey: 'wksId',
+					targetKey: 'id',
+					as: 'workspace',
+					targetColumns: ['id', 'name'],
+					targetColumnGroups: {
+						_defaults: ['id', 'name']
+					},
+					targetStamped: true
+				} as RelationshipConfig
+			}
+		};
+	}
+
+	protected getRelatedDao(relation: string) {
+		if (relation === 'workspace') {
+			return wksDao;
+		}
+		return null;
+	}
+	//#endregion ---------- /Include Processor Options ---------- 
 }
