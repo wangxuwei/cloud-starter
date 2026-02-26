@@ -1,42 +1,60 @@
-import { Project, QueryOptions } from '#shared/entities.js';
-import { Monitor } from '../perf.js';
-import { UserContext } from '../user-context.js';
-import { AccessRequires } from './access.js';
+// <origin src="services/_common/src/da/dao-project.ts" />
+// (c) 2024 BriteSnow, inc - This code is licensed under MIT license (for details see LICENSE)
+
+/////////////////////
+// Project DAO
+////
+
+import { Project } from '#shared/entities.js';
 import { OrgScopedDao } from './dao-org-scoped.js';
+import { wksDao } from './daos.js';
 
-
-export const PROJECT_COLUMNS = Object.freeze(['id', 'cid', 'ctime', 'mid', 'mtime', 'name', "wksId"] as const);
+// Default columns for Project entity
+export const PROJECT_COLUMNS = Object.freeze([
+  'id', 'name', 'description', 'wksId'
+] as const);
 
 export class ProjectDao extends OrgScopedDao<Project, number> {
-	constructor() { super({ table: 'project', stamped: true }) }
-	
-	//#region    ---------- BaseDao Overrides ---------- 
-	@AccessRequires('a_admin', 'org_a_project_manage')
-	async get(utx: UserContext, id: number) {
-		return super.get(utx, id);
-	}
+  constructor() { 
+    super({ 
+      table: 'project', 
+      stamped: true,
+      columns: PROJECT_COLUMNS
+    }) 
+  }
 
-	@AccessRequires('a_admin', 'org_a_project_manage')
-	@Monitor()
-	async list(utx: UserContext, queryOptions?: QueryOptions<Project>): Promise<Project[]> {
-		return super.list(utx, queryOptions);
-	}
+  protected getIncludeProcessorOptions() {
+    const baseOptions = super.getIncludeProcessorOptions();
+    return {
+      ...baseOptions,
+      // Add custom column groups specific to projects
+      columnGroups: {
+        ...baseOptions.columnGroups,
+        _projectInfo: ['id', 'name', 'wksId'],
+        _details: ['id', 'name', 'description']
+      },
+      // Define workspace relationship for nested includes
+      relationships: {
+        workspace: {
+          type: 'belongsTo',
+          targetTable: 'workspace',
+          foreignKey: 'wksId',
+          targetKey: 'id',
+          as: 'workspace',
+          targetColumns: ['id', 'name'],
+          targetColumnGroups: {
+            _defaults: ['id', 'name']
+          },
+          targetStamped: true
+        }
+      }
+    };
+  }
 
-	@AccessRequires('#user') // any user can create a new project, it will be the org_r_owner
-	@Monitor()
-	async create(utx: UserContext, data: Partial<Project>) {
-		const wksId = await super.create(utx, data);
-		return wksId;
-	}
-
-	@AccessRequires('a_admin', 'org_a_project_manage')
-	async update(utx: UserContext, id: number, data: Partial<Project>) {
-		return super.update(utx, id, data);
-	}
-
-	@AccessRequires('a_admin', 'org_a_project_manage')
-	async remove(utx: UserContext, ids: number | number[]) {
-		return super.remove(utx, ids);
-	}
-	//#endregion ---------- /BaseDao Overrides ---------- 
+  protected getRelatedDao(relation: string) {
+    if (relation === 'workspace') {
+      return wksDao;
+    }
+    return null;
+  }
 }

@@ -2,12 +2,20 @@
 // (c) 2019 BriteSnow, inc - This code is licensed under MIT license (see LICENSE for details)
 
 import { Op, QueryFilter, QueryOptions, StampedEntity, Val } from '#shared/entities.js';
+import { RelationshipConfig } from '#shared/query_options.js';
 import { Knex } from 'knex';
 import { Monitor } from '../perf.js';
 import { UserContext } from '../user-context.js';
 import { ensureArray, nowTimestamp, removeProps } from '../utils.js';
 import { AccessRequires } from './access.js';
 import { knexQuery } from './db.js';
+import {
+	buildDefaultGroups,
+	IncludeProcessorOptions,
+	IncludeProcessResult,
+	NestedIncludeConfig,
+	processIncludes,
+} from './include-utils.js';
 
 export interface CustomQuery {
 	custom?: (q: Knex.QueryBuilder) => void;
@@ -21,6 +29,8 @@ export interface BaseDaoOptions {
 	orderBy?: string | null;
 	/** Fix the column names for this DAO (get, first, list will filter through those)  */
 	columns?: string[];
+	/** Relationships configuration for nested includes */
+	relationships?: Record<string, RelationshipConfig>;
 }
 
 // Note: for now, the knex can take a generic I for where value
@@ -31,14 +41,20 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 	protected readonly stamped: boolean;
 	protected readonly orderBy: string | null;
 	protected readonly columns?: string[];
+	protected relationships?: Record<string, RelationshipConfig>;
+	protected columnGroups?: Record<string, string[]>;
 
 	constructor(opts: BaseDaoOptions) {
 		this.table = opts.table;
 		this.stamped = opts.stamped;
 		this.idNames = (opts.idNames) ? opts.idNames : 'id';
 		this.orderBy = (opts.orderBy) ? opts.orderBy : null;
+		this.relationships = opts.relationships;
 		if (opts.columns) {
 			this.columns = opts.columns;
+		}
+		if (this.stamped) {
+			this.columnGroups = buildDefaultGroups(this.columns || ['id'], true);
 		}
 	}
 
@@ -112,6 +128,87 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 	}
 	//#endregion ---------- /Data Entity Processing ---------- 
 
+	//#region    ---------- Include Processing ---------- 
+	/**
+	 * Builds include processor options for this DAO.
+	 * Can be overridden in subclasses to add custom groups and relationships.
+	 */
+	protected getIncludeProcessorOptions(): IncludeProcessorOptions {
+		return {
+			columns: this.columns,
+			columnGroups: this.columnGroups,
+			stamped: this.stamped,
+			relationships: this.relationships,
+			tableAlias: 'main'
+		};
+	}
+
+	/**
+	 * Processes includes into Knex query configuration.
+	 */
+	protected processIncludes(includes?: any): IncludeProcessResult {
+		const options = this.getIncludeProcessorOptions();
+		return processIncludes(includes, options, '', 'main');
+	}
+
+	/**
+	 * Loads nested entities for hasMany/hasOne relationships.
+	 * Executes batch queries using Knex query builder to avoid N+1 problem.
+	 */
+	protected async loadNestedEntities(
+		utx: UserContext,
+		entities: E[],
+		nestedConfigs: NestedIncludeConfig[]
+	): Promise<E[]> {
+		if (entities.length === 0 || nestedConfigs.length === 0) {
+			return entities;
+		}
+
+		const result = [...entities];
+
+		for (const nestedConfig of nestedConfigs) {
+			const { relation, config, includes, sourceKey } = nestedConfig;
+
+			const parentIds = entities.map(e => (e as any).id);
+			const nestedDao = this.getRelatedDao(relation);
+			if (!nestedDao) continue;
+
+			const { query } = await knexQuery({ utx, tableName: config.targetTable });
+			const nestedEntities = await query
+				.whereIn(config.foreignKey, parentIds)
+				.then(records => records.map((r: any) => nestedDao.parseRecord(r)));
+
+			const groupedByParent = new Map<I, any[]>();
+			for (const nested of nestedEntities) {
+				const parentId = (nested as any)[config.foreignKey];
+				if (!groupedByParent.has(parentId)) {
+					groupedByParent.set(parentId, []);
+				}
+				groupedByParent.get(parentId)!.push(nested);
+			}
+
+			for (const entity of result) {
+				const parentId = (entity as any).id;
+				const nestedList = groupedByParent.get(parentId) || [];
+
+				if (config.type === 'hasOne') {
+					(entity as any)[relation] = nestedList[0] || null;
+				} else {
+					(entity as any)[relation] = nestedList;
+				}
+			}
+		}
+
+		return result;
+	}
+
+	/**
+	 * Get DAO instance for a relationship. Override in subclasses.
+	 */
+	protected getRelatedDao(relation: string): BaseDao<any, any> | null {
+		return null;
+	}
+	//#endregion ---------- /Include Processing ---------- 
 
 	//#region    ---------- Public Interface ---------- 
 
@@ -139,9 +236,9 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 	async getForSomeIds(utx: UserContext, ids: (I | undefined)[]): Promise<(E | undefined)[]> {
 		// first filter the none defined
 		const definedIds = ids.filter(v => v !== undefined) as I[]; // help typing system
-		// NOTE: here we forst the id property, as per limitationof this API
+		// NOTE: here we first the id property, as per limitation of this API
 		const entities = await this.getForIds(utx, definedIds);
-		// NOTE: Also, here we need to explicity set the correct type (typescript get it wrong :(, they are working on it)
+		// NOTE: Also, here we need to explicitly set the correct type (typescript get it wrong :(, they are working on it)
 		// NOTE: Also, here we assume that the entity as .id. Will  need to clean this up.
 		const a = entities.map((ent: E) => [(<any>ent).id, ent]) as [number, E][];
 		const entityById = new Map(a);
@@ -197,7 +294,7 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 		data = this.cleanForSave(utx, data, true);
 		data = this.stamp(utx, data, true);
 
-		// NOTE: By default, thereturning this.idNames is .id
+		// NOTE: By default, the returning this.idNames is .id
 		const r = await query.insert(data).returning(this.idNames as 'id');
 		return r[0].id as I;
 	}
@@ -269,9 +366,41 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 	async list(utx: UserContext, queryOptions?: Q & CustomQuery): Promise<E[]> {
 		const { query } = await knexQuery({ utx, tableName: this.table });
 
+		// Process includes if provided
+		const includes = queryOptions?.includes;
+		let nested: NestedIncludeConfig[] = [];
+		
+		if (includes) {
+			const includeResult = this.processIncludes(includes);
+			const { columns, joins, nested: nestedConfigs } = includeResult;
+			nested = nestedConfigs;
+
+			// Apply column selection if specified (otherwise use default columns logic in completeQueryBuilder)
+			if (columns.length > 0 && !(columns.length === 1 && columns[0] === '*')) {
+				query.column(columns);
+			}
+
+			// Apply JOINs for belongsTo relationships
+			for (const join of joins) {
+				query.leftJoin(
+					`${join.table} as ${join.as}`,
+					join.on.first,
+					join.on.operator,
+					join.on.second
+				);
+			}
+		}
+
 		this.completeQueryBuilder(utx, query, queryOptions);
-		const records = (await query.debug(true).then()) as any[]; // TODO: need to check if this is the common way
-		return this.parseRecords(records);
+		const records = (await query.debug(true).then()) as any[]; // TODO: need to check if this is to common way
+		const entities = this.parseRecords(records);
+
+		// Load nested entities for hasMany/hasOne relationships
+		if (nested.length > 0) {
+			return this.loadNestedEntities(utx, entities, nested);
+		}
+
+		return entities;
 	}
 
 	/**
@@ -298,7 +427,7 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 			}
 
 		}
-		// otherwise, if single id, so ssingle delete
+		// otherwise, if single id, so single delete
 		else {
 			return query.delete().where(this.getWhereIdObject(ids));
 		}
