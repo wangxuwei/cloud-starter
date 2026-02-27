@@ -1,9 +1,9 @@
 import { Project, QueryOptions } from '#shared/entities.js';
+import { RelationshipConfig } from '#shared/query_options.js';
 import { Monitor } from '../perf.js';
 import { UserContext } from '../user-context.js';
 import { AccessRequires } from './access.js';
 import { OrgScopedDao } from './dao-org-scoped.js';
-import { RelationshipConfig } from './include-utils.js';
 import { wksDao } from './daos.js';
 
 
@@ -24,7 +24,7 @@ export class ProjectDao extends OrgScopedDao<Project, number> {
 		return super.list(utx, queryOptions);
 	}
 
-	@AccessRequires('#user') // any user can create a new project, it will be the org_r_owner
+	@AccessRequires('#user') // any user can create a new project, it will be to org_r_owner
 	@Monitor()
 	async create(utx: UserContext, data: Partial<Project>) {
 		const wksId = await super.create(utx, data);
@@ -50,15 +50,15 @@ export class ProjectDao extends OrgScopedDao<Project, number> {
 			columnGroups: {
 				...baseOptions.columnGroups,
 				_projectInfo: ['id', 'name', 'wksId'],
-				_details: ['id', 'name', 'description']
+				_details: ['id', 'name']
 			},
 			relationships: {
 				workspace: {
 					type: 'belongsTo',
-					targetTable: 'workspace',
+					targetTable: 'wks',
 					foreignKey: 'wksId',
 					targetKey: 'id',
-					as: 'workspace',
+					as: 'w',
 					targetColumns: ['id', 'name'],
 					targetColumnGroups: {
 						_defaults: ['id', 'name']

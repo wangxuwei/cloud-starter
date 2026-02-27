@@ -22,9 +22,9 @@ const daoByEntity: { [type: string]: BaseDao<any, any> } = {
 // endregion: --- DAO Registry ---
 
 // region:    --- Generic Entity CRUD RPC Methods ---
-export async function listEntities(ktx: ApiKtx, params: { type: string; filters?: any }) {
+export async function listEntities(ktx: ApiKtx, params: { type: string; filters?: any, includes?:any }) {
 	const ctx = ktx.state.utx;
-	const { type, filters } = params;
+	const { type, filters, includes } = params;
 
 	const dao = daoByEntity[type];
 	if (!dao) {
@@ -34,6 +34,10 @@ export async function listEntities(ktx: ApiKtx, params: { type: string; filters?
 	let queryOptions: any = {};
 	if (filters) {
 		queryOptions.filters = filters;
+	}
+
+	if (includes){
+		queryOptions.includes = includes;
 	}
 
 	const entities = await dao.list(ctx, queryOptions);
