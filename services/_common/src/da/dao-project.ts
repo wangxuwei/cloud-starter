@@ -4,13 +4,15 @@ import { Monitor } from '../perf.js';
 import { UserContext } from '../user-context.js';
 import { AccessRequires } from './access.js';
 import { OrgScopedDao } from './dao-org-scoped.js';
+import { WKS_COLUMNS } from './dao-wks.js';
 import { wksDao } from './daos.js';
+import { IncludeProcessorOptions } from './include-utils.js';
 
 
 export const PROJECT_COLUMNS = Object.freeze(['id', 'cid', 'ctime', 'mid', 'mtime', 'name', "wksId"] as const);
 
 export class ProjectDao extends OrgScopedDao<Project, number> {
-	constructor() { super({ table: 'project', stamped: true }) }
+	constructor() { super({ table: 'project', stamped: true, allColumns: [...PROJECT_COLUMNS] }) }
 	
 	//#region    ---------- BaseDao Overrides ---------- 
 	@AccessRequires('a_admin', 'org_a_project_manage')
@@ -43,7 +45,7 @@ export class ProjectDao extends OrgScopedDao<Project, number> {
 	//#endregion ---------- /BaseDao Overrides ---------- 
 
 	//#region    ---------- Include Processor Options ---------- 
-	protected getIncludeProcessorOptions() {
+	protected getIncludeProcessorOptions(): IncludeProcessorOptions {
 		const baseOptions = super.getIncludeProcessorOptions();
 		return {
 			...baseOptions,
@@ -60,10 +62,12 @@ export class ProjectDao extends OrgScopedDao<Project, number> {
 					targetKey: 'id',
 					as: 'w',
 					targetColumns: ['id', 'name'],
+					targetAllColumns: [...WKS_COLUMNS],
 					targetColumnGroups: {
 						_defaults: ['id', 'name']
 					},
-					targetStamped: true
+					targetStamped: true,
+					includes: {} // Empty object means use default columns from targetColumns
 				} as RelationshipConfig
 			}
 		};

@@ -84,6 +84,7 @@ export interface RelationshipConfig {
 	targetKey?: string; // Target table's primary key (defaults to 'id')
 	as?: string; // Table alias for this relationship
 	targetColumns?: string[]; // Default columns for target entity
+	targetAllColumns?: string[]; // all columns for target entity
 	targetColumnGroups?: Record<string, string[]>; // Column groups for target
 	targetStamped?: boolean; // Whether target entity has audit columns
 }

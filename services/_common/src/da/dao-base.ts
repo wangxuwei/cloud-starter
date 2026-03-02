@@ -13,6 +13,7 @@ import {
 	buildDefaultGroups,
 	IncludeProcessorOptions,
 	IncludeProcessResult,
+	JoinClause,
 	NestedIncludeConfig,
 	processIncludes
 } from './include-utils.js';
@@ -29,6 +30,8 @@ export interface BaseDaoOptions {
 	orderBy?: string | null;
 	/** Fix the column names for this DAO (get, first, list will filter through those)  */
 	columns?: string[];
+	/** All columns available for validation in includes */
+	allColumns?: string[];
 	/** Relationships configuration for nested includes */
 	relationships?: Record<string, RelationshipConfig>;
 }
@@ -43,6 +46,7 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 	protected readonly columns?: string[];
 	protected relationships?: Record<string, RelationshipConfig>;
 	protected columnGroups?: Record<string, string[]>;
+	protected readonly allColumns?: string[];
 
 	constructor(opts: BaseDaoOptions) {
 		this.table = opts.table;
@@ -52,6 +56,9 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 		this.relationships = opts.relationships;
 		if (opts.columns) {
 			this.columns = opts.columns;
+		}
+		if (opts.allColumns) {
+			this.allColumns = opts.allColumns;
 		}
 		if (this.stamped) {
 			this.columnGroups = buildDefaultGroups(this.columns || ['id'], true);
@@ -136,6 +143,7 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 	protected getIncludeProcessorOptions(): IncludeProcessorOptions {
 		return {
 			columns: this.columns,
+			allColumns: this.allColumns,
 			columnGroups: this.columnGroups,
 			stamped: this.stamped,
 			relationships: this.relationships,
@@ -168,12 +176,23 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 			configMap.set(config.relation, config);
 		}
 
-		// Find columns that belong to nested belongsTo relations (pattern: relation_columnName)
+		// Find columns that belong to nested belongsTo relations (pattern: relation_columnName or relation.columnName)
 		const nestedRelations = new Set<string>();
 		for (const column of Object.keys(result)) {
+			// Check for prefix format: relation_columnName (e.g., workspace_id)
 			const underscoreIndex = column.indexOf('_');
 			if (underscoreIndex > 0) {
 				const relation = column.substring(0, underscoreIndex);
+				if (configMap.has(relation) && configMap.get(relation)!.config.type === 'belongsTo') {
+					nestedRelations.add(relation);
+					continue;
+				}
+			}
+
+			// Check for dot format: relation.columnName (e.g., workspace.id) - fallback for compatibility
+			const dotIndex = column.indexOf('.');
+			if (dotIndex > 0) {
+				const relation = column.substring(0, dotIndex);
 				if (configMap.has(relation) && configMap.get(relation)!.config.type === 'belongsTo') {
 					nestedRelations.add(relation);
 				}
@@ -184,12 +203,25 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 		for (const relation of nestedRelations) {
 			const nestedObj: any = {};
 			const relationPrefix = relation + '_';
+			const relationDot = relation + '.';
 
-			// Extract columns starting with the relation prefix
+			// Use prefix from join config if available, otherwise fallback to relation name
+			const joinPrefix = relationPrefix;
+
+			// Extract columns starting with the relation prefix (e.g., workspace_id, workspace_name)
 			for (const column of Object.keys(result)) {
-				if (column.startsWith(relationPrefix)) {
-					const attrName = column.substring(relationPrefix.length);
+				if (column.startsWith(joinPrefix)) {
+					const attrName = column.substring(joinPrefix.length);
 					nestedObj[attrName] = result[column];
+					delete result[column];
+				}
+				// Fallback: also handle dot notation for backward compatibility
+				else if (column.startsWith(relationDot)) {
+					const attrName = column.substring(relationDot.length);
+					// Only add if not already added (prefer prefix version)
+					if (nestedObj[attrName] === undefined) {
+						nestedObj[attrName] = result[column];
+					}
 					delete result[column];
 				}
 			}
@@ -344,7 +376,7 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 			return null;
 		}
 
-		const entity = this.parseNestedRecord(entities[0], result.joins);
+		const entity = this.parseNestedRecord(entities[0], result.nested);
 		// Load nested entities for hasMany/hasOne relationships
 		if (nested.length > 0) {
 			const parsedEntity = this.parseRecord(entity);
@@ -440,7 +472,7 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 		const records = (await query.debug(true).then()) as any[];
 		
 		// Parse nested records from JOINed tables
-		const parsedRecords = records.map(r => this.parseNestedRecord(r, result.joins));
+		const parsedRecords = records.map(r => this.parseNestedRecord(r, result.nested));
 		const entities = this.parseRecords(parsedRecords);
 
 		// Load nested entities for hasMany/hasOne relationships
@@ -484,7 +516,7 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 
 
 	//#region    ---------- Query Processors ---------- 
-	protected completeQueryBuilder(utx: UserContext, query: Knex.QueryBuilder, queryOptions?: Q & CustomQuery): {nested: NestedIncludeConfig[], joins: any[]} {
+	protected completeQueryBuilder(utx: UserContext, query: Knex.QueryBuilder, queryOptions?: Q & CustomQuery): {nested: NestedIncludeConfig[], joins: JoinClause[]} {
 		const alias = this.getIncludeProcessorOptions().tableAlias;
 		// if this dao has a fixed column. 
 		if (this.columns) {
@@ -518,7 +550,7 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 
 				// Apply column selection if specified (otherwise use default columns logic in completeQueryBuilder)
 				if (columns.length > 0 && !(columns.length === 1 && columns[0] === '*')) {
-					query.column(columns);
+					query.column(columns.filter(col => col.indexOf(".") <= 0 || col.startsWith(`${alias}.`) ));
 				}
 
 				// When we have joins but no main table columns selected, automatically add default columns.
@@ -541,6 +573,19 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 						join.on.operator,
 						join.on.second
 					);
+
+					// For belongsTo relationships, add column aliases with prefix to avoid name conflicts
+					// e.g., workspace.id -> workspace_id, workspace.name -> workspace_name
+					if (join.prefix) {
+						for (const col of columns) {
+							// Only add alias for columns that belong to this joined table
+							if (col.startsWith(`${join.as}.`)) {
+								const columnName = col.substring(`${join.as}.`.length);
+								const aliasName = `${join.prefix}${columnName}`;
+								query.column(`${col} as ${aliasName}`);
+							}
+						}
+					}
 				}
 			}
 

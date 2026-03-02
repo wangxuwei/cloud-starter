@@ -10,6 +10,7 @@ This document provides guidance on creating Data Access Object (DAO) methods wit
 - [Extending OrgScopedDao](#extending-orgscopeddao)
 - [Access Control](#access-control)
 - [Entity Processing](#entity-processing)
+- [Include Processing](#include-processing)
 - [Custom Methods](#custom-methods)
 - [Query Options](#query-options)
 - [Best Practices](#best-practices)
@@ -52,6 +53,7 @@ export class ExampleDao extends BaseDao<Entity, number> {
 | `idNames` | `string \| string[]` | Primary key name(s). Defaults to `'id'` |
 | `orderBy` | `string \| null` | Default sort order. Prefix with `!` for DESC |
 | `columns` | `string[]` | Fixed columns to select in get/first/list operations |
+| `allColumns` | `string[]` | All available columns for include validation |
 
 ## Extending BaseDao
 
@@ -212,6 +214,175 @@ protected cleanForSave(utx: UserContext, data: Partial<E>, forCreate = false): P
 }
 ```
 
+## Include Processing
+
+Override `getIncludeProcessorOptions` and `getRelatedDao` to enable nested entity queries through the `$includes` parameter.
+
+### getIncludeProcessorOptions
+
+Define column groups and relationships for nested entity queries.
+
+```typescript
+import { RelationshipConfig } from '#shared/query_options.js';
+import { IncludeProcessorOptions } from './include-utils.js';
+import { OrgScopedDao } from './dao-org-scoped.js';
+
+export class ProjectDao extends OrgScopedDao<Project, number> {
+  //#region    ---------- Include Processor Options ---------- 
+  protected getIncludeProcessorOptions(): IncludeProcessorOptions {
+    const baseOptions = super.getIncludeProcessorOptions();
+    return {
+      ...baseOptions,
+      columnGroups: {
+        ...baseOptions.columnGroups,
+        // Custom column groups
+        _projectInfo: ['id', 'name', 'wksId'],
+        _details: ['id', 'name']
+      },
+      relationships: {
+        workspace: {
+          type: 'belongsTo',
+          targetTable: 'wks',
+          foreignKey: 'wksId',
+          targetKey: 'id',
+          as: 'w',
+          targetColumns: ['id', 'name'],
+          targetColumnGroups: {
+            _defaults: ['id', 'name']
+          },
+          targetStamped: true,
+          includes: {} // Empty object means use default columns from targetColumns
+        } as RelationshipConfig
+      }
+    };
+  }
+  
+  protected getRelatedDao(relation: string) {
+    if (relation === 'workspace') {
+      return wksDao;
+    }
+    return null;
+  }
+  //#endregion ---------- /Include Processor Options ---------- 
+}
+```
+
+### Relationship Configuration
+
+Relationships can be of three types: `belongsTo`, `hasMany`, or `hasOne`.
+
+#### belongsTo Example
+
+```typescript
+relationships: {
+  workspace: {
+    type: 'belongsTo',           // Many-to-one: this entity belongs to workspace
+    targetTable: 'wks',          // Target table name
+    foreignKey: 'wksId',          // FK on this table pointing to target
+    targetKey: 'id',              // PK on target table (defaults to 'id')
+    as: 'w',                      // Table alias for JOIN
+    targetColumns: ['id', 'name'], // Default columns to select from target
+    targetColumnGroups: {         // Column groups for target entity
+      _defaults: ['id', 'name']
+    },
+    targetStamped: true,          // Does target have audit columns?
+    includes: {}                  // Include spec for default columns (empty object = use defaults)
+  }
+}
+```
+
+#### hasMany Example
+
+```typescript
+relationships: {
+  project: {
+    type: 'hasMany',              // One-to-many: this entity has many projects
+    targetTable: 'project',       // Target table name
+    foreignKey: 'wksId',          // FK on target table pointing to this entity
+    targetKey: 'id',              // PK on target table (defaults to 'id')
+    as: 'p',                      // Table alias for queries
+    targetColumns: ['id', 'name'], // Default columns to select from target
+    targetColumnGroups: {         // Column groups for target entity
+      _defaults: ['id', 'name']
+    },
+    targetStamped: true,          // Does target have audit columns?
+    includes: {}                  // Include spec for default columns (empty object = use defaults)
+  }
+}
+```
+
+#### hasOne Example
+
+```typescript
+relationships: {
+  profile: {
+    type: 'hasOne',               // One-to-one: this entity has one profile
+    targetTable: 'profile',       // Target table name
+    foreignKey: 'userId',         // FK on target table pointing to this entity
+    targetKey: 'id',              // PK on target table (defaults to 'id')
+    as: 'profile',                // Table alias for queries
+    targetColumns: ['id', 'bio'], // Default columns to select from target
+    targetColumnGroups: {         // Column groups for target entity
+      _defaults: ['id', 'bio']
+    },
+    targetStamped: true,          // Does target have audit columns?
+    includes: {}                  // Include spec for default columns (empty object = use defaults)
+  }
+}
+```
+
+### Using Includes in Queries
+
+```typescript
+// Include related workspace entity
+const projects = await projectDao.list(utx, {
+  includes: {
+    workspace: true  // Include workspace with default columns
+  }
+});
+
+// Include specific columns
+const projects = await projectDao.list(utx, {
+  includes: {
+    workspace: { id: true, name: true }
+  }
+});
+
+// Use column groups
+const projects = await projectDao.list(utx, {
+  includes: {
+    workspace: { _defaults: true, _timestamps: true }
+  }
+});
+
+// Nested includes
+const workspaces = await wksDao.list(utx, {
+  includes: {
+    project: {
+      _defaults: true,
+      // Note: For hasMany, nested includes are batch-loaded
+    }
+  }
+});
+```
+
+### Relationship Type Behavior
+
+- **belongsTo**: Creates SQL LEFT JOIN, data is included in main query result
+- **hasMany**: Batch-loaded with separate query to avoid N+1 problem
+- **hasOne**: Batch-loaded with separate query to avoid N+1 problem
+
+### Include Specification in Relationship Config
+
+When defining relationships in `getIncludeProcessorOptions`, the `includes` property in the `RelationshipConfig` specifies the default column selection for that relationship:
+
+- **`includes: {}`** (empty object): Use default columns from `targetColumns`. This is recommended for most cases.
+- **`includes: true`**: Same as empty object, use default columns.
+- **`includes: { id: true, name: true }`**: Select specific columns.
+- **`includes: { _defaults: true }`**: Select columns from the `_defaults` column group.
+
+The `includes` property in the relationship config provides the default behavior when the relationship is included without specifying columns. When querying, you can override this default by specifying your own include specification.
+
 ## Custom Methods
 
 Add domain-specific methods beyond standard CRUD operations.
@@ -264,18 +435,6 @@ const result = await dao.list(utx, {
 	filters: { 
 		age: { $gte: 18 },
 		name: { $startsWith: 'John' }
-	}
-});
-```
-
-### Custom Query
-
-```typescript
-import { Knex } from 'knex';
-
-const result = await dao.list(utx, {
-	custom: (query: Knex.QueryBuilder) => {
-		query.whereRaw('LOWER(name) = ?', ['john']);
 	}
 });
 ```
@@ -418,6 +577,39 @@ const result = await query
   .where({ 'some_table.status': 'active' });
 ```
 
+### 11. Configure Include Processor Options
+
+When defining relationships in `getIncludeProcessorOptions`, ensure:
+
+- Use lowercase relationship keys to match entity property names
+- Define `targetColumns` for default column selection in related entities
+- Define `targetColumnGroups` for convenient column group access
+- Set `targetStamped` appropriately based on whether target entity has audit columns
+- Provide `as` alias for belongsTo relationships to avoid SQL conflicts
+- Implement `getRelatedDao` to return the correct DAO for each relationship
+- Add `includes: {}` to relationship configuration to specify default column selection behavior
+
+```typescript
+protected getRelatedDao(relation: string) {
+  if (relation === 'workspace') {
+    return wksDao;
+  }
+  if (relation === 'project') {
+    return projectDao;
+  }
+  return null;
+}
+```
+
+### 12. Include Validation
+
+The `validateIncludes` function automatically validates:
+- Include keys match available columns, column groups, or relationships
+- Relationship configurations are valid (have required properties)
+- Nested include specifications are recursively validated
+
+Invalid includes will throw an error with helpful context about available keys. Empty objects `{}` are valid for relationship includes and mean "use default columns."
+
 ## Complete Example
 
 Here's a complete example combining all best practices:
@@ -425,6 +617,8 @@ Here's a complete example combining all best practices:
 ```typescript
 import { QueryOptions } from '#shared/entities.js';
 import { Ticket } from '#shared/entities/ticket-entity.js';
+import { RelationshipConfig } from '#shared/query_options.js';
+import { IncludeProcessorOptions } from './include-utils.js';
 import { Monitor } from '../perf.js';
 import { UserContext } from '../user-context.js';
 import { AccessRequires } from './access.js';
@@ -440,7 +634,8 @@ export class TicketDao extends OrgScopedDao<Ticket, number> {
     super({ 
       table: 'ticket', 
       stamped: true,
-      orderBy: '!ctime'
+      orderBy: '!ctime',
+      allColumns: TICKET_COLUMNS
     }) 
   }
 
@@ -475,5 +670,41 @@ export class TicketDao extends OrgScopedDao<Ticket, number> {
   async getByProject(utx: UserContext, projectId: number): Promise<Ticket[]> {
     return this.list(utx, { filters: { projectId } });
   }
+
+  //#region    ---------- Include Processor Options ---------- 
+  protected getIncludeProcessorOptions(): IncludeProcessorOptions {
+    const baseOptions = super.getIncludeProcessorOptions();
+    return {
+      ...baseOptions,
+      columnGroups: {
+        ...baseOptions.columnGroups,
+        _ticketInfo: ['id', 'title', 'status'],
+        _details: ['id', 'title']
+      },
+      relationships: {
+        project: {
+          type: 'belongsTo',
+          targetTable: 'project',
+          foreignKey: 'projectId',
+          targetKey: 'id',
+          as: 'p',
+          targetColumns: ['id', 'name'],
+          targetColumnGroups: {
+            _defaults: ['id', 'name']
+          },
+          targetStamped: true,
+          includes: {} // Empty object means use default columns from targetColumns
+        } as RelationshipConfig
+      }
+    };
+  }
+
+  protected getRelatedDao(relation: string) {
+    if (relation === 'project') {
+      return projectDao;
+    }
+    return null;
+  }
+  //#endregion ---------- /Include Processor Options ---------- 
 }
 ```

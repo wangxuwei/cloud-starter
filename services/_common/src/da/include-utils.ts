@@ -25,6 +25,7 @@ export interface ColumnGroupMap {
  */
 export interface IncludeProcessorOptions {
 	columns?: string[]; // Default columns if no includes specified
+	allColumns?: string[]; // All available columns for validation
 	columnGroups?: ColumnGroupMap; // Group definitions (e.g., _defaults, _timestamps)
 	stamped?: boolean; // Auto-add audit columns (cid, ctime, mid, mtime)
 	relationships?: Record<string, RelationshipConfig>; // Nested entity relationships
@@ -54,6 +55,7 @@ export interface JoinClause {
 	table: string;
 	as: string;
 	on: { first: string; operator: string; second: string }; // ON condition parts
+	prefix?: string; // Prefix for column aliases to avoid name conflicts (e.g., 'wks_' for workspace.id -> wks_id)
 }
 
 /**
@@ -102,28 +104,29 @@ export function validateRelationshipConfig(relationName: string, config: Relatio
 
 /**
  * Validates include keys against available columns, groups, and relationships.
+ * Recursively validates nested includes for relationships.
  * Throws an error if any include key is not recognized.
  * 
  * @param includes - The include specification to validate
  * @param options - Include processor options containing available columns, groups, and relationships
+ * @param path - Current path in the include tree (for error messages)
  * @throws Error if an include key doesn't match any available column, group, or relationship
  */
 export function validateIncludes(
 	includes: IncludeObject | undefined | boolean,
-	options: IncludeProcessorOptions
+	options: IncludeProcessorOptions,
+	path: string = ''
 ): void {
 	if (!includes || typeof includes !== 'object') {
 		return;
 	}
 
-	const { columns, columnGroups = {}, relationships = {} } = options;
-
+	const { columnGroups = {}, relationships = {}, allColumns } = options;
 	// Build a set of all valid top-level keys
 	const validKeys = new Set<string>();
-
 	// Add direct columns
-	if (columns) {
-		for (const col of columns) {
+	if (allColumns) {
+		for (const col of allColumns) {
 			validKeys.add(col);
 		}
 	}
@@ -148,9 +151,38 @@ export function validateIncludes(
 
 	// Validate each include key
 	for (const key of Object.keys(includes)) {
-		if (!validKeys.has(key)) {
+		const fullPath = path ? `${path}.${key}` : key;
+		const spec = includes[key];
+
+		// Handle nested entity includes (belongsTo, hasMany, hasOne)
+		// Check if key is a relationship and spec is an object (not boolean)
+		if (!key.startsWith('_') && relationships[key] && typeof spec === 'object' && !Array.isArray(spec)) {
+			// Validate relationship configuration
+			validateRelationshipConfig(key, relationships[key]);
+
+			// Recursively validate nested includes if they exist
+			const relationship = relationships[key];
+			
+			// Build options for nested validation
+			const nestedOptions: IncludeProcessorOptions = {
+				allColumns: relationship.targetAllColumns,
+				columns: relationship.targetColumns,
+				columnGroups: relationship.targetColumnGroups,
+				stamped: relationship.targetStamped,
+				relationships: {}, // Nested relationships would need to be defined in relationship config
+				tableAlias: relationship.as || key
+			};
+
+			// Only validate recursively if spec is a non-empty object
+			// Empty object {} is valid and means "use defaults"
+			if (Object.keys(spec).length > 0) {
+				validateIncludes(spec as IncludeObject, nestedOptions, fullPath);
+			}
+		}
+		// Validate against available keys (columns, groups, stamped columns, relationships)
+		else if (!validKeys.has(key)) {
 			const availableKeys = Array.from(validKeys).sort().join(', ');
-			throw new Error(`Include key '${key}' is not valid. Available keys are: ${availableKeys}`);
+			throw new Error(`Include key '${fullPath}' is not valid. Available keys are: ${availableKeys}`);
 		}
 	}
 }
@@ -229,27 +261,41 @@ export function processIncludes(
 						second: `${alias}.${targetKey}`
 					};
 
+					// Generate prefix for column aliases to avoid name conflicts
+					// e.g., workspace table -> 'workspace_' prefix, so workspace.id -> workspace_id
+					const prefix = `${key}_`;
+
 					joins.push({
 						type: 'LEFT',
 						table: relationship.targetTable,
 						as: alias,
-						on: onClause
+						on: onClause,
+						prefix
+					});
+
+					nested.push({
+						relation: key,
+						config: relationship,
+						includes: spec as IncludeObject,
+						sourceKey: relationship.foreignKey,
+						tableAlias
 					});
 
 					// Recursively process nested includes
 					// Empty object {} means select default columns for nested entity
 					const nestedIncludes = (spec as IncludeObject);
-					const hasNestedIncludes = typeof spec === 'object' && Object.keys(spec).length > 0;
-
+					
 					const targetOptions: IncludeProcessorOptions = {
+						allColumns: relationship.targetAllColumns,
 						columns: relationship.targetColumns,
 						columnGroups: relationship.targetColumnGroups,
 						stamped: relationship.targetStamped,
 						tableAlias: alias
 					};
 
+					// Pass spec directly so empty object {} triggers default column selection
 					const nestedResult = processIncludes(
-						hasNestedIncludes ? nestedIncludes : undefined,
+						nestedIncludes,
 						targetOptions,
 						fullPath,
 						alias
@@ -259,7 +305,6 @@ export function processIncludes(
 					nestedResult.columns.forEach(col => selectedColumns.add(col));
 					joins.push(...nestedResult.joins);
 					nested.push(...nestedResult.nested);
-
 				} else if (relationship.type === 'hasMany' || relationship.type === 'hasOne') {
 					// For hasMany/hasOne, defer to batch loading
 					// foreignKey is on the target table pointing to this entity
