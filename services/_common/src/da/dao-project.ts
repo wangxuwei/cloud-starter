@@ -51,11 +51,11 @@ export class ProjectDao extends OrgScopedDao<Project, number> {
 			...baseOptions,
 			columnGroups: {
 				...baseOptions.columnGroups,
-				_projectInfo: ['id', 'name', 'wksId'],
-				_details: ['id', 'name']
+				_details: ['id', 'name', 'wksId'],
+				_defaults: ['id', 'name']
 			},
 			relationships: {
-				workspace: {
+				wks: {
 					type: 'belongsTo',
 					targetTable: 'wks',
 					foreignKey: 'wksId',
@@ -74,7 +74,7 @@ export class ProjectDao extends OrgScopedDao<Project, number> {
 	}
 
 	protected getRelatedDao(relation: string) {
-		if (relation === 'workspace') {
+		if (relation === 'wks') {
 			return wksDao;
 		}
 		return null;

@@ -4,4 +4,6 @@
 
 INSERT INTO "user" (id, role, username) VALUES (1, 'r_sys', 'sysadmin');
 
-INSERT INTO "user" (id, role, username) VALUES (2, 'r_user', 'demo1');
+INSERT INTO "user" (id, role, username) VALUES (2, 'r_admin', 'admin');
+
+INSERT INTO "user" (id, role, username) VALUES (3, 'r_user', 'demo1');

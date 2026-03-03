@@ -12,14 +12,18 @@ import { createEntity, deleteEntity, getEntity, updateEntity } from './rpc-gener
 class RpcHandlers{
 
 	@RpcMethod("org_list")
-	async listOrgs(ktx: ApiKtx, params: { filters?: any }) {
+	async listOrgs(ktx: ApiKtx, params: { filters?: any, includes?: any }) {
 		const ctx = ktx.state.utx;
-		const { filters } = params;
+		const { filters, includes } = params;
 
 		let queryOptions: OrgQueryOptions = { access: 'org_a_content_view' };
 
 		if (filters) {
 			queryOptions.filters = filters;
+		}
+
+		if (includes) {
+			queryOptions.includes = includes;
 		}
 
 		const entities = await orgDao.list(ctx, queryOptions);

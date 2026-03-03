@@ -154,9 +154,11 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 	/**
 	 * Processes includes into Knex query configuration.
 	 */
-	protected processIncludes(includes?: any): IncludeProcessResult {
+	protected processIncludes(includes?: any, alias?:string): IncludeProcessResult {
 		const options = this.getIncludeProcessorOptions();
-		return processIncludes(includes, options, '', 'main');
+		alias = typeof alias === 'undefined' ? 'main' : alias;
+		options.tableAlias = alias;
+		return processIncludes(includes, options, '', alias);
 	}
 
 	/**
@@ -242,7 +244,7 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 		utx: UserContext,
 		entities: E[],
 		nestedConfigs: NestedIncludeConfig[],
-		joins: any[]
+		joins: JoinClause[]
 	): Promise<E[]> {
 		if (entities.length === 0 || nestedConfigs.length === 0) {
 			return entities;
@@ -251,7 +253,7 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 		const result = [...entities];
 
 		for (const nestedConfig of nestedConfigs) {
-			const { relation, config, includes, sourceKey } = nestedConfig;
+			const { relation, config, includes } = nestedConfig;
 
 			// For belongsTo relationships, the data is already JOINed and parsed via parseNestedProps
 			// No need for additional batch queries
@@ -264,18 +266,33 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 			const nestedDao = this.getRelatedDao(relation);
 			if (!nestedDao) continue;
 
-			// For hasMany and hasOne, simple whereIn query
-			const { query } = await knexQuery({ utx, tableName: config.targetTable });
+			const nestAlias = 'nest_main';
+			const { query } = await knexQuery({ utx, tableName: `${config.targetTable} as ${nestAlias}` });
+			
+			// Use the nested DAO's processIncludes to properly resolve column groups, default columns, and includes
+			const includeResult = nestedDao.processIncludes(includes, nestAlias);
+			const { columns } = includeResult;
+			// Apply column selection if specified (not wildcard)
+			if (columns.length > 0 && !(columns.length === 1 && columns[0] === '*')) {
+				query.columns(columns);
+			}
+			
+			// Always include the foreign key column for grouping (unless it's already in columns)
+			if (!columns.includes(config.foreignKey)) {
+				query.column(`${nestAlias}.${config.foreignKey}`);
+			}
+			
 			const nestedEntities = await query
 				.whereIn(config.foreignKey, parentIds)
 				.then(records => records.map((r: any) => ({ entity: nestedDao.parseRecord(r), parentId: (r as any)[config.foreignKey] })));
-
 			const groupedByParent = new Map<I, any[]>();
 			for (const { entity, parentId } of nestedEntities) {
+				let obj = {...entity};
+				delete obj[config.foreignKey];
 				if (!groupedByParent.has(parentId)) {
 					groupedByParent.set(parentId, []);
 				}
-				groupedByParent.get(parentId)!.push(entity);
+				groupedByParent.get(parentId)!.push(obj);
 			}
 
 			for (const entity of result) {

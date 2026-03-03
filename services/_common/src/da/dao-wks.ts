@@ -51,7 +51,7 @@ export class WksDao extends OrgScopedDao<Wks, number, QueryOptions<Wks>> {
 			...baseOptions,
 			columnGroups: {
 				...baseOptions.columnGroups,
-				_details: ['id', 'name']
+				_defaults: ['id', 'name']
 			},
 			relationships: {
 				project: {

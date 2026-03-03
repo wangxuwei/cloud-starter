@@ -1,5 +1,5 @@
 import { assertOrgAccess, ORG_ROLES, ORG_ROLES_BY_ACCESS, OrgAccess } from '#shared/access-types.js';
-import { Org, QueryOptions, User } from '#shared/entities.js';
+import { Org, QueryOptions, RelationshipConfig, User } from '#shared/entities.js';
 import { Err } from '../error.js';
 import { Monitor } from '../perf.js';
 import { UserContext } from '../user-context.js';
@@ -7,7 +7,10 @@ import { symbolDic } from '../utils.js';
 import { saveOrgRole } from './access-org.js';
 import { AccessRequires } from './access.js';
 import { BaseDao } from './dao-base.js';
+import { WKS_COLUMNS } from './dao-wks.js';
+import { wksDao } from './daos.js';
 import { knexQuery } from './db.js';
+import { IncludeProcessorOptions } from './include-utils.js';
 
 
 const ERROR = symbolDic(
@@ -22,7 +25,7 @@ export interface OrgQueryOptions extends QueryOptions<Org> {
 }
 
 export class OrgDao extends BaseDao<Org, number, OrgQueryOptions> {
-	constructor() { super({ table: 'org', stamped: true }) }
+	constructor() { super({ table: 'org', stamped: true, allColumns: [...ORG_COLUMNS] }) }
 
 	//#region    ---------- Entity Processing ---------- 
 	protected parseRecord(obj: any): Org {
@@ -123,4 +126,41 @@ export class OrgDao extends BaseDao<Org, number, OrgQueryOptions> {
 		return super.remove(utx, ids);
 	}
 	//#endregion ---------- /BaseDao Overrides ---------- 
+
+
+	//#region    ---------- Include Processor Options ---------- 
+	protected getIncludeProcessorOptions(): IncludeProcessorOptions {
+		const baseOptions = super.getIncludeProcessorOptions();
+		return {
+			...baseOptions,
+			columnGroups: {
+				...baseOptions.columnGroups,
+				_defaults: ['id', 'name']
+			},
+			relationships: {
+				wks: {
+					type: 'hasMany',
+					targetTable: 'wks',
+					foreignKey: 'orgId',
+					targetKey: 'id',
+					as: 'wks',
+					targetColumns: ['id', 'name'],
+					targetAllColumns: [...WKS_COLUMNS],
+					targetColumnGroups: {
+						_defaults: ['id', 'name']
+					},
+					targetStamped: true,
+					includes: {} // Empty object means use default columns from wks, can include nested relationships like project
+				} as RelationshipConfig
+			}
+		};
+	}
+
+	protected getRelatedDao(relation: string) {
+		if (relation === 'wks') {
+			return wksDao;
+		}
+		return null;
+	}
+	//#endregion ---------- /Include Processor Options ---------- 
 }
