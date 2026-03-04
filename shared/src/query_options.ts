@@ -51,6 +51,7 @@ export type QueryFilter<E> = {
 	[K in keyof E]?: Val | { [O in Op]?: Val } | Val[];
 };
 
+
 /**
  * Include specification - can be boolean, nested object, or undefined.
  * An empty object {} means "select default columns" for that nested entity.
@@ -63,30 +64,6 @@ export type IncludeSpec = boolean | IncludeObject;
  */
 export interface IncludeObject {
 	[key: string]: IncludeSpec;
-}
-
-/**
- * Relationship type for entity relationships.
- * - 'belongsTo': Many-to-one relationship (foreign key on this entity)
- * - 'hasMany': One-to-many relationship (foreign key on related entity)
- * - 'hasOne': One-to-one relationship (foreign key on related entity)
- */
-export type RelationshipType = 'belongsTo' | 'hasMany' | 'hasOne';
-
-/**
- * Configuration for a relationship between two entities.
- * Defines how to join and query related entities.
- */
-export interface RelationshipConfig {
-	type: RelationshipType; // Relationship type
-	targetTable: string; // Target table name
-	foreignKey: string; // Foreign key column (source FK for belongsTo, target FK for hasMany/hasOne)
-	targetKey?: string; // Target table's primary key (defaults to 'id')
-	as?: string; // Table alias for this relationship
-	targetColumns?: string[]; // Default columns for target entity
-	targetAllColumns?: string[]; // all columns for target entity
-	targetColumnGroups?: Record<string, string[]>; // Column groups for target
-	targetStamped?: boolean; // Whether target entity has audit columns
 }
 
 /**
@@ -107,15 +84,10 @@ export interface ListOptions {
 /**
  * Query options for entity queries.
  * Provides filtering, including, and pagination capabilities.
+ * The includes property uses backend-specific types defined in include-utils.
  */
 export interface QueryOptions<E> {
 	filters?: QueryFilter<E>[] | QueryFilter<E>;
 	includes?: IncludeObject;
 	list_options?: ListOptions;
 }
-
-// ============================================================================
-// Re-export from entities-base for backward compatibility
-// ============================================================================
-
-// These are re-exported from entities-base.ts to maintain existing import paths

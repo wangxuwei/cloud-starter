@@ -1,18 +1,14 @@
 import { Project, QueryOptions } from '#shared/entities.js';
-import { RelationshipConfig } from '#shared/query_options.js';
 import { Monitor } from '../perf.js';
 import { UserContext } from '../user-context.js';
 import { AccessRequires } from './access.js';
 import { OrgScopedDao } from './dao-org-scoped.js';
-import { WKS_COLUMNS } from './dao-wks.js';
-import { wksDao } from './daos.js';
-import { IncludeProcessorOptions } from './include-utils.js';
 
 
 export const PROJECT_COLUMNS = Object.freeze(['id', 'cid', 'ctime', 'mid', 'mtime', 'name', "wksId"] as const);
 
-export class ProjectDao extends OrgScopedDao<Project, number> {
-	constructor() { super({ table: 'project', stamped: true, allColumns: [...PROJECT_COLUMNS] }) }
+export class ProjectDao extends OrgScopedDao<Project, number, QueryOptions<Project>> {
+	constructor() { super({ table: 'project', stamped: true }) }
 	
 	//#region    ---------- BaseDao Overrides ---------- 
 	@AccessRequires('a_admin', 'org_a_project_manage')
@@ -26,7 +22,7 @@ export class ProjectDao extends OrgScopedDao<Project, number> {
 		return super.list(utx, queryOptions);
 	}
 
-	@AccessRequires('#user') // any user can create a new project, it will be to org_r_owner
+	@AccessRequires('#user') // any user can create a new project within a workspace they have access to
 	@Monitor()
 	async create(utx: UserContext, data: Partial<Project>) {
 		const wksId = await super.create(utx, data);
@@ -43,41 +39,4 @@ export class ProjectDao extends OrgScopedDao<Project, number> {
 		return super.remove(utx, ids);
 	}
 	//#endregion ---------- /BaseDao Overrides ---------- 
-
-	//#region    ---------- Include Processor Options ---------- 
-	protected getIncludeProcessorOptions(): IncludeProcessorOptions {
-		const baseOptions = super.getIncludeProcessorOptions();
-		return {
-			...baseOptions,
-			columnGroups: {
-				...baseOptions.columnGroups,
-				_details: ['id', 'name', 'wksId'],
-				_defaults: ['id', 'name']
-			},
-			relationships: {
-				wks: {
-					type: 'belongsTo',
-					targetTable: 'wks',
-					foreignKey: 'wksId',
-					targetKey: 'id',
-					as: 'w',
-					targetColumns: ['id', 'name'],
-					targetAllColumns: [...WKS_COLUMNS],
-					targetColumnGroups: {
-						_defaults: ['id', 'name']
-					},
-					targetStamped: true,
-					includes: {} // Empty object means use default columns from targetColumns
-				} as RelationshipConfig
-			}
-		};
-	}
-
-	protected getRelatedDao(relation: string) {
-		if (relation === 'wks') {
-			return wksDao;
-		}
-		return null;
-	}
-	//#endregion ---------- /Include Processor Options ---------- 
 }
