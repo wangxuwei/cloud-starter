@@ -1,19 +1,16 @@
 // <origin src="https://raw.githubusercontent.com/BriteSnow/cloud-starter/master/services/_common/src/dao-base.ts" />
 // (c) 2019 BriteSnow, inc - This code is licensed under MIT license (see LICENSE for details)
 
-import { IncludeObject, Op, QueryFilter, QueryOptions, StampedEntity, Val } from '#shared/entities.js';
+import { QueryOptions, StampedEntity } from '#shared/entities.js';
 import { Knex } from 'knex';
 import { Monitor } from '../perf.js';
 import { UserContext } from '../user-context.js';
 import { ensureArray, nowTimestamp, removeProps } from '../utils.js';
 import { AccessRequires } from './access.js';
-import { getDao } from './daos.js';
 import { knexQuery } from './db.js';
-import {
-	IncludeProcessorOptions,
-	ExtendedIncludeProcessorOptions,
-	processIncludes
-} from './include-processor.js';
+import { completeQueryFilter } from './options/filter/index.js';
+import { IncludeProcessorOptions, processIncludes } from './options/include/processor.js';
+import { buildBelongsToQuery } from './options/include/query.js';
 
 export interface CustomQuery {
 	custom?: (q: Knex.QueryBuilder) => void;
@@ -25,7 +22,7 @@ export interface BaseDaoOptions {
 	idNames?: string | string[];
 	/** set the default orderBy. '!' prefix make it DESC. .e.g., 'odr' or '!age' */
 	orderBy?: string | null;
-	/** Fix the column names for this DAO (get, first, list will filter through those)  */
+	/** Fix the column names for this DAO (get, list will first will filter through those)  */
 	columns?: string[];
 }
 
@@ -128,355 +125,6 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 	protected getEntity(): string {
 		return this.table;
 	}
-
-	/**
-	 * Processes includes into query configuration using the centralized schema.
-	 * The entity key is used to lookup capabilities and relationships from the schema.
-	 * 
-	 * @param includes - Include specification from query options
-	 * @param alias - Table alias for this level (defaults to 'main')
-	 * @returns Query configuration with columns, joins, and nested configs
-	 */
-	protected processIncludes(includes?: any, alias?: string): any {
-		const entityKey = this.getEntity();
-		return processIncludes(
-			includes,
-			entityKey,
-			alias ?? 'main'
-		);
-	}
-
-	/**
-	 * Parses nested properties for belongsTo relationships from flat JOINed data.
-	 * Transforms columns like 'workspace_id', 'workspace_name' into nested object { workspace: { id, name } }.
-	 * 
-	 * @param record - The database record with potential prefixed columns
-	 * @param nestedConfigs - Array of nested include configurations to check
-	 * @returns Parsed record with nested objects
-	 */
-	protected parseNestedRecord(record: any, nestedConfigs: ExtendedIncludeProcessorOptions[]): any {
-		if (!record || nestedConfigs.length === 0) {
-			return record;
-		}
-
-		const result = { ...record };
-
-		// Create a map for quick lookup by relation key (use alias for belongsTo)
-		const configMap = new Map<string, ExtendedIncludeProcessorOptions>();
-		for (const config of nestedConfigs) {
-			// For belongsTo, the alias is the relation name
-			if (config.relationshipType === 'belongsTo') {
-				configMap.set(config.alias, config);
-			}
-		}
-
-		// Find columns that belong to nested belongsTo relations (pattern: relation_columnName or relation.columnName)
-		const nestedRelations = new Set<string>();
-		for (const column of Object.keys(result)) {
-			// Check for prefix format: relation_columnName (e.g., workspace_id)
-			const underscoreIndex = column.indexOf('_');
-			if (underscoreIndex > 0) {
-				const relation = column.substring(0, underscoreIndex);
-				if (configMap.has(relation) && configMap.get(relation)!.relationshipType === 'belongsTo') {
-					nestedRelations.add(relation);
-					continue;
-				}
-			}
-
-			// Check for dot format: relation.columnName (e.g., workspace.id) - fallback for compatibility
-			const dotIndex = column.indexOf('.');
-			if (dotIndex > 0) {
-				const relation = column.substring(0, dotIndex);
-				if (configMap.has(relation) && configMap.get(relation)!.relationshipType === 'belongsTo') {
-					nestedRelations.add(relation);
-				}
-			}
-		}
-
-		// For each nested belongsTo relation, extract columns and create nested object
-		for (const relation of nestedRelations) {
-			const nestedObj: any = {};
-			const relationPrefix = relation + '_';
-			const relationDot = relation + '.';
-
-			// Use prefix from join config if available, otherwise fallback to relation name
-			const joinPrefix = relationPrefix;
-
-			// Extract columns starting with the relation prefix (e.g., workspace_id, workspace_name)
-			for (const column of Object.keys(result)) {
-				if (column.startsWith(joinPrefix)) {
-					const attrName = column.substring(joinPrefix.length);
-					nestedObj[attrName] = result[column];
-					delete result[column];
-				}
-				// Fallback: also handle dot notation for backward compatibility
-				else if (column.startsWith(relationDot)) {
-					const attrName = column.substring(relationDot.length);
-					// Only add if not already added (prefer prefix version)
-					if (nestedObj[attrName] === undefined) {
-						nestedObj[attrName] = result[column];
-					}
-					delete result[column];
-				}
-			}
-
-			// Assign nested object to the relation key
-			result[relation] = nestedObj;
-		}
-
-		return result;
-	}
-
-	/**
-	 * Loads nested entities for hasMany/hasOne relationships and parses belongsTo relationships from JOINed data.
-	 * Executes batch queries to avoid N+1 problem for hasMany/hasOne.
-	 * For belongsTo relationships, parses the nested data already present from JOINs.
-	 * 
-	 * @param utx - User transaction context
-	 * @param entities - List of entities to load nested data for
-	 * @param nestedConfigs - Array of nested include configurations
-	 * @param joins - Array of JOIN clauses
-	 * @param dao - DAO instance to use for nested queries
-	 * @returns Entities with nested data loaded
-	 */
-	protected async loadNestedEntities(
-		utx: UserContext,
-		entities: E[],
-		nestedConfigs: ExtendedIncludeProcessorOptions[],
-		joins: any[],
-		dao: BaseDao<any, any> = this
-	): Promise<E[]> {
-		if (entities.length === 0 || nestedConfigs.length === 0) {
-			return entities;
-		}
-
-		const result = [...entities];
-
-		for (const nestedConfig of nestedConfigs) {
-			const relationKey = nestedConfig.entityKey || nestedConfig.table || '';
-			const config = nestedConfig;
-
-			if (config.relationshipType === 'belongsTo') {
-				// For belongsTo relationships, the data is already JOINed and parsed via parseNestedRecord
-				// We need to recursively process deeper nested relationships if they exist
-				const nestedNestedConfigs = this.buildNestedConfigsForBelongsTo(config);
-				if (nestedNestedConfigs.length > 0) {
-					// Extract all the nested belongsTo objects from the result entities
-					const nestedEntities: any[] = [];
-					for (const entity of result) {
-						const nestedEntity = (entity as any)[relationKey];
-						if (nestedEntity) {
-							nestedEntities.push(nestedEntity);
-						}
-					}
-
-					if (nestedEntities.length > 0) {
-						// Get the DAO for the target table
-						const targetTable = config.table || relationKey;
-						const nestedDao = getDao(targetTable);
-						if (!nestedDao) continue;
-
-						// Recursively load deeper nested entities
-						const entitiesWithNested = await nestedDao.loadNestedEntities(
-							utx,
-							nestedEntities,
-							nestedNestedConfigs,
-							[], // No additional joins needed for belongsTo at this level
-							nestedDao
-						);
-
-						// Map back to parent entities
-						let entityIndex = 0;
-						for (const entity of result) {
-							if ((entity as any)[relationKey]) {
-								(entity as any)[relationKey] = entitiesWithNested[entityIndex++];
-							}
-						}
-					}
-				}
-				continue;
-			}
-
-			// For hasMany and hasOne relationships, use batch queries to avoid N+1 problem
-			const parentIds = entities.map(e => (e as any).id);
-			
-			// Use schema-based DAO lookup
-			const targetTable = config.table || relationKey;
-			const nestedDao = getDao(targetTable);
-			if (!nestedDao) continue;
-
-			const nestAlias = config.alias || 'nest_main';
-			const { query } = await knexQuery({ utx, tableName: `${targetTable} as ${nestAlias}` });
-			
-			// Build includes object from nestedConfig.relationships
-			const includes = this.buildIncludesFromRelationships(config.relationships);
-			
-			// Use the nested DAO's processIncludes to properly resolve columns and includes
-			const includeResult = nestedDao.processIncludes(includes, nestAlias);
-			const { columns, nested: nestedNestedConfigs, joins: nestedJoins } = includeResult;
-			
-			// Apply column selection if specified (not wildcard)
-			if (columns.length > 0 && !(columns.length === 1 && columns[0] === '*')) {
-				query.columns(columns);
-			}
-			
-			// Always include the foreign key column for grouping (unless it's already in columns)
-			const foreignKey = config.sourceKey || 'id';
-			if (!columns.some(col => col === `${nestAlias}.${foreignKey}`) && !columns.includes(foreignKey)) {
-				query.column(`${nestAlias}.${foreignKey}`);
-			}
-			
-			// Apply JOINs for belongsTo nested relationships
-			for (const join of nestedJoins) {
-				query.leftJoin(
-					`${join.table} as ${join.as}`,
-					join.on.first,
-					join.on.operator,
-					join.on.second
-				);
-
-				// For belongsTo relationships, add column aliases with prefix to avoid name conflicts
-				if (join.prefix) {
-					for (const col of columns) {
-						if (col.startsWith(`${join.as}.`)) {
-							const columnName = col.substring(`${join.as}.`.length);
-							const aliasName = `${join.prefix}${columnName}`;
-							query.column(`${col} as ${aliasName}`);
-						}
-					}
-				}
-			}
-			
-			const nestedEntities = await query
-				.whereIn(foreignKey, parentIds)
-				.then(records => records.map((r: any) => ({ 
-					entity: nestedDao.parseNestedRecord(r, nestedNestedConfigs), 
-					parentId: (r as any)[foreignKey] 
-				})));
-			
-			const groupedByParent = new Map<I, any[]>();
-			for (const { entity, parentId } of nestedEntities) {
-				let obj = {...entity};
-				delete obj[foreignKey];
-				if (!groupedByParent.has(parentId)) {
-					groupedByParent.set(parentId, []);
-				}
-				groupedByParent.get(parentId)!.push(obj);
-			}
-
-			// Recursively load deeper nested entities if any nested configs exist
-			const entitiesWithNested = await this.loadNestedEntities(
-				utx, 
-				nestedEntities.map((n:any) => n.entity), 
-				nestedNestedConfigs, 
-				nestedJoins,
-				nestedDao
-			);
-
-			// Map back to parent entities
-			const entityMap = new Map<any, any>();
-			for (let i = 0; i < nestedEntities.length; i++) {
-				entityMap.set(JSON.stringify(nestedEntities[i].entity), entitiesWithNested[i]);
-			}
-
-			for (const entity of result) {
-				const parentId = (entity as any).id;
-				const nestedList = groupedByParent.get(parentId) || [];
-				
-				// Replace with entities that have deeper nested data
-				const entitiesWithDeeperNested = nestedList.map(nested => {
-					const key = JSON.stringify(nested);
-					return entityMap.get(key) || nested;
-				});
-
-				if (config.relationshipType === 'hasOne') {
-					(entity as any)[relationKey] = entitiesWithDeeperNested[0] || null;
-				} else {
-					(entity as any)[relationKey] = entitiesWithDeeperNested;
-				}
-			}
-		}
-
-		return result;
-	}
-
-	/**
-	 * Build nested configs for belongsTo relationships from extended processor options.
-	 * This extracts nested relationship configurations that need to be loaded recursively.
-	 * 
-	 * @param config - Extended include processor options
-	 * @returns Array of extended nested configs for recursive loading
-	 */
-	private buildNestedConfigsForBelongsTo(config: ExtendedIncludeProcessorOptions): ExtendedIncludeProcessorOptions[] {
-		const nestedConfigs: ExtendedIncludeProcessorOptions[] = [];
-		
-		// Get the target entity's relationships from the schema
-		const targetTable = config.table || config.entityKey || '';
-		const targetDao = getDao(targetTable);
-		if (!targetDao) {
-			return nestedConfigs;
-		}
-
-		// Process each nested relationship
-		for (const [key, nestedOptions] of Object.entries(config.relationships || {})) {
-			const relationshipDef = this.resolveRelationshipDef(targetTable, key);
-			if (relationshipDef) {
-				nestedConfigs.push({
-					...nestedOptions,
-					entityKey: key,
-					sourceKey: relationshipDef.foreignKey,
-					sourceTableAlias: config.alias,
-					relationshipType: relationshipDef.type,
-					targetKey: relationshipDef.targetKey || 'id'
-				});
-			}
-		}
-
-		return nestedConfigs;
-	}
-
-	/**
-	 * Build includes object from relationships map for processIncludes.
-	 * Converts the relationships Record<string, IncludeProcessorOptions> to IncludeObject format.
-	 * 
-	 * @param relationships - Relationships map from IncludeProcessorOptions
-	 * @returns Include object for processIncludes
-	 */
-	private buildIncludesFromRelationships(relationships?: Record<string, IncludeProcessorOptions>): IncludeObject | undefined {
-		if (!relationships) {
-			return undefined;
-		}
-		
-		const includes: IncludeObject = {};
-		for (const [key, opts] of Object.entries(relationships)) {
-			// If nested options has no relationships, use true (boolean)
-			// Otherwise, build nested includes recursively
-			if (!opts.relationships || Object.keys(opts.relationships).length === 0) {
-				includes[key] = true;
-			} else {
-				includes[key] = this.buildIncludesFromRelationships(opts.relationships) || {};
-			}
-		}
-		
-		return includes;
-	}
-
-	/**
-	 * Resolve relationship definition for a given entity and relation.
-	 * Looks up the relationship from the schema.
-	 * 
-	 * @param entityKey - Source entity key
-	 * @param relationKey - Relationship name/key
-	 * @returns Relationship definition or undefined if not found
-	 */
-	private resolveRelationshipDef(entityKey: string, relationKey: string): any {
-		try {
-			const { resolveRelationship } = require('./include-conf.js');
-			return resolveRelationship(entityKey, relationKey);
-		} catch {
-			return undefined;
-		}
-	}
 	//#endregion ---------- /Include Processing ---------- 
 
 	//#region    ---------- Public Interface ---------- 
@@ -503,7 +151,7 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 	 */
 	@AccessRequires() // will force #sys only for baseDao
 	async getForSomeIds(utx: UserContext, ids: (I | undefined)[]): Promise<(E | undefined)[]> {
-		// first filter the none defined
+		// first filter() none defined
 		const definedIds = ids.filter(v => v !== undefined) as I[]; // help typing system
 		// NOTE: here we first of of id property, as per limitation of this API
 		const entities = await this.getForIds(utx, definedIds);
@@ -542,7 +190,8 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 	@Monitor()
 	@AccessRequires() // will force #sys only for baseDao
 	async first(utx: UserContext, data: Partial<E>): Promise<E | null> {
-		const { query } = await knexQuery({ utx, tableName: this.table });
+		const alias = 'main';
+		const { query } = await knexQuery({ utx, tableName: `${this.table} as ${alias}` });
 
 
 		const options = { filters: data, list_options: {limit: 1} } as (QueryOptions<E> & Q); // needs typing int
@@ -694,14 +343,14 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 
 
 	//#region    ---------- Query Processors ---------- 
-	protected completeQueryBuilder(utx: UserContext, query: Knex.QueryBuilder, queryOptions?: Q & CustomQuery): {nested: ExtendedIncludeProcessorOptions[], joins: any[]} {
+	// return nest Include Processor options
+	protected completeQueryBuilder(utx: UserContext, query: Knex.QueryBuilder, queryOptions?: Q & CustomQuery) : IncludeProcessorOptions | undefined{
 		const alias = 'main';
 		
 		// if this dao has a fixed column. 
 		if (this.columns) {
 			query.columns(this.columns);
 		}
-		const nested: ExtendedIncludeProcessorOptions[] = [];
 		const joins: any[] = [];
 
 		if (queryOptions) {
@@ -720,51 +369,25 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 
 			// Process includes if provided
 			const includes = queryOptions?.includes;
-			
+			let includeOptions: IncludeProcessorOptions | undefined = undefined;
 			if (includes) {
-				const includeResult = this.processIncludes(includes);
-				const { columns, joins: joinClauses, nested: nestedConfigs } = includeResult;
-				joins.push(...joinClauses);
-				nested.push(...nestedConfigs);
-
-				// Apply column selection if specified (otherwise use default columns logic in completeQueryBuilder)
-				if (columns.length > 0 && !(columns.length === 1 && columns[0] === '*')) {
-					query.column(columns.filter(col => col.indexOf(".") <= 0 || col.startsWith(`${alias}.`) ));
-				}
-
-				// When we have joins but no main table columns selected, automatically add default columns.
-				// This ensures proper nesting: joined table columns will have table aliases (e.g., "workspace.id")
-				// while main table columns won't (e.g., just "id"), allowing the parser to distinguish them.
-				// Without this, SELECT * would mix columns from both tables, causing nested data to appear at top level.
-				const hasMainColumns = columns.some(col => !col.includes('.') && col !== '*');
-				if (joins.length > 0 && !hasMainColumns && this.columns) {
-					// Add default main table columns to ensure proper structure
-					for (const col of this.columns) {
-						query.column(`${alias}.${col}`);
+				// Use buildIncludeProcessorOptions to get the complete options with targetColumns map
+				const entityKey = this.getEntity();
+				includeOptions = processIncludes(includes, entityKey, alias);
+				
+				// Build columns from targetColumns map (path-based structure)
+				for (const [path, cols] of Object.entries(includeOptions.targetRelationColumns)) {
+					for (const col of cols) {
+						// should include .
+						// For joined table columns, add column alias using format: ${alias}.${col} as ${path_col}
+						// The column already has alias.table format, we need to convert to path_col format
+						query.column(`${col} as ${path}_${col.split('.')[1]}`);
 					}
 				}
-
-				// Apply JOINs for belongsTo relationships
-				for (const join of joinClauses) {
-					query.leftJoin(
-						`${join.table} as ${join.as}`,
-						join.on.first,
-						join.on.operator,
-						join.on.second
-					);
-
-					// For belongsTo relationships, add column aliases with prefix to avoid name conflicts
-					// e.g., workspace.id -> workspace_id, workspace.name -> workspace_name
-					if (join.prefix) {
-						for (const col of columns) {
-							// Only add alias for columns that belong to this joined table
-							if (col.startsWith(`${join.as}.`)) {
-								const columnName = col.substring(`${join.as}.`.length);
-								const aliasName = `${join.prefix}${columnName}`;
-								query.column(`${col} as ${aliasName}`);
-							}
-						}
-					}
+				
+				// Build JOINs and nested configs for all belongsTo relationships
+				if (includeOptions.relationships) {
+					buildBelongsToQuery(query, includeOptions);
 				}
 			}
 
@@ -832,150 +455,4 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 	}
 	//#endregion ---------- /Query Processors ---------- 
 
-}
-
-function completeQueryFilter<E>(query: Knex.QueryBuilder, filter: QueryFilter<E>, table:string) {
-	for (const key in filter) {
-		const column = `${table}.${key}`;
-		// value to match
-		const value = filter[key];
-
-		// Check if value is an operator object (new format)
-		if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-			// New operator format: { "$eq": value } or { "$in": [val1, val2] }
-			const opValue = value as { [op: string]: Val | Val[] };
-			for (const op in opValue) {
-				const opVal = opValue[op];
-				applyOperator(query, column, op as Op, opVal);
-			}
-		}
-		// Handle simple value or null (backward compatibility)
-		else {
-			applyOperator(query, column, '$eq', value as Val);
-		}
-	}
-}
-
-
-function applyOperator(query: Knex.QueryBuilder, column: string, op: Op, value: Val | Val[]) {
-	switch (op) {
-		case '$eq':
-			if (value === null) {
-				query.whereNull(column);
-			} else {
-				query.where(column, value);
-			}
-			break;
-		case '$not':
-			if (value === null) {
-				query.whereNotNull(column);
-			} else {
-				query.whereNot(column, value);
-			}
-			break;
-		case '$in':
-			query.whereIn(column, value as Val[]);
-			break;
-		case '$notIn':
-			query.whereNotIn(column, value as Val[]);
-			break;
-		case '$contains':
-			query.where(column, 'like', `%${value}%`);
-			break;
-		case '$containsAny':
-			if (Array.isArray(value) && value.length > 0) {
-				query.andWhere(function () {
-					for (let i = 0; i < value.length; i++) {
-						this.orWhere(column, 'like', `%${value[i]}%`);
-					}
-				});
-			}
-			break;
-		case '$containsAll':
-			if (Array.isArray(value)) {
-				for (const v of value) {
-					query.where(column, 'like', `%${v}%`);
-				}
-			}
-			break;
-		case '$notContains':
-			query.whereNot(column, 'like', `%${value}%`);
-			break;
-		case '$notContainsAny':
-			if (Array.isArray(value) && value.length > 0) {
-				query.andWhere(function () {
-					for (let i = 0; i < value.length; i++) {
-						this.orWhereNot(column, 'like', `%${value[i]}%`);
-					}
-				});
-			}
-			break;
-		case '$startsWith':
-			query.where(column, 'like', `${value}%`);
-			break;
-		case '$startsWithAny':
-			if (Array.isArray(value) && value.length > 0) {
-				query.andWhere(function () {
-					for (let i = 0; i < value.length; i++) {
-						this.orWhere(column, 'like', `${value[i]}%`);
-					}
-				});
-			}
-			break;
-		case '$notStartsWith':
-			query.whereNot(column, 'like', `${value}%`);
-			break;
-		case '$notStartsWithAny':
-			if (Array.isArray(value) && value.length > 0) {
-				query.andWhere(function () {
-					for (let i = 0; i < value.length; i++) {
-						this.orWhereNot(column, 'like', `${value[i]}%`);
-					}
-				});
-			}
-			break;
-		case '$endsWith':
-			query.where(column, 'like', `%${value}`);
-			break;
-		case '$endsWithAny':
-			if (Array.isArray(value) && value.length > 0) {
-				query.andWhere(function () {
-					for (let i = 0; i < value.length; i++) {
-						this.orWhere(column, 'like', `%${value[i]}`);
-					}
-				});
-			}
-			break;
-		case '$notEndsWith':
-			query.whereNot(column, 'like', `%${value}`);
-			break;
-		case '$notEndsWithAny':
-			if (Array.isArray(value) && value.length > 0) {
-				query.andWhere(function () {
-					for (let i = 0; i < value.length; i++) {
-						this.orWhereNot(column, 'like', `%${value[i]}`);
-					}
-				});
-			}
-			break;
-		case '$lt':
-			query.where(column, '<', value);
-			break;
-		case '$lte':
-			query.where(column, '<=', value);
-			break;
-		case '$gt':
-			query.where(column, '>', value);
-			break;
-		case '$gte':
-			query.where(column, '>=', value);
-			break;
-		case '$null':
-			query.whereNull(column);
-			break;
-		default:
-			// For unknown operators, treat as equals (fallback for backward compatibility)
-			query.where(column, '=', value);
-			break;
-	}
 }

@@ -55,7 +55,9 @@ export interface EntityIncludeColumnsSpec {
  * - `true` indicates a relationship that should be auto-resolved from RELATIONSHIP_DEFS
  * - Object with nested relationships for deeper includes
  */
-export type IncludeRelationSpec = true | Record<string, boolean>;
+export interface IncludeRelationSpec {
+  [key: string]: boolean | IncludeRelationSpec;
+}
 
 /**
  * Schema containing all entity definitions.
@@ -67,7 +69,7 @@ export interface IncludeSchema {
 	/** Include columns for each entity */
 	entityIncludeColumns: Record<string, EntityIncludeColumnsSpec>;
 	/** Include specifications for each entity (simplified format) */
-	entityIncludeRelations: Record<string, Record<string, IncludeRelationSpec>>;
+	entityIncludeRelations: IncludeRelationSpec;
 }
 
 
@@ -177,7 +179,7 @@ const ENTITY_COLUMN_SPECS: Record<string, EntityIncludeColumnsSpec> = {
  * Relationship details (type, foreignKey, targetKeyCol) are auto-resolved from
  * RELATIONSHIP_DEFS based on the entityKey and relationKey pattern: ${entityKey}_${relationKey}
  */
-const ENTITY_INCLUDE_RELATION_SPECS: Record<string, Record<string, IncludeRelationSpec>> = {
+const ENTITY_INCLUDE_RELATION_SPECS: Record<string, IncludeRelationSpec> = {
 	org: {
 		wks: true,
 	},
@@ -230,7 +232,7 @@ export function getEntityIncludeColumns(key: string): EntityIncludeColumnsSpec {
  * @param key - Entity key
  * @returns Entity include specification
  */
-export function getEntityIncludeRelations(key: string): Record<string, IncludeRelationSpec> {
+export function getEntityIncludeRelations(key: string): IncludeRelationSpec {
 	const includes = ENTITY_INCLUDE_RELATION_SPECS[key];
 	if (!includes) {
 		throw new Error(`No include relation specification found for entity '${key}'`);
@@ -244,25 +246,11 @@ export function getEntityIncludeRelations(key: string): Record<string, IncludeRe
  * @param key - Relationship key (e.g., 'org_to_wks')
  * @returns Relationship definition
  */
-export function getRelationship(key: string): RelationshipDef {
-	const rel = RELATIONSHIP_DEFS[key];
+export function getRelationship(key: string, key1: string): RelationshipDef {
+	const keyRel = `${key}_to_${key1}`;
+	const rel = RELATIONSHIP_DEFS[keyRel];
 	if (!rel) {
-		throw new Error(`No relationship found with key '${key}'`);
+		throw new Error(`No relationship found with key '${keyRel}'`);
 	}
-	return rel;
-}
-
-/**
- * Resolve relationship definition for a given entity and relation.
- * Looks up the relationship from RELATIONSHIP_DEFS using the pattern: ${fromTable}_${toTable}
- * 
- * @param entityKey - Source entity table name (e.g., 'org')
- * @param relationKey - Relationship name/key (e.g., 'wks')
- * @returns Relationship definition
- * @throws Error if relationship definition is not found
- */
-export function resolveRelationship(entityKey: string, relationKey: string): RelationshipDef {
-	const relKey = `${entityKey}_${relationKey}`;
-	const rel = getRelationship(relKey);
 	return rel;
 }
