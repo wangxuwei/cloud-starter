@@ -1,17 +1,12 @@
-import { QueryOptions, RelationshipConfig, Wks } from '#shared/entities.js';
+import { QueryOptions, Wks } from '#shared/entities.js';
 import { Monitor } from '../perf.js';
 import { UserContext } from '../user-context.js';
 import { AccessRequires } from './access.js';
 import { OrgScopedDao } from './dao-org-scoped.js';
-import { PROJECT_COLUMNS } from './dao-project.js';
-import { projectDao } from './daos.js';
-import { IncludeProcessorOptions } from './include-utils.js';
 
-
-export const WKS_COLUMNS = Object.freeze(['id', 'cid', 'ctime', 'mid', 'mtime', 'name'] as const);
 
 export class WksDao extends OrgScopedDao<Wks, number, QueryOptions<Wks>> {
-	constructor() { super({ table: 'wks', stamped: true, allColumns: [...WKS_COLUMNS] }) }
+	constructor() { super({ table: 'wks', stamped: true }) }
 	
 	//#region    ---------- BaseDao Overrides ---------- 
 	@AccessRequires('a_admin', 'org_a_wks_manage')
@@ -42,41 +37,4 @@ export class WksDao extends OrgScopedDao<Wks, number, QueryOptions<Wks>> {
 		return super.remove(utx, ids);
 	}
 	//#endregion ---------- /BaseDao Overrides ---------- 
-
-
-	//#region    ---------- Include Processor Options ---------- 
-	protected getIncludeProcessorOptions(): IncludeProcessorOptions {
-		const baseOptions = super.getIncludeProcessorOptions();
-		return {
-			...baseOptions,
-			columnGroups: {
-				...baseOptions.columnGroups,
-				_details: ['id', 'name']
-			},
-			relationships: {
-				project: {
-					type: 'hasMany',
-					targetTable: 'project',
-					foreignKey: 'wksId',
-					targetKey: 'id',
-					as: 'p',
-					targetColumns: ['id', 'name'],
-					targetAllColumns: [...PROJECT_COLUMNS],
-					targetColumnGroups: {
-						_defaults: ['id', 'name']
-					},
-					targetStamped: true,
-					includes: {} // Empty object means use default columns from targetColumns
-				} as RelationshipConfig
-			}
-		};
-	}
-
-	protected getRelatedDao(relation: string) {
-		if (relation === 'project') {
-			return projectDao;
-		}
-		return null;
-	}
-	//#endregion ---------- /Include Processor Options ---------- 
 }

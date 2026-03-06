@@ -16,7 +16,7 @@ const ERROR = symbolDic(
 
 export const ORG_COLUMNS = Object.freeze(['id', 'cid', 'ctime', 'mid', 'mtime', 'name'] as const);
 
-/** OrgQueryOptions MUST defined the required OrgAccess for the query */
+/** OrgQueryOptions MUST defined that required OrgAccess for the query */
 export interface OrgQueryOptions extends QueryOptions<Org> {
 	access: OrgAccess
 }

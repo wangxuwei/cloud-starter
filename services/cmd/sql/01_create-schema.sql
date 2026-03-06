@@ -5,6 +5,7 @@
 -- Global user roles
 CREATE TYPE user_role AS ENUM (
   'r_sys',
+  'r_admin',
   'r_user'
 );
 
