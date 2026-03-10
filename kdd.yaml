@@ -70,23 +70,24 @@ builders:
     when_file: ./package.json
     exec:
       cmd: npm
-      args: ["install", "--color"]     
+      args: ["install", "--color"]
   - name: tsc
     when_file: ./tsconfig.json
     exec:
       cmd: node_modules/.bin/tsc
       watch_args: ["-w"]
-  - name: rollup
-    when_file: ./rollup.config.js
-    replace: tsc # rollup has rollup-ts, so no need to do it twice
+  - name: rolldown
+    when_file: ./rolldown.config.js
+    replace: tsc # rolldown has ts, so no need to do it twice
     exec:
-      cmd: node_modules/.bin/rollup
-      args: ["-c"]
-      watch_args: ["-c", "-w"]
-  - name: pcss
-    when_file: ./pcss.config.js
+      cmd: node_modules/.bin/rolldown
+      args: ["-c", "rolldown.config.js"]
+      watch_args: ["-c", "rolldown.config.js", "-w"]
+  - name: css
+    when_file: ./build-css.js
     exec:
-      cmd: node_modules/.bin/pcss
+      cmd: node
+      args: ["./build-css.js"]
       watch_args: ["-w"]        
 
 versions:

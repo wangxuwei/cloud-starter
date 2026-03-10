@@ -1,6 +1,6 @@
 # Views Best Practices
 
-This document outlines the coding standards and best practices for TypeScript view components (`*.ts`) and PostCSS styles (`*.pcss`) in the frontend.
+This document outlines the coding standards and best practices for TypeScript view components (`*.ts`) and CSS styles (`*.css`) in the frontend.
 
 ## TypeScript Views (`.ts`)
 
@@ -272,9 +272,9 @@ import { Org } from 'shared/entities.js';
 import { asNum } from 'utils-min';
 ```
 
-Note: PCSS files are located in `frontends/web/pcss/views/` and are included by the build system. They do not require explicit imports in TypeScript files.
+Note: PCSS files are located in `frontends/web/css/views/` and are included by the build system. They do not require explicit imports in TypeScript files.
 
-## PostCSS Views (`.pcss`)
+## CSS Views (`.css`)
 
 ### Naming Conventions
 
@@ -282,7 +282,7 @@ Note: PCSS files are located in `frontends/web/pcss/views/` and are included by 
 - Use kebab-case matching the custom element name
 - Selector name should match the element tag name
 
-```pcss
+```css
 v-home {
     // styles
 }
@@ -297,7 +297,7 @@ v-images {
 - Be descriptive but concise
 - Prefix with element type when needed
 
-```pcss
+```css
 .card-org-add { }
 .media-add { }
 .show-menu { }
@@ -305,9 +305,9 @@ v-images {
 
 ### File Structure and Location
 
-PCSS files for views are now located in `frontends/web/pcss/views/` and named after the view (e.g., `v-home.pcss`). The styles are organized in a nested structure with `&` for children:
+PCSS files for views are now located in `frontends/web/css/views/` and named after the view (e.g., `v-home.css`). The styles are organized in a nested structure with `&` for children:
 
-```pcss
+```css
 v-home {
     padding: 2rem;
     
@@ -338,7 +338,7 @@ Benefits:
 #### Grid Layout
 Use CSS Grid for card layouts:
 
-```pcss
+```css
 section {
     display: grid;
     grid-template-columns: repeat(auto-fill, 16rem);
@@ -350,7 +350,7 @@ section {
 #### Flex Layout
 Use Flexbox for single-direction alignment:
 
-```pcss
+```css
 .header {
     display: flex;
     align-items: center;
@@ -362,7 +362,7 @@ Use Flexbox for single-direction alignment:
 
 Always use CSS custom properties (variables) for colors:
 
-```pcss
+```css
 &:hover {
     opacity: 1;
     c-symbol {
@@ -374,7 +374,7 @@ Always use CSS custom properties (variables) for colors:
 }
 ```
 
-Common color variables (defined in vars-colors.pcss):
+Common color variables (defined in vars-colors.css):
 - `var(--clr-prime)` - Primary color
 - `var(--clr-text)` - Text color
 - `var(--clr-bg)` - Background color
@@ -389,7 +389,7 @@ Use consistent spacing values:
 - `2rem` - Medium spacing (default)
 - `4rem` - Large spacing
 
-```pcss
+```css
 v-home {
     padding: 2rem;
     
@@ -404,7 +404,7 @@ v-home {
 
 Use `&` modifier for states:
 
-```pcss
+```css
 .card-org-add {
     opacity: .4;
     
@@ -422,7 +422,7 @@ Use `&` modifier for states:
 
 Use specific selectors for icons:
 
-```pcss
+```css
 .card {
     c-ico {
         width: 4rem;
@@ -439,7 +439,7 @@ Use specific selectors for icons:
 
 For images within cards:
 
-```pcss
+```css
 .card {
     section > img {
         width: 100%;
@@ -454,7 +454,7 @@ For images within cards:
 ### Add Card Pattern
 For "Add New" cards:
 
-```pcss
+```css
 .card-add {
     cursor: pointer;
     display: grid;
@@ -482,7 +482,7 @@ For "Add New" cards:
 ### Card Pattern
 For content cards:
 
-```pcss
+```css
 .card {
     cursor: pointer;
     display: block;
@@ -504,7 +504,7 @@ For content cards:
 - [ ] Comments are meaningful and properly formatted
 - [ ] Route change events handled for navigation-dependent views
 
-### PostCSS
+### CSS
 - [ ] Element selector matches custom element name
 - [ ] Nested structure with `&` for hierarchy
 - [ ] Colors use CSS variables (`var(--clr-*)`)
@@ -512,5 +512,5 @@ For content cards:
 - [ ] State modifiers use `&:hover`, `&:active`, etc.
 - [ ] Grid layout for card grids
 - [ ] Images use `object-fit: contain` or `cover`
-- [ ] Files are located in `frontends/web/pcss/views/`
-- [ ] File naming matches view name (e.g., `v-home.pcss`)
+- [ ] Files are located in `frontends/web/css/views/`
+- [ ] File naming matches view name (e.g., `v-home.css`)

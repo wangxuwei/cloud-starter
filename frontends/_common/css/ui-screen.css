@@ -10,7 +10,10 @@ main > .screen{
 		align-items: center;
 
 		h1{
-			@mixin typo-h2{};
+			font-size: var(--txt-h2-size);
+			line-height: var(--txt-h2-height);
+			letter-spacing: var(--txt-h2-spacing);
+			font-weight: var(--txt-h2-weight);
 		}
 
 		.tab-bar{

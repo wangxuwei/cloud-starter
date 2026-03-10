@@ -10,7 +10,10 @@
 	outline: none; 
 
 	& > header{
-		@mixin typo-h3{};
+		font-size: var(--txt-h3-size);
+		line-height: var(--txt-h3-height);
+		letter-spacing: var(--txt-h3-spacing);
+		font-weight: var(--txt-h3-weight);
 		padding: 0 1rem;
 		display: grid;
 

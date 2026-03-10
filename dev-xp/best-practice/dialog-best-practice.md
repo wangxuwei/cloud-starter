@@ -1,6 +1,6 @@
 # Dialog Best Practices
 
-This document outlines the coding standards and best practices for TypeScript dialog components (`dg-*.ts`) and PostCSS styles (`dg-*.pcss`) in the frontend.
+This document outlines the coding standards and best practices for TypeScript dialog components (`dg-*.ts`) and CSS styles (`dg-*.css`) in the frontend.
 
 ## TypeScript Dialogs (`dg-*.ts`)
 
@@ -266,13 +266,13 @@ import { DgDialog } from '../dialog/dg-dialog.js';
 const { assign } = Object;
 ```
 
-## PostCSS Dialogs (`dg-*.pcss`)
+## CSS Dialogs (`dg-*.css`)
 
 ### Element Selectors
 - Use kebab-case matching the custom element name
 - Selector name should match the element tag name
 
-```pcss
+```css
 dg-org-add {
     // styles
 }
@@ -286,7 +286,7 @@ dg-wks-add {
 
 Use `::slotted()` to style the dialog content wrapper:
 
-```pcss
+```css
 dg-example-add {
     ::slotted(.dialog-content) {
         display: grid;
@@ -309,7 +309,7 @@ Properties to include:
 
 Ensure form inputs within dialog content are properly styled:
 
-```pcss
+```css
 dg-example-add {
     ::slotted(.dialog-content) {
         d-input {
@@ -450,7 +450,7 @@ export class ProjectsView extends BaseViewElement {
 - [ ] Content defined as `html` template literal constant
 - [ ] `init()` uses `document.importNode()` with template
 
-### PostCSS
+### CSS
 - [ ] Element selector matches custom element name
 - [ ] Content uses grid layout with proper spacing
 - [ ] Form inputs properly styled within content

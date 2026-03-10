@@ -108,7 +108,7 @@ button, a.button{
 }
 
 button.main-button{
-	@mixin elev-4{};
+	box-shadow: var(--elev-4);
 	background: var(--clr-prime);
 	color: white;
 	width: 5rem;
@@ -128,10 +128,10 @@ button.main-button{
 	
 	&:hover:not(:disabled):not(.disabled){
 		background: var(--clr-prime);
-		@mixin elev-8{};
+		box-shadow: var(--elev-8);
 	}
 	&:active:not(:disabled):not(.disabled){
-		@mixin elev-1{};
+		box-shadow: var(--elev-1);
 		background: var(--clr-prime);
 		color: red;
 	} 

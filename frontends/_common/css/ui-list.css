@@ -5,7 +5,10 @@ ul, li{
 
 ul{
 	li, a{
-		@mixin typo-label{};
+		font-size: var(--txt-label-size);
+		line-height: var(--txt-label-height);
+		letter-spacing: var(--txt-label-spacing);
+		font-weight: var(--txt-label-weight);
 		line-height: 1.4;
 		padding: 1rem .5rem;
 	}

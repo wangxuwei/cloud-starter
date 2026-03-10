@@ -11,7 +11,10 @@ v-nav{
 	background-color: var(--bkg-nav);
 	display: flex;	
 	a{ 
-		@mixin typo-h4{};
+		font-size: var(--txt-h4-size);
+		line-height: var(--txt-h4-height);
+		letter-spacing: var(--txt-h4-spacing);
+		font-weight: var(--txt-h4-weight);
 		font-weight: 400;
 		height: 2.5rem;
 		color: var(txt);

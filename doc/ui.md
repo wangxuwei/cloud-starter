@@ -289,19 +289,19 @@ All Web UI applications source code is structured the following way:
 
 - **services/web-server/web-folder** For each web application, we have a corresponding service (backend) web server with a _web-folder/_ which will be the output directory for the _js_ and _css_ files, as well as root _index.html_ files. 
 
-- **frontends/web/** The _web_ client source code (.ts, .pcss, .tmpl) is located in the _frontends/_ folder structxure with the name of the web app (note: first one being often just 'web', hend the _frontends/web/_)
+- **frontends/web/** The _web_ client source code (.ts, .css, .tmpl) is located in the _frontends/_ folder structxure with the name of the web app (note: first one being often just 'web', hend the _frontends/web/_)
 
-- UI code used **TypeScript (.ts)** for all logic code, **PostCSS (.pcss)** for all styling code, **Handlebars (.tmpl)** for most templating code beside inline templating for Custom Elements. TypeScript files will be processed by [Rollup](https://github.com/rollup/rollup) with the typing
+- UI code used **TypeScript (.ts)** for all logic code, **CSS (.css)** for all styling code, **Handlebars (.tmpl)** for most templating code beside inline templating for Custom Elements. TypeScript files will be processed by [Rollup](https://github.com/rollup/rollup) with the typing
 
 - UI Code structure, below the **frontends/web/**, follows the following code layout:
 
-  - **`src/_pcss/*.pcss`** Those are the base css files from mixins, CSS Vars, to base styling for the web applications. The folder is prefixed by `_` so that it ran first by the postCSS processor without extra configuration.
+  - **`src/_css/*.css`** Those are the base css files from mixins, CSS Vars, to base styling for the web applications. The folder is prefixed by `_` so that it ran first by the CSS processor without extra configuration.
 
   - **`src/ts/*.ts`** All of the main/base TypeScript files for the application level logic and cross view utilities (e.g., `main.ts` to start the app, `ajax.ts` for ajax wrapper, etc...)
 
-  - **`src/views/**/*.[ts/pcss/tmpl]`** All of the views asset, typsically starting by `v-view-name.ts` and . 
+  - **`src/views/**/*.[ts/css/tmpl]`** All of the views asset, typsically starting by `v-view-name.ts` and . 
     - ALL file name are LOWERCASE, and split with `-` character, typcially starting with `v-` such as `v-view-name.ts`.
-    - Typically a matching name file for postCss is created such as `v-view-name.pcss`
+    - Typically a matching name file for postCss is created such as `v-view-name.css`
     - When templates for the component is relatively big, we can can put it in another file `v-view-name.tmpl` which will be accessbile as handlebars template (accessible with `render('v-view-name', data)`. 
 
 

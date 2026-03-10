@@ -30,7 +30,7 @@ npm run recreateDb
 ## REPL Dev
 
 `npm run watch` will rebuild and restart the server and what each service and compile and restart as appropriate: 
-- When `web/ .js, .pcss, .tmpl` the approriate web source will be rebuilt and the app can just be reloaded in the browser. 
+- When `web/ .js, .css, .tmpl` the approriate web source will be rebuilt and the app can just be reloaded in the browser. 
 - When `services/cmd-pod/sql/*.sql` file changes, the `cmd-pod` service will be called to recreate the db. 
 - When `services/web-server/**/*.ts` changes, they will be compile and the server will be restart (in debug mode, i.e., with `--inspect`) so that vscode can bind to it if needed. 
 

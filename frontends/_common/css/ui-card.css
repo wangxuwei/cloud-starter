@@ -8,7 +8,10 @@
 	grid-template-rows: auto 1fr auto;
 
 	& > header{
-		@mixin typo-h3{}; /* This is for inline header, when no h5/h6 */
+		font-size: var(--txt-h3-size);
+		line-height: var(--txt-h3-height);
+		letter-spacing: var(--txt-h3-spacing);
+		font-weight: var(--txt-h3-weight);
 		display: grid;
 		grid-template-columns: 2rem 1fr 1rem;
 		padding: 1rem;
@@ -24,7 +27,10 @@
 		}
 
 		h3{
-			@mixin typo-sub1{};
+			font-size: var(--txt-sub1-size);
+			line-height: var(--txt-sub1-height);
+			letter-spacing: var(--txt-sub1-spacing);
+			font-weight: var(--txt-sub1-weight);
 			color: var(--txt-L3);
 			grid-column: 1 / 3;
 			grid-row: 2;
@@ -42,7 +48,10 @@
 	}
 
 	& > section{
-		@mixin typo-body1{};
+		font-size: var(--txt-body1-size);
+		line-height: var(--txt-body1-height);
+		letter-spacing: var(--txt-body1-spacing);
+		font-weight: var(--txt-body1-weight);
 		padding: 0 1rem 8px 1rem;
 	}
 

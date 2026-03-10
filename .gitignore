@@ -30,10 +30,11 @@ package-lock.json
 
 # By default those files are compile output
 *.js
-!pcss.config.js
-!rollup.config.js
+!build-css.js
+!rolldown.config.js
 !sprite-demo.js
 *.css
+!frontends/**/*.css
 !sprite-demo.css
 *.map 
 

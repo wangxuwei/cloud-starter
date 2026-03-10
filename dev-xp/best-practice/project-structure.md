@@ -32,7 +32,7 @@ Contains code shared by all services and frontends. This includes:
 Contains common code used by all frontends (admin and web).
 
 - **CSS/PCSS**: Shared styles and UI components
-  - `pcss/` - Common PCSS files (typography, buttons, cards, dialogs, forms, navigation, etc.)
+  - `css/` - Common PCSS files (typography, buttons, cards, dialogs, forms, navigation, etc.)
   - Mixins for elevations, typography, and utilities
   - UI component styles
 
@@ -54,7 +54,7 @@ Contains common code used by all frontends (admin and web).
 Admin interface for managing the platform.
 
 - **CSS/PCSS**: Admin-specific styles
-  - `pcss/` - Admin styles (base, colors, login view)
+  - `css/` - Admin styles (base, colors, login view)
 
 - **Source**: Admin application code
   - `src/main.ts` - Main entry point
@@ -62,7 +62,7 @@ Admin interface for managing the platform.
 
 - **Configuration**
   - `rollup.config.js` - Bundler configuration
-  - `pcss.config.js` - PostCSS configuration
+  - `build-css.js` - css configuration
   - `tsconfig.json` - TypeScript configuration
 
 ### frontends/web
@@ -70,7 +70,7 @@ Admin interface for managing the platform.
 Main web application for users.
 
 - **CSS/PCSS**: Web application styles
-  - `pcss/` - Web styles (base, colors, dialog, views)
+  - `css/` - Web styles (base, colors, dialog, views)
   - View-specific styles: home, images, videos, projects, timeline, etc.
 
 - **Source**: Web application code
@@ -88,7 +88,7 @@ Main web application for users.
 
 - **Configuration**
   - `rollup.config.js` - Bundler configuration
-  - `pcss.config.js` - PostCSS configuration
+  - `build-css.js` - css configuration
   - `tsconfig.json` - TypeScript configuration
 
 ## Services
@@ -316,7 +316,7 @@ services/* (admin-server, web-server, cmd, vid-init, vid-scaler)
 
 - All file and folder names use lowercase with hyphens for multi-word names
 - TypeScript files use `.ts` extension
-- CSS files use `.pcss` extension (PostCSS)
+- CSS files use `.css` extension
 - Configuration files use descriptive names with `.config.js` extension
 - Test files use `.spec.ts` extension
 - SQL files use numeric prefixes for execution order (00_, 01_, 02_)

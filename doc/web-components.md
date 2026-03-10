@@ -9,7 +9,7 @@ With the deprecation of IE11 and Edge move to Google Chrome, Native **WebCompone
 
 - **Custom Elements** have simple and very robust browser support to efficiently componentized the application custom elements.
 
-- **shadowDom** (not yet) unfortunately _shadowDOM_ styling opacity model adds quite a bit of complexity to application styling, especially for those that want to use great tooling like postCSS. For now, we will start developing the component without _shadowDOM_ first, but we will be following the best practices so that we can adopt it once we have integrated postCSS into our dev cycle (probably with .cpcss, which will be component css put in the templates.js and can be retrieved by appTemplates.css.templateName).
+- **shadowDom** (not yet) unfortunately _shadowDOM_ styling opacity model adds quite a bit of complexity to application styling, especially for those that want to use great tooling like postCSS. For now, we will start developing the component without _shadowDOM_ first, but we will be following the best practices so that we can adopt it once we have integrated postCSS into our dev cycle (probably with .ccss, which will be component css put in the templates.js and can be retrieved by appTemplates.css.templateName).
 
 - **Templates** This is another thing that can be useful, although HTML Templates are not as expressive as handlebars. For now, we will either use inline **string literals** or use the handlebars. Also, Web Components are for atomic components and will be mostly ts/CSS, as the templating needs are more on the view.  
 

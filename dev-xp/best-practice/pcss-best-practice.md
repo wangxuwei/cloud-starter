@@ -1,6 +1,6 @@
 # PCSS Best Practices
 
-This document outlines the best practices for writing PCSS (PostCSS with nesting) in this project.
+This document outlines the best practices for writing CSS (with nesting) in this project.
 
 ## Class Naming Conventions
 
@@ -35,30 +35,30 @@ This document outlines the best practices for writing PCSS (PostCSS with nesting
 
 ### File Naming
 
-- Use **lowercase** with **hyphens** (e.g., `ui-button.pcss`, `v-main.pcss`)
+- Use **lowercase** with **hyphens** (e.g., `ui-button.css`, `v-main.css`)
 - Prefix files based on their purpose:
-  - `ui-*.pcss` - Common UI component styles
-  - `v-*.pcss` - View-specific styles
-  - `dg-*.pcss` - Dialog styles
-  - `vars-*.pcss` - Variable definitions
-  - `mixins-*.pcss` - Mixin definitions
+  - `ui-*.css` - Common UI component styles
+  - `v-*.css` - View-specific styles
+  - `dg-*.css` - Dialog styles
+  - `vars-*.css` - Variable definitions
+  - `mixins-*.css` - Mixin definitions
 
 ### Recommended File Organization
 
 ```
 frontends/
-  _common/pcss/
-    ui-*.pcss          # Common UI components
-    vars-*.pcss        # Variables (colors, typography, etc.)
-    mixins-*.pcss      # Mixins
-  web/pcss/
-    base.pcss          # Base/reset styles
-    main.pcss          # Main entry point
-    vars-colors.pcss  # Color variables (overrides)
+  _common/css/
+    ui-*.css          # Common UI components
+    vars-*.css        # Variables (colors, typography, etc.)
+    mixins-*.css      # Mixins
+  web/css/
+    base.css          # Base/reset styles
+    main.css          # Main entry point
+    vars-colors.css  # Color variables (overrides)
     views/
-      v-*.pcss       # View-specific styles
+      v-*.css       # View-specific styles
     dialog/
-      dg-*.pcss      # Dialog-specific styles
+      dg-*.css      # Dialog-specific styles
 ```
 
 ## Writing PCSS
@@ -105,10 +105,10 @@ Use `&` for pseudo-classes and combinators:
 
 ### Define Colors in Variable Files
 
-Always define colors in a dedicated variable file (e.g., `vars-colors.pcss` or `common-colors.pcss`).
+Always define colors in a dedicated variable file (e.g., `vars-colors.css` or `common-colors.css`).
 
 ```css
-/* vars-colors.pcss */
+/* vars-colors.css */
 :root {
   /* Primary colors */
   --color-primary: #3b82f6;
@@ -158,7 +158,7 @@ Always use CSS custom properties for colors:
 Define typography in a separate variables file:
 
 ```css
-/* vars-typo.pcss */
+/* vars-typo.css */
 :root {
   --font-family-base: 'Open Sans', sans-serif;
   --font-family-heading: 'Open Sans', sans-serif;
@@ -188,19 +188,19 @@ Organize imports in this order:
 
 ```css
 /* 1. Variables */
-@import '../common/pcss/vars-typo.pcss';
-@import '../common/pcss/vars-elev.pcss';
+@import '../common/css/vars-typo.css';
+@import '../common/css/vars-elev.css';
 
 /* 2. Mixins */
-@import '../common/pcss/mixins-typography.pcss';
-@import '../common/pcss/mixins-utils.pcss';
+@import '../common/css/mixins-typography.css';
+@import '../common/css/mixins-utils.css';
 
 /* 3. Base/Reset styles */
-@import './base.pcss';
+@import './base.css';
 
 /* 4. Component styles */
-@import '../common/pcss/ui-button.pcss';
-@import '../common/pcss/ui-card.pcss';
+@import '../common/css/ui-button.css';
+@import '../common/css/ui-card.css';
 ```
 
 ## Component Style Pattern
@@ -249,7 +249,7 @@ Follow this pattern when writing component styles:
 Create reusable mixins for common patterns:
 
 ```css
-/* mixins-utils.pcss */
+/* mixins-utils.css */
 @mixin flex-center {
   display: flex;
   align-items: center;
@@ -310,7 +310,7 @@ Use CSS variables for breakpoints when needed:
 Use a predefined z-index scale to avoid z-index wars:
 
 ```css
-/* vars-elev.pcss */
+/* vars-elev.css */
 :root {
   --z-index-dropdown: 100;
   --z-index-sticky: 200;

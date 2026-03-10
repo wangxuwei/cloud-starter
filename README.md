@@ -44,7 +44,7 @@ The key code structure is as follow:
 
 - **frontends/** is the base folder that contains all of the various client frontends. There is usually a 1-1 mapping between the back-end server (in the `services/**` folder) with a `frontends/**` html/ts/css source for web applications.  During the build process, each front-end distribution file (e.g., `app-bundle.js`) will be written into the corresponding server. For example, the `frontends/web/**` bundle files, such as `app-bundle.js`), will be copied in the web application folder `services/web-server/web-folder/` directory.
 
-- **kdd.yaml** is the description file of all of the various resources that need to be built and deployed. It just streamline docker, kubernetes, and allow custom build executors to integrate with rollup, pcss, typescript, and any other compilers.
+- **kdd.yaml** is the description file of all of the various resources that need to be built and deployed. It just streamline docker, kubernetes, and allow custom build executors to integrate with rollup, css, typescript, and any other compilers.
 
 
 ## Key Tech Stack
@@ -58,7 +58,7 @@ For more information, see [Architecture - Tech Stack](doc/arch.md#TechStack)
   - `Rust` When GC based language not appropriate (should be an exception). 
   - `Python` For Machine Learning model scripting.
 - **Database:** `Postgresql` (robust, mature, advanced, with no-sql capability with jsonb)
-- **Web:** `TypeScript`, `PostCss`, [Rollup](https://www.npmjs.com/package/rollup) ([dom-native](https://github.com/dom-native/dom-native) Dom Centric MVC. simple scale better, used right the DOM is a solid foundation for building large application UIs))
+- **Web:** `TypeScript`, `lightningcss`, [Rolldown](https://www.npmjs.com/package/rolldown) ([dom-native](https://github.com/dom-native/dom-native) Dom Centric MVC. simple scale better, used right the DOM is a solid foundation for building large application UIs))
 - **IDE:** `VSCode` (best in class productivity with **TypeScript**, robust, fast, extensible with an amazing community). 
 
 
