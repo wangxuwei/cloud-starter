@@ -84,11 +84,11 @@ builders:
       args: ["-c", "rolldown.config.js"]
       watch_args: ["-c", "rolldown.config.js", "-w"]
   - name: css
-    when_file: ./build-css.js
+    when_file: ./lightningcss.config.js
     exec:
       cmd: node
-      args: ["./build-css.js"]
-      watch_args: ["-w"]        
+      args: ["./lightningcss.config.js"]
+      watch_args: ["./lightningcss.config.js", "-w"]    
 
 versions:
   - val: __version__\s*[=:]\s*["](.*)['"]

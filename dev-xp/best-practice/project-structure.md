@@ -62,7 +62,7 @@ Admin interface for managing the platform.
 
 - **Configuration**
   - `rollup.config.js` - Bundler configuration
-  - `build-css.js` - css configuration
+  - `lightningcss.config.js` - css configuration
   - `tsconfig.json` - TypeScript configuration
 
 ### frontends/web
@@ -88,7 +88,7 @@ Main web application for users.
 
 - **Configuration**
   - `rollup.config.js` - Bundler configuration
-  - `build-css.js` - css configuration
+  - `lightningcss.config.js` - css configuration
   - `tsconfig.json` - TypeScript configuration
 
 ## Services

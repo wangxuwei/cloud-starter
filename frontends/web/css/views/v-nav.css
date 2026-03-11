@@ -17,7 +17,7 @@ v-nav{
 		font-weight: var(--txt-h4-weight);
 		font-weight: 400;
 		height: 2.5rem;
-		color: var(txt);
+		color: var(--txt);
 		margin-bottom: 1rem;
 		display: grid;
 		grid-auto-columns: .25rem .75rem 1.5rem 1rem 1fr;

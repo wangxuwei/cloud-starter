@@ -30,11 +30,13 @@ package-lock.json
 
 # By default those files are compile output
 *.js
-!build-css.js
+!lightningcss.config.js
 !rolldown.config.js
 !sprite-demo.js
 *.css
-!frontends/**/*.css
+!frontends/_common/css/**/*.css
+!frontends/web/css/**/*.css
+!frontends/admin/css/**/*.css
 !sprite-demo.css
 *.map 
 

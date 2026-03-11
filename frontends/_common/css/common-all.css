@@ -1,4 +1,4 @@
-/* @import '@dom-native/ui/css/all.css'; */
+@import '../../../node_modules/@dom-native/ui/dist/css/ui.css';
 @import './fonts.css';
 @import './vars-elev.css';
 @import './d-ui.css';

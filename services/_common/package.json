@@ -15,24 +15,24 @@
   "license": "ISC",
   "dependencies": {
     "@backlib/koa": "^0.6.0",
-    "ajv": "^8.17.1",
+    "ajv": "^8.18.0",
     "backlib": "^0.6.0",
     "cloud-bucket": "^0.5.0",
     "execa": "^9.6.1",
     "fs-aux": "^0.2.0",
-    "ioredis": "^5.9.2",
+    "ioredis": "^5.10.0",
     "knex": "^3.1.0",
     "koa-body": "^7.0.1",
     "koa-send": "^5.0.1",
     "koa-static": "^5.0.0",
-    "pg": "^8.17.2",
+    "pg": "^8.20.0",
     "redstream": "^0.3.0",
     "useragent": "^2.3.0",
     "utils-min": "^0.2.4",
     "typescript": "^5.9.3"
   },
   "devDependencies": {
-    "@types/formidable": "^3.4.6",
+    "@types/formidable": "^3.5.0",
     "@types/koa-static": "^4.0.4",
     "@types/useragent": "^2.3.4"
   }
