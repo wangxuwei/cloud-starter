@@ -13,7 +13,7 @@ const WATCH_GLOB = ['./css/', "../_common/css/"];
 const cssOutputDir = dirname(OUTPUT_FILE);
 
 const generateEntry = async () => {
-  const files = await glob(['css/**/*.css']);
+  const files = await glob(['css/**/*.css', '../_common/css/**/*.css']);
 
   const imports = files.map((file) => {
     const relativePath = relative('.', file);
@@ -49,9 +49,11 @@ async function build() {
     });
     mkdirSync(cssOutputDir, { recursive: true });
     writeFileSync(OUTPUT_FILE, code);
-    writeFileSync(join(cssOutputDir, "all-bundle.css.map"), map);
+    const outputMapFile = join(cssOutputDir, "all-bundle.css.map");
+    writeFileSync(outputMapFile, map);
 
     console.log(`Built: ${OUTPUT_FILE}`);
+    console.log(`Built: ${outputMapFile}`);
   } catch (error) {
     console.error('Build failed:', error);
   }

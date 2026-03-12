@@ -22,7 +22,7 @@ v-login{
 			font-weight: 100;
 		}
 
-		.content{
+		section.content{
 			background: var(--bkg-prime);
 			display: grid;
 			padding: 3rem 4rem 1rem 4rem;

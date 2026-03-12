@@ -116,27 +116,21 @@ async function watchService(serviceName: string, debugPort: string) {
     else {
       // kubectl set env deployment/cstar-web-server-dep KCTL_SET_ENV_TS=1657995576759
       await execa(
-        "",
+       "kubectl",
         ["set", "env", `deployment/${dep}`, `KCTL_SET_ENV_TS=${Date.now()}`],
         execaOpts
       );
     }
   }, 500);
 
-  watcher.on("change", async function (filePath: string) {
-    if (filePath.includes(NOT_RESTART_IF_PATH_HAS)) {
-      // console.log(`no restart because path contains ${NOT_RESTART_IF_PATH_HAS}`);
-    } else {
-      cr();
-    }
-  });
 
-  watcher.on("add", async function (filePath: string) {
-    if (filePath.includes(NOT_RESTART_IF_PATH_HAS)) {
-      // console.log(`no restart because path contains ${NOT_RESTART_IF_PATH_HAS}`);
-    } else {
+  const onFileEvent = async (filePath: string) => {
+    if (!filePath.includes(NOT_RESTART_IF_PATH_HAS)) {
       cr();
     }
-  });
+  };
+
+  watcher.on("change", onFileEvent);
+  watcher.on("add", onFileEvent);
   console.log(`-- started watching ${serviceName}`);
 }

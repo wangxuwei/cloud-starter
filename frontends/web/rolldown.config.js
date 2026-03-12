@@ -32,11 +32,7 @@ runTypeCheck();
 // 2. Dynamic Entry Generation (Glob)
 // -------------------------------------------------------
 const generateEntry = async () => {
-  const files = await glob('src/**/*.ts', {
-    ignore: [
-      'src/lib-bundle.js',
-    ]
-  });
+  const files = await glob('src/**/*.ts');
 
   const imports = files.map((file) => {
     const relativePath = relative('.', file);
