@@ -18,6 +18,7 @@ import {
   buildMainAndRelationColumns,
   loadNestEntity,
   parseNestRecord,
+  removeIdsIfNeed,
 } from "./options/include/query.js";
 
 export interface CustomQuery {
@@ -240,6 +241,7 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 
       // Load nested entities for hasMany/hasOne relationships
       await loadNestEntity(utx, entities, includeOptions);
+      removeIdsIfNeed(entities, includeOptions);
       return entities[0];
     } else {
       return this.parseRecords(records)[0];
@@ -353,6 +355,7 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
 
       // Load nested entities for hasMany/hasOne relationships
       await loadNestEntity(utx, entities, includeOptions);
+      removeIdsIfNeed(entities, includeOptions);
       return entities;
     } else {
       return this.parseRecords(records);

@@ -90,7 +90,7 @@ export type RelationshipType = "belongsTo" | "hasMany" | "hasOne";
  * - belongsTo: FK on source table
  * - hasOne: FK on target table
  */
-const RELATIONSHIP_DEFS: Record<string, RelationshipDef> = {
+const RELATIONSHIP_DEFS: Record<string, RelationshipDef> = Object.freeze({
   // org -> wks (one-to-many): FK on wks table
   org_to_wks: {
     fromTable: "org",
@@ -126,44 +126,45 @@ const RELATIONSHIP_DEFS: Record<string, RelationshipDef> = {
     foreignKey: "wksId",
     targetKey: "id",
   },
-};
+});
 
 // ============================================================================
 // Entity Include columns spec
 // ============================================================================
-const ENTITY_COLUMN_SPECS: Record<string, EntityIncludeColumnsSpec> = {
-  org: {
-    defaultColumns: ["id", "name"],
-    allColumns: ["id", "cid", "ctime", "mid", "mtime", "name"],
-    columnGroups: {
-      _defaults: ["id", "name"],
-      _stamped: ["id", "cid", "ctime", "mid", "mtime", "name"],
-      _timestamps: ["cid", "ctime", "mid", "mtime"],
+const ENTITY_COLUMN_SPECS: Record<string, EntityIncludeColumnsSpec> =
+  Object.freeze({
+    org: {
+      defaultColumns: ["id", "name"],
+      allColumns: ["id", "cid", "ctime", "mid", "mtime", "name"],
+      columnGroups: {
+        _defaults: ["id", "name"],
+        _stamped: ["id", "cid", "ctime", "mid", "mtime", "name"],
+        _timestamps: ["cid", "ctime", "mid", "mtime"],
+      },
+      stamped: true,
     },
-    stamped: true,
-  },
-  wks: {
-    defaultColumns: ["id", "name"],
-    allColumns: ["id", "cid", "ctime", "mid", "mtime", "name"],
-    columnGroups: {
-      _defaults: ["id", "name"],
-      _stamped: ["id", "cid", "ctime", "mid", "mtime", "name"],
-      _timestamps: ["cid", "ctime", "mid", "mtime"],
+    wks: {
+      defaultColumns: ["id", "name"],
+      allColumns: ["id", "cid", "ctime", "mid", "mtime", "name"],
+      columnGroups: {
+        _defaults: ["id", "name"],
+        _stamped: ["id", "cid", "ctime", "mid", "mtime", "name"],
+        _timestamps: ["cid", "ctime", "mid", "mtime"],
+      },
+      stamped: true,
     },
-    stamped: true,
-  },
-  project: {
-    defaultColumns: ["id", "name"],
-    allColumns: ["id", "cid", "ctime", "mid", "mtime", "name", "wksId"],
-    columnGroups: {
-      _defaults: ["id", "name"],
-      _details: ["id", "name", "wksId"],
-      _stamped: ["id", "cid", "ctime", "mid", "mtime", "name", "wksId"],
-      _timestamps: ["cid", "ctime", "mid", "mtime"],
+    project: {
+      defaultColumns: ["id", "name"],
+      allColumns: ["id", "cid", "ctime", "mid", "mtime", "name", "wksId"],
+      columnGroups: {
+        _defaults: ["id", "name"],
+        _details: ["id", "name", "wksId"],
+        _stamped: ["id", "cid", "ctime", "mid", "mtime", "name", "wksId"],
+        _timestamps: ["cid", "ctime", "mid", "mtime"],
+      },
+      stamped: true,
     },
-    stamped: true,
-  },
-};
+  });
 
 // ============================================================================
 // Entity Include Relation Specifications (Simplified Format)
@@ -177,22 +178,23 @@ const ENTITY_COLUMN_SPECS: Record<string, EntityIncludeColumnsSpec> = {
  * Relationship details (type, foreignKey, targetKeyCol) are auto-resolved from
  * RELATIONSHIP_DEFS based on the entityKey and relationKey pattern: ${entityKey}_${relationKey}
  */
-const ENTITY_INCLUDE_RELATION_SPECS: Record<string, IncludeRelationSpec> = {
-  org: {
+const ENTITY_INCLUDE_RELATION_SPECS: Record<string, IncludeRelationSpec> =
+  Object.freeze({
+    org: {
+      wks: {
+        project: true,
+      },
+    },
     wks: {
       project: true,
-    },
-  },
-  wks: {
-    project: true,
-    org: true,
-  },
-  project: {
-    wks: {
       org: true,
     },
-  },
-};
+    project: {
+      wks: {
+        org: true,
+      },
+    },
+  });
 
 // ============================================================================
 // Complete Schema
@@ -219,7 +221,7 @@ export const INCLUDE_SCHEMA: IncludeSchema = {
  * @returns Entity include Columns
  */
 export function getEntityIncludeColumns(key: string): EntityIncludeColumnsSpec {
-  const caps = { ...ENTITY_COLUMN_SPECS[key] };
+  const caps = JSON.parse(JSON.stringify(ENTITY_COLUMN_SPECS[key]));
   if (!caps) {
     throw new Error(`No include columns found for entity '${key}'`);
   }
@@ -233,7 +235,9 @@ export function getEntityIncludeColumns(key: string): EntityIncludeColumnsSpec {
  * @returns Entity include specification
  */
 export function getEntityIncludeRelations(key: string): IncludeRelationSpec {
-  const includes = { ...ENTITY_INCLUDE_RELATION_SPECS[key] };
+  const includes = JSON.parse(
+    JSON.stringify(ENTITY_INCLUDE_RELATION_SPECS[key])
+  );
   if (!includes) {
     throw new Error(
       `No include relation specification found for entity '${key}'`
@@ -250,7 +254,7 @@ export function getEntityIncludeRelations(key: string): IncludeRelationSpec {
  */
 export function getRelationship(key: string, key1: string): RelationshipDef {
   const keyRel = `${key}_to_${key1}`;
-  const rel = { ...RELATIONSHIP_DEFS[keyRel] };
+  const rel = JSON.parse(JSON.stringify(RELATIONSHIP_DEFS[keyRel]));
   if (!rel) {
     throw new Error(`No relationship found with key '${keyRel}'`);
   }

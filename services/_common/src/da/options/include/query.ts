@@ -39,6 +39,10 @@ export function buildMainAndRelationColumns(
     query.column(col);
   }
 
+  if (!options.targetColumns?.includes(`${options.alias}.id`)) {
+    query.column(`${options.alias}.id as id`);
+  }
+
   // Build columns from targetRelationColumns map (path-based structure)
   for (const [path, cols] of Object.entries(options.targetRelationColumns)) {
     for (const col of cols) {
@@ -163,6 +167,66 @@ export function parseNestRecord(
 }
 
 /**
+ * Recursively removes 'id' fields from entities if they are not included in targetColumns.
+ *
+ * @param entities - List of entities to process
+ * @param options - IncludeProcessorOptions containing targetColumns and relationships
+ */
+export function removeIdsIfNeed(
+  entities: any[],
+  options: IncludeProcessorOptions,
+  parentEntityKey: string = ""
+): void {
+  if (!entities || entities.length === 0 || !options) {
+    return;
+  }
+
+  const idColumn = `${options.alias}.id`;
+  let foreignColumn = "";
+  let shouldKeepIdForeign = true;
+  if (parentEntityKey) {
+    const relationship = getRelationship(parentEntityKey, options.entityKey!);
+    if (relationship && relationship.type !== "belongsTo") {
+      foreignColumn = relationship.foreignKey;
+      shouldKeepIdForeign = options.targetColumns.includes(
+        `${options.alias}.${relationship.foreignKey}`
+      );
+    }
+  }
+  const shouldKeepId = options.targetColumns.includes(idColumn);
+
+  for (const entity of entities) {
+    if (!entity) {
+      continue;
+    }
+
+    if (!shouldKeepId) {
+      delete entity.id;
+    }
+
+    if (!shouldKeepIdForeign && foreignColumn) {
+      delete entity[foreignColumn];
+    }
+
+    // Recursively process nested relationships
+    if (options.relationships) {
+      for (const [relName, relOptions] of Object.entries(
+        options.relationships
+      )) {
+        const nestedEntity = (entity as any)[relName];
+        if (nestedEntity) {
+          if (Array.isArray(nestedEntity)) {
+            removeIdsIfNeed(nestedEntity, relOptions, options.entityKey);
+          } else {
+            removeIdsIfNeed([nestedEntity], relOptions, options.entityKey);
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
  * Loads nested entities recursively using batch queries to avoid N+1 problem.
  * Handles hasMany, hasOne, and belongsTo relationships at any nesting depth.
  *
@@ -245,7 +309,7 @@ export async function loadNestEntity<E>(
 
         // Get the DAO for the target table
         const targetTable = relationOptions.table || relationKey;
-        const nestedDao = getDao(targetTable);
+        const nestedDao = await getDao(targetTable);
         if (!nestedDao) continue;
 
         // Build CustomQuery to avoid recursion in dao.list
@@ -253,9 +317,9 @@ export async function loadNestEntity<E>(
           custom: (query: Knex.QueryBuilder) => {
             buildMainAndRelationColumns(query, relationOptions);
 
-            query
-              .column(`${relationOptions.alias}.${foreignKey} as ${foreignKey}`)
-              .debug(true);
+            query.column(
+              `${relationOptions.alias}.${foreignKey} as ${foreignKey}`
+            );
             buildBelongsJoinToQuery(query, relationOptions);
           },
         };
@@ -317,16 +381,13 @@ export async function loadNestEntity<E>(
           // Create a map for quick lookup
           const entityMap = new Map<any, any>();
           for (let i = 0; i < allNestedEntities.length; i++) {
-            entityMap.set(
-              JSON.stringify(allNestedEntities[i]),
-              entitiesWithNested[i]
-            );
+            entityMap.set(allNestedEntities[i].id, entitiesWithNested[i]);
           }
 
           // Map back to parent entities with deeper nested data
           for (const [parentId, nestedList] of groupedByParent.entries()) {
             const entitiesWithDeeperNested = nestedList.map((nested) => {
-              const key = JSON.stringify(nested);
+              const key = nested.id;
               return entityMap.get(key) || nested;
             });
             groupedByParent.set(parentId, entitiesWithDeeperNested);
