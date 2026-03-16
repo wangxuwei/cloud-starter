@@ -37,6 +37,11 @@ import { BaseDco } from './dco-base.js';
 import { Wks, QueryOptions } from 'shared/entities.js';
 
 export const wksDco = new BaseDco<Wks, QueryOptions<Wks>>('Wks');
+import { BaseDco } from './dco-base.js';
+import { Wks } from 'shared/entities.js';
+import type { QueryOptions } from 'shared/query_options.js';
+
+export const wksDco = new BaseDco<Wks, QueryOptions<Wks>>('Wks');
 ```
 
 Use the entity name string exactly as it appears on the server side.
@@ -47,7 +52,8 @@ When you need special behavior (file uploads, custom methods, etc.), create a cl
 
 ```ts
 import { BaseDco, dcoHub } from './dco-base.js';
-import { Media, QueryOptions } from 'shared/entities.js';
+import { Media } from 'shared/entities.js';
+import type { QueryOptions } from 'shared/query_options.js';
 
 class MediaDao extends BaseDco<Media, QueryOptions<Media>> {
   constructor() {
@@ -175,7 +181,8 @@ Here is a complete example showing various DCO patterns:
 
 ```ts
 import { webRequest } from 'common/web-request.js';
-import { Media, QueryOptions } from 'shared/entities.js';
+import { Media } from 'shared/entities.js';
+import type { QueryOptions } from 'shared/query_options.js';
 import { BaseDco, dcoHub } from './dco-base.js';
 
 class MediaDao extends BaseDco<Media, QueryOptions<Media>> {

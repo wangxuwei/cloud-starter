@@ -1,4 +1,4 @@
-# PCSS Best Practices
+# CSS Best Practices
 
 This document outlines the best practices for writing CSS (with nesting) in this project.
 
@@ -41,8 +41,6 @@ This document outlines the best practices for writing CSS (with nesting) in this
   - `v-*.css` - View-specific styles
   - `dg-*.css` - Dialog styles
   - `vars-*.css` - Variable definitions
-  - `mixins-*.css` - Mixin definitions
-
 ### Recommended File Organization
 
 ```
@@ -50,7 +48,6 @@ frontends/
   _common/css/
     ui-*.css          # Common UI components
     vars-*.css        # Variables (colors, typography, etc.)
-    mixins-*.css      # Mixins
   web/css/
     base.css          # Base/reset styles
     main.css          # Main entry point
@@ -61,11 +58,9 @@ frontends/
       dg-*.css      # Dialog-specific styles
 ```
 
-## Writing PCSS
-
 ### Use Nesting Sparingly
 
-PCSS supports nesting
+supports nesting
 
 ```css
 /* Good - minimal nesting */
@@ -191,14 +186,11 @@ Organize imports in this order:
 @import '../common/css/vars-typo.css';
 @import '../common/css/vars-elev.css';
 
-/* 2. Mixins */
-@import '../common/css/mixins-typography.css';
-@import '../common/css/mixins-utils.css';
 
-/* 3. Base/Reset styles */
+/* 2. Base/Reset styles */
 @import './base.css';
 
-/* 4. Component styles */
+/* 3. Component styles */
 @import '../common/css/ui-button.css';
 @import '../common/css/ui-card.css';
 ```
@@ -241,41 +233,6 @@ Follow this pattern when writing component styles:
   &.card-elevated {
     box-shadow: var(--elevation-md);
   }
-}
-```
-
-## Mixins
-
-Create reusable mixins for common patterns:
-
-```css
-/* mixins-utils.css */
-@mixin flex-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-@mixin truncate {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-@mixin reset-button {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  font: inherit;
-}
-
-/* Usage */
-.icon-button {
-  @mixin reset-button;
-  @mixin flex-center;
-  width: 32px;
-  height: 32px;
 }
 ```
 
@@ -405,5 +362,4 @@ Only use `!important` as a last resort, typically for utility classes:
 - [ ] Use `&` for pseudo-classes and combinators
 - [ ] Keep selectors simple and specific
 - [ ] Group related properties
-- [ ] Use mixins for reusable patterns
 - [ ] Follow consistent file naming conventions

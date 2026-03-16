@@ -155,25 +155,6 @@ Foreign key on target table, loaded via batch query with single result.
 }
 ```
 
-### Many-to-Many
-
-Uses a junction/pivot table, loaded via batch query.
-
-```typescript
-{
-  type: 'hasMany',
-  targetTable: 'tag',
-  foreignKey: 'tagId',           // FK in junction table referencing target
-  junctionTable: 'project_tag',  // Junction/pivot table
-  junctionSourceKey: 'projectId',  // FK in junction table referencing source
-  junctionTargetKey: 'tagId'      // FK in junction table referencing target
-}
-```
-
-**Important**: For many-to-many relationships:
-- `foreignKey` refers to column in junction table that points to target table
-- `junctionSourceKey` is column in junction table that points to source entity (defaults to source PK name)
-- `junctionTargetKey` is column in junction table that points to target entity (defaults to `targetKey`)
 
 ## Column Groups
 
@@ -271,7 +252,7 @@ Order by a property. Prefix with `!` for descending order:
 
 ```json
 {
-  "$orderBy": "!ctime"
+  "$orderBy": "!priority"
 }
 ```
 
@@ -436,49 +417,6 @@ Result:
 }
 ```
 
-### Many-to-Many relationship
-
-```json
-{
-  "method": "user_list",
-  "params": {
-    "$includes": {
-      "_defaults": true,
-      "roles": {
-        "_defaults": true
-      }
-    }
-  }
-}
-```
-
-Configuration in DAO:
-```typescript
-{
-  type: 'hasMany',
-  targetTable: 'role',
-  foreignKey: 'roleId',
-  junctionTable: 'user_role',
-  junctionSourceKey: 'userId',
-  junctionTargetKey: 'roleId'
-}
-```
-
-Result:
-```json
-{
-  "data": [
-    {
-      "id": 1,
-      "username": "user1",
-      "roles": [
-        { "id": 1, "name": "Admin" },
-        { "id": 2, "name": "Editor" }
-      ]
-    }
-  ]
-}
-```
 
 ### Deep nesting
 
@@ -559,17 +497,12 @@ Result:
 3. **Limit nesting depth**: Deep nesting can impact performance
 4. **Select only needed columns**: Avoid selecting unused columns for better performance
 5. **Use belongsTo for single relations**: Prefer belongsTo over hasOne when possible (single query vs batch)
-6. **Use many-to-many sparingly**: Consider caching for frequently accessed many-to-many relations
 7. **Validate includes client-side**: Prevent invalid includes before sending requests
 
 ## Error Handling
 
 All include validation errors occur before SQL generation, providing clear error messages:
 
-- Invalid column names
-- Invalid group names
-- Invalid relationship names
-- Missing many-to-many configuration
 
 ```typescript
 // Example error

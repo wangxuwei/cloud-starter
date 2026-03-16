@@ -31,12 +31,10 @@ Contains code shared by all services and frontends. This includes:
 
 Contains common code used by all frontends (admin and web).
 
-- **CSS/PCSS**: Shared styles and UI components
-  - `css/` - Common PCSS files (typography, buttons, cards, dialogs, forms, navigation, etc.)
-  - Mixins for elevations, typography, and utilities
-  - UI component styles
+ - **CSS**: Shared styles and UI components
+   - `css/` - Common CSS files (typography, buttons, cards, dialogs, forms, navigation, etc.)
+   - Styles and utilities for elevations, typography, and UI components
 
-- **Source**: Common JavaScript/TypeScript code
   - `src/common-main.ts` - Main entry point for common code, initializes DOM, loads default icons from @dom-native/ui, loads SVG symbols, triggers APP_LOADED event
   - `src/dom-utils.ts` - DOM manipulation utilities, includes `firstCssWithPrefix` to extract class names with a prefix
   - `src/global-types.ts` - Global type definitions for HTMLElement (extra, origValue properties) and Window (__version__)
@@ -53,15 +51,13 @@ Contains common code used by all frontends (admin and web).
 
 Admin interface for managing the platform.
 
-- **CSS/PCSS**: Admin-specific styles
   - `css/` - Admin styles (base, colors, login view)
 
-- **Source**: Admin application code
   - `src/main.ts` - Main entry point
   - `src/views/v-admin-login.ts` - Login view
 
-- **Configuration**
-  - `rollup.config.js` - Bundler configuration
+ - `rolldown.config.js` - Bundler configuration
+ `rolldown.config.js` - Rolldown bundler configuration for TypeScript aggregation and bundling
   - `lightningcss.config.js` - css configuration
   - `tsconfig.json` - TypeScript configuration
 
@@ -69,11 +65,9 @@ Admin interface for managing the platform.
 
 Main web application for users.
 
-- **CSS/PCSS**: Web application styles
   - `css/` - Web styles (base, colors, dialog, views)
   - View-specific styles: home, images, videos, projects, timeline, etc.
 
-- **Source**: Web application code
   - `src/main.ts` - Main entry point
   - `src/components/` - Reusable UI components (c-ico, c-menu)
   - `src/dialog/` - Dialog implementations (dg-base-dialog, dg-dialog)
@@ -86,10 +80,13 @@ Main web application for users.
   - `src/dcos.ts` - Data components registry
   - `src/utils.ts` - Utility functions
 
-- **Configuration**
-  - `rollup.config.js` - Bundler configuration
+ - `rolldown.config.js` - Bundler configuration
+ `rolldown.config.js` - Rolldown bundler configuration for TypeScript aggregation and bundling
   - `lightningcss.config.js` - css configuration
   - `tsconfig.json` - TypeScript configuration
+ - `rolldown.config.js` - Rolldown bundler configuration for TypeScript aggregation and bundling
+ - `lightningcss.config.js` - CSS configuration
+ - `tsconfig.json` - TypeScript configuration
 
 ## Services
 
@@ -107,6 +104,13 @@ Contains common code shared by all backend services (admin-server, web-server, c
     - `access.ts` - `@AccessRequires` decorator for method-level access control, supports global access, org access, and entity match patterns (`@id`, `@cid`, `@userId`)
     - `access-org.ts` - Organization role management, `saveOrgRole` and `getOrgAccesses` functions
     - `access-wks.ts` - Workspace access functions (referenced)
+
+ - **Options**:
+   - `include/` - Include query logic and configuration for JOQL $include functionality
+     - `conf.ts` - Centralized include schema, relationship definitions, entity columns, and DAO mappings
+     - `processor.ts` - Include processor options interface and type definitions
+     - `query.ts` - Include query building and loading logic (JOINs for belongsTo, batch queries for hasMany/hasOne)
+   - `filter/` - Filter options processing (index.ts)
 
   - **Data Access Objects (DAOs)**:
     - `dao-base.ts` - Base DAO class with CRUD operations, query building, stamping, and record processing

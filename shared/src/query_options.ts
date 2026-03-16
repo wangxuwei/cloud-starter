@@ -84,10 +84,11 @@ export interface ListOptions {
 /**
  * Query options for entity queries.
  * Provides filtering, including, and pagination capabilities.
- * The includes property uses backend-specific types defined in include-utils.
+ * The includes property is processed by the backend include processor.
  */
 export interface QueryOptions<E> {
 	filters?: QueryFilter<E>[] | QueryFilter<E>;
 	includes?: IncludeObject;
 	list_options?: ListOptions;
+
 }
