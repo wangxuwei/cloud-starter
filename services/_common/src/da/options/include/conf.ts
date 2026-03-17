@@ -32,6 +32,14 @@ export interface RelationshipDef {
   foreignKey: string;
   /** Primary key column on target table (defaults to 'id') */
   targetKey?: string;
+  /** Pivot table name (required for manyToMany relationships) */
+  pivotTable?: string;
+  /** Foreign key column on pivot table pointing to source entity */
+  pivotSourceKey?: string;
+  /** Foreign key column on pivot table pointing to target entity */
+  pivotTargetKey?: string;
+  /** Columns to select from the pivot table (e.g., ['role', 'joinedAt']) */
+  pivotColumns?: string[];
 }
 
 /**
@@ -77,7 +85,11 @@ export interface IncludeSchema {
  * - 'hasMany': One-to-many relationship (foreign key on related entity)
  * - 'hasOne': One-to-one relationship (foreign key on related entity)
  */
-export type RelationshipType = "belongsTo" | "hasMany" | "hasOne";
+export type RelationshipType =
+  | "belongsTo"
+  | "hasMany"
+  | "hasOne"
+  | "manyToMany";
 
 // ============================================================================
 // Relationship Definitions (Direct Database Relationships)
@@ -126,6 +138,19 @@ const RELATIONSHIP_DEFS: Record<string, RelationshipDef> = Object.freeze({
     foreignKey: "wksId",
     targetKey: "id",
   },
+
+  // user -> org (many-to-many): via user_org pivot table
+  user_to_org: {
+    fromTable: "user",
+    toTable: "org",
+    type: "manyToMany",
+    // FKs are on pivot table
+    foreignKey: "", // Not used for manyToMany, pivot keys are used
+    pivotTable: "user_org",
+    pivotSourceKey: "userId",
+    pivotTargetKey: "orgId",
+    pivotColumns: ["role"],
+  },
 });
 
 // ============================================================================
@@ -164,6 +189,16 @@ const ENTITY_COLUMN_SPECS: Record<string, EntityIncludeColumnsSpec> =
       },
       stamped: true,
     },
+    user: {
+      defaultColumns: ["id", "username"],
+      allColumns: ["id", "cid", "ctime", "mid", "mtime", "username"],
+      columnGroups: {
+        _defaults: ["id", "username"],
+        _stamped: ["id", "cid", "ctime", "mid", "mtime", "username"],
+        _timestamps: ["cid", "ctime", "mid", "mtime"],
+      },
+      stamped: true,
+    },
   });
 
 // ============================================================================
@@ -193,6 +228,9 @@ const ENTITY_INCLUDE_RELATION_SPECS: Record<string, IncludeRelationSpec> =
       wks: {
         org: true,
       },
+    },
+    user: {
+      org: {},
     },
   });
 

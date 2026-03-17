@@ -362,42 +362,6 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
     }
   }
 
-  @Monitor()
-  @AccessRequires() // will force #sys only for baseDao
-  async listByProcessor(
-    utx: UserContext,
-    includeProcessor: IncludeProcessorOptions,
-    queryOptions?: Q & CustomQuery
-  ): Promise<E[]> {
-    const alias = includeProcessor.alias;
-    const { query } = await knexQuery({
-      utx,
-      tableName: `${this.table} as ${alias}`,
-    });
-
-    const includeOptions = await this.completeQueryBuilder(
-      utx,
-      query,
-      queryOptions,
-      alias
-    );
-    const records = (await query.then()) as any[];
-
-    // Parse nested records from JOINed tables
-    if (includeOptions) {
-      const parsedRecords = records.map((r) =>
-        parseNestRecord(r, includeOptions)
-      );
-      const entities = this.parseRecords(parsedRecords);
-
-      // Load nested entities for hasMany/hasOne relationships
-      await loadNestEntity(utx, entities, includeOptions);
-      return entities;
-    } else {
-      return this.parseRecords(records);
-    }
-  }
-
   /**
    * Remove one or more entities from one or more id
    */

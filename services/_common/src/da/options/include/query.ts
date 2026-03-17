@@ -11,6 +11,7 @@
 
 import { Knex } from "knex";
 import { getSysContext, UserContext } from "../../../user-context.js";
+import { knexQuery } from "../../db.js";
 import { getRelationship } from "./conf.js";
 import { IncludeProcessorOptions } from "./processor.js";
 
@@ -32,7 +33,12 @@ import { IncludeProcessorOptions } from "./processor.js";
  */
 export function buildMainAndRelationColumns(
   query: Knex.QueryBuilder,
-  options: IncludeProcessorOptions
+  options: IncludeProcessorOptions,
+  pivotConfig?: {
+    pivotAlias: string;
+    pivotCols: string[];
+    pivotSourceKey: string;
+  }
 ): void {
   // Build columns from targetColumns map (path-based structure)
   for (const [_, col] of Object.entries(options.targetColumns)) {
@@ -51,6 +57,22 @@ export function buildMainAndRelationColumns(
       // The column already has alias.table format, we need to convert to path_col format
       query.column(`${col} as ${path}_${col.split(".")[1]}`);
     }
+  }
+
+  // Build pivot table columns if provided (for manyToMany relationships)
+  if (pivotConfig) {
+    const { pivotAlias, pivotCols, pivotSourceKey } = pivotConfig;
+    const targetAlias = options.alias;
+
+    // Select pivot columns with '_pivot' suffix to distinguish them
+    for (const pCol of pivotCols) {
+      query.column(`${pivotAlias}.${pCol} as ${targetAlias}_pivot_${pCol}`);
+    }
+
+    // Select the source key from pivot table to group back to parents
+    query.column(
+      `${pivotAlias}.${pivotSourceKey} as ${targetAlias}_${pivotSourceKey}`
+    );
   }
 }
 
@@ -227,6 +249,49 @@ export function removeIdsIfNeed(
 }
 
 /**
+ * Helper to recursively load deeper nested entities and apply them back to grouped results.
+ * Common logic used for hasMany/hasOne and manyToMany relationship processing.
+ */
+async function applyRecursiveLoading(
+  utx: UserContext,
+  groupedByParent: Map<any, any[]>,
+  flatEntities: any[],
+  relationOptions: IncludeProcessorOptions,
+  currentPath: string,
+  relationKey: string
+): Promise<void> {
+  if (
+    !relationOptions.relationships ||
+    Object.keys(relationOptions.relationships).length === 0
+  ) {
+    return;
+  }
+
+  const nestedPath = currentPath
+    ? `${currentPath}.${relationKey}`
+    : relationKey;
+
+  const entitiesWithNested = await loadNestEntity(
+    utx,
+    flatEntities,
+    relationOptions,
+    nestedPath
+  );
+
+  const entityMap = new Map<any, any>();
+  for (let i = 0; i < flatEntities.length; i++) {
+    entityMap.set(flatEntities[i].id, entitiesWithNested[i]);
+  }
+
+  for (const [parentId, group] of groupedByParent.entries()) {
+    groupedByParent.set(
+      parentId,
+      group.map((e) => entityMap.get(e.id) || e)
+    );
+  }
+}
+
+/**
  * Loads nested entities recursively using batch queries to avoid N+1 problem.
  * Handles hasMany, hasOne, and belongsTo relationships at any nesting depth.
  *
@@ -247,7 +312,6 @@ export async function loadNestEntity<E>(
   options: IncludeProcessorOptions,
   currentPath: string = ""
 ): Promise<E[]> {
-  const { getDao } = await import("../../dao-registry.js");
   if (
     entities.length === 0 ||
     !options.relationships ||
@@ -302,45 +366,124 @@ export async function loadNestEntity<E>(
             }
           }
         }
+      } else if (relationshipDef.type === "manyToMany") {
+        // For manyToMany, query pivot table joined with target table
+        const pivotTable = relationshipDef.pivotTable!;
+        const pivotSourceKey = relationshipDef.pivotSourceKey!;
+        const pivotTargetKey = relationshipDef.pivotTargetKey!;
+        const pivotCols = relationshipDef.pivotColumns || [];
+
+        const parentIds = entities.map((e) => (e as any).id);
+        const pivotAlias = `${relationOptions.alias}_pivot`;
+        const targetAlias = relationOptions.alias;
+
+        const { query } = await knexQuery({
+          utx,
+          tableName: `${pivotTable} as ${pivotAlias}`,
+        });
+
+        // Join target table
+        query.leftJoin(
+          `${relationshipDef.toTable} as ${targetAlias}`,
+          `${pivotAlias}.${pivotTargetKey}`,
+          `${targetAlias}.id`
+        );
+
+        // Add nested belongsTo joins for the target entity (if any)
+        buildBelongsJoinToQuery(query, relationOptions);
+        // Build main and relation columns using unified function
+        buildMainAndRelationColumns(query, relationOptions, {
+          pivotAlias: pivotAlias,
+          pivotCols: pivotCols,
+          pivotSourceKey: pivotSourceKey,
+        });
+
+        // Add nested belongsTo joins for the target entity (if any)
+        buildBelongsJoinToQuery(query, relationOptions);
+
+        // Filter by parent IDs
+        query.whereIn(`${pivotAlias}.${pivotSourceKey}`, parentIds);
+
+        let records = [] as any[];
+        try {
+          records = await query;
+        } catch (e) {
+          console.log("Error occurs in manyToMany query: ", e);
+        }
+
+        // Parse records: separate pivot columns and target columns
+        const groupedByParent = new Map<any, any[]>();
+
+        for (const record of records) {
+          const parentId = (record as any)[`${targetAlias}_${pivotSourceKey}`];
+
+          const pivotObj: any = {};
+          const targetObj: any = {};
+
+          // Separate pivot columns (suffix _pivot)
+          const pivotPrefix = `${targetAlias}_pivot_`;
+          const sourceKeyAlias = `${targetAlias}_${pivotSourceKey}`;
+
+          for (const key in record) {
+            if (key.startsWith(pivotPrefix)) {
+              const attrName = key.substring(pivotPrefix.length);
+              pivotObj[attrName] = record[key];
+            } else if (key !== sourceKeyAlias) {
+              // This is a target column or nested relation column
+              targetObj[key] = record[key];
+            }
+          }
+
+          // Mount pivot object onto target entity
+          // const entity = { ...targetObj, _pivot: pivotObj };
+          const entity = { ...targetObj };
+
+          // Group by parent ID
+          if (!groupedByParent.has(parentId)) {
+            groupedByParent.set(parentId, []);
+          }
+          groupedByParent.get(parentId)!.push(entity);
+        }
+
+        // Recursively load deeper nested entities using common helper
+        const allTargetEntities = Array.from(groupedByParent.values()).flat();
+        await applyRecursiveLoading(
+          utx,
+          groupedByParent,
+          allTargetEntities,
+          relationOptions,
+          currentPath,
+          relationKey
+        );
+
+        // Assign to parent entities
+        for (const entity of result) {
+          const parentId = (entity as any).id;
+          (entity as any)[relationKey] = groupedByParent.get(parentId) || [];
+        }
       } else {
         // For hasMany and hasOne, use batch queries
         const parentIds = entities.map((e) => (e as any).id);
         const foreignKey = relationshipDef.foreignKey;
 
-        // Get the DAO for the target table
-        const targetTable = relationOptions.table || relationKey;
-        const nestedDao = await getDao(targetTable);
-        if (!nestedDao) continue;
-
         // Build CustomQuery to avoid recursion in dao.list
-        const customQuery: any = {
-          custom: (query: Knex.QueryBuilder) => {
-            buildMainAndRelationColumns(query, relationOptions);
+        const alias = relationOptions.alias;
+        const { query } = await knexQuery({
+          utx,
+          tableName: `${relationOptions.table} as ${alias}`,
+        });
 
-            query.column(
-              `${relationOptions.alias}.${foreignKey} as ${foreignKey}`
-            );
-            buildBelongsJoinToQuery(query, relationOptions);
-          },
-        };
+        buildMainAndRelationColumns(query, relationOptions);
+        query.column(`${relationOptions.alias}.${foreignKey} as ${foreignKey}`);
+        buildBelongsJoinToQuery(query, relationOptions);
 
-        // Execute batch query with CustomQuery
-        const queryOptions: any = {
-          custom: customQuery.custom,
-          filters: {
-            [foreignKey]: { $in: parentIds },
-          },
-        };
+        query.whereIn(foreignKey, parentIds);
 
         // Use dao.listByProcessor with CustomQuery to get nested entities
         const sysUtx = await getSysContext();
         let records = [] as any[];
         try {
-          records = await nestedDao.listByProcessor(
-            sysUtx,
-            relationOptions,
-            queryOptions
-          );
+          records = await listByProcessor(sysUtx, relationOptions, query);
         } catch (e) {
           console.log("Error occurs: ", e);
         }
@@ -362,37 +505,15 @@ export async function loadNestEntity<E>(
           groupedByParent.get(parentId)!.push(entity);
         }
 
-        // Recursively load deeper nested entities if needed
-        if (
-          relationOptions.relationships &&
-          Object.keys(relationOptions.relationships).length > 0
-        ) {
-          const allNestedEntities = parsedRecords;
-          const nestedPath = currentPath
-            ? `${currentPath}.${relationKey}`
-            : relationKey;
-          const entitiesWithNested = await loadNestEntity(
-            utx,
-            allNestedEntities,
-            relationOptions,
-            nestedPath
-          );
-
-          // Create a map for quick lookup
-          const entityMap = new Map<any, any>();
-          for (let i = 0; i < allNestedEntities.length; i++) {
-            entityMap.set(allNestedEntities[i].id, entitiesWithNested[i]);
-          }
-
-          // Map back to parent entities with deeper nested data
-          for (const [parentId, nestedList] of groupedByParent.entries()) {
-            const entitiesWithDeeperNested = nestedList.map((nested) => {
-              const key = nested.id;
-              return entityMap.get(key) || nested;
-            });
-            groupedByParent.set(parentId, entitiesWithDeeperNested);
-          }
-        }
+        // Recursively load deeper nested entities using common helper
+        await applyRecursiveLoading(
+          utx,
+          groupedByParent,
+          parsedRecords,
+          relationOptions,
+          currentPath,
+          relationKey
+        );
 
         // Assign nested entities to parent entities
         for (const entity of result) {
@@ -412,4 +533,22 @@ export async function loadNestEntity<E>(
   }
 
   return result;
+}
+
+async function listByProcessor<E>(
+  utx: UserContext,
+  includeOptions: IncludeProcessorOptions,
+  query: Knex.QueryBuilder
+): Promise<E[]> {
+  const records = (await query.then()) as any[];
+  // Parse nested records from JOINed tables
+  if (includeOptions) {
+    const entities = records.map((r) => parseNestRecord(r, includeOptions));
+
+    // Load nested entities for hasMany/hasOne relationships
+    await loadNestEntity(utx, entities, includeOptions);
+    return entities;
+  } else {
+    return records;
+  }
 }

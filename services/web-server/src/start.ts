@@ -1,64 +1,68 @@
-import { __version__ } from '#common/conf.js';
-import { KoaApp } from '#common/web/koa-app.js';
-import { RpcRouter } from '#common/web/rpc.js';
-import { execa } from 'execa';
-import { env } from 'process';
-import routerAuthGoogleOAuth from './web/router-auth-google-oauth.js';
-import routerMedia from './web/router-media.js';
+import { __version__ } from "#common/conf.js";
+import { KoaApp } from "#common/web/koa-app.js";
+import { RpcRouter } from "#common/web/rpc.js";
+import { execa } from "execa";
+import { env } from "process";
+import routerAuthGoogleOAuth from "./web/router-auth-google-oauth.js";
+import routerMedia from "./web/router-media.js";
 // Import RPC handlers to register them
-import './web/rpc-media.js';
-import './web/rpc-org.js';
-import './web/rpc-project.js';
-import './web/rpc-wks.js';
+import "./web/rpc-media.js";
+import "./web/rpc-org.js";
+import "./web/rpc-project.js";
+import "./web/rpc-user.js";
+import "./web/rpc-wks.js";
 
 const PORT = 8080;
 
 main();
 
 async function main() {
-	// -- CHECK - that bash environment are set correctly otherwise fail early. 
-	try {
-		const out = await execa("which", ["ss3"]);
-	} catch (ex) {
-		console.log(`FATAL ERROR - It seems 'which ss3' failed. /bin/bash does not seem to be setup with the right environment variables`, ex);
-	}
+  // -- CHECK - that bash environment are set correctly otherwise fail early.
+  try {
+    const out = await execa("which", ["ss3"]);
+  } catch (ex) {
+    console.log(
+      `FATAL ERROR - It seems 'which ss3' failed. /bin/bash does not seem to be setup with the right environment variables`,
+      ex
+    );
+  }
 
-	const app = new KoaApp({
-		token_name: 'token',
-		beforeAuthMdws: [
-			routerAuthGoogleOAuth().middleware(),
-		],
-		apiMdws: [
-			routerMedia("/api").middleware(),
-			// Authenticated RPC routes (requires authentication) - uses /rpc prefix
-			new RpcRouter('/wapi').middleware() 
-		]
-	});
+  const app = new KoaApp({
+    token_name: "token",
+    beforeAuthMdws: [routerAuthGoogleOAuth().middleware()],
+    apiMdws: [
+      routerMedia("/api").middleware(),
+      // Authenticated RPC routes (requires authentication) - uses /rpc prefix
+      new RpcRouter("/wapi").middleware(),
+    ],
+  });
 
-	// Simple inline example for testing
-	app.use(async (ktx, next) => {
-		// Assumption: if we are here, all API handlers took the request, and we just have a page render or static file (with extension)
-		if (ktx.path == '/test') {
-			console.log('->> will return  ', ktx.path);
-			ktx.body = `from '/test' - 0089 - ${env["HOSTNAME"]} - ${Date.now()}`;
-		} else {
-			return next();
-		}
-	});
+  // Simple inline example for testing
+  app.use(async (ktx, next) => {
+    // Assumption: if we are here, all API handlers took the request, and we just have a page render or static file (with extension)
+    if (ktx.path == "/test") {
+      console.log("->> will return  ", ktx.path);
+      ktx.body = `from '/test' - 0089 - ${env["HOSTNAME"]} - ${Date.now()}`;
+    } else {
+      return next();
+    }
+  });
 
-	await app.setup();
+  await app.setup();
 
-	app.start(PORT);
+  app.start(PORT);
 
-	console.log(`--> web-server (${__version__}) - listening at ${PORT}`);
+  console.log(`--> web-server (${__version__}) - listening at ${PORT}`);
 }
-
 
 // TODO - listen to the SIGTERM event to start cleanup
 // some inputs - https://blog.risingstack.com/graceful-shutdown-node-js-kubernetes/
-process.on('SIGTERM', function onSigterm() {
-	console.info('Got SIGTERM. Graceful shutdown start', new Date().toISOString());
-	// TODO - set flag so that /health should return 500
-	// TODO - stop accepting new request
-	// TODO - gzip and upload remaining logs
+process.on("SIGTERM", function onSigterm() {
+  console.info(
+    "Got SIGTERM. Graceful shutdown start",
+    new Date().toISOString()
+  );
+  // TODO - set flag so that /health should return 500
+  // TODO - stop accepting new request
+  // TODO - gzip and upload remaining logs
 });
