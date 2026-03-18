@@ -100,7 +100,7 @@ export function buildBelongsJoinToQuery(
     }
 
     // Get relationship definition from conf.ts
-    const relationship = getRelationship(options.entityKey, relName);
+    const relationship = getRelationship(options.entityKey, relName)!;
 
     // Only process belongsTo relationships (LEFT JOIN)
     if (relationship.type === "belongsTo") {
@@ -329,7 +329,7 @@ export async function loadNestEntity<E>(
       const relationshipDef = getRelationship(
         options.entityKey || options.table || "",
         relationKey
-      );
+      )!;
 
       if (relationshipDef.type === "belongsTo") {
         // For belongsTo relationships, data is already JOINed and parsed via parseNestRecord
@@ -371,7 +371,16 @@ export async function loadNestEntity<E>(
         const pivotTable = relationshipDef.pivotTable!;
         const pivotSourceKey = relationshipDef.pivotSourceKey!;
         const pivotTargetKey = relationshipDef.pivotTargetKey!;
-        const pivotCols = relationshipDef.pivotColumns || [];
+        const allPivotCols = relationshipDef.pivotColumns || [];
+
+        // Determine which pivot columns to include based on user spec
+        const spec = relationOptions.spec;
+        let selectedPivotCols: string[] = [];
+
+        if (spec && typeof spec === "object" && !Array.isArray(spec)) {
+          // User specified pivot columns in the spec (e.g., { "role": true, "joinedAt": true })
+          selectedPivotCols = allPivotCols.filter((col) => spec[col] === true);
+        }
 
         const parentIds = entities.map((e) => (e as any).id);
         const pivotAlias = `${relationOptions.alias}_pivot`;
@@ -394,7 +403,7 @@ export async function loadNestEntity<E>(
         // Build main and relation columns using unified function
         buildMainAndRelationColumns(query, relationOptions, {
           pivotAlias: pivotAlias,
-          pivotCols: pivotCols,
+          pivotCols: selectedPivotCols,
           pivotSourceKey: pivotSourceKey,
         });
 
@@ -434,9 +443,22 @@ export async function loadNestEntity<E>(
             }
           }
 
-          // Mount pivot object onto target entity
-          // const entity = { ...targetObj, _pivot: pivotObj };
-          const entity = { ...targetObj };
+          // Mount pivot object onto target entity only if pivot columns were selected by user
+          const entity: any = { ...targetObj };
+
+          if (selectedPivotCols.length > 0) {
+            // Only add pivot columns that user explicitly requested via spec
+            for (const pCol of selectedPivotCols) {
+              if (
+                spec &&
+                typeof spec == "object" &&
+                spec[pCol] === true &&
+                pivotObj[pCol] !== undefined
+              ) {
+                entity[pCol] = pivotObj[pCol];
+              }
+            }
+          }
 
           // Group by parent ID
           if (!groupedByParent.has(parentId)) {

@@ -155,6 +155,93 @@ Foreign key on target table, loaded via batch query with single result.
 }
 ```
 
+### manyToMany (Many-to-Many)
+
+Uses a pivot table to connect two entities, loaded via pivot table joined with target table.
+
+```typescript
+{
+  type: 'manyToMany',
+  targetTable: 'org',
+  pivotTable: 'user_org',
+  pivotSourceKey: 'userId',  // FK in pivot table pointing to source entity
+  pivotTargetKey: 'orgId',   // FK in pivot table pointing to target entity
+  pivotColumns: ['role', 'joinedAt']  // Columns available from pivot table
+}
+```
+
+**Query example - basic:**
+```json
+{
+  "$includes": {
+    "org": {}
+  }
+}
+```
+
+**Result:**
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "username": "user1",
+      "org": [
+        {
+          "id": 1,
+          "name": "Org 1"
+        },
+        {
+          "id": 2,
+          "name": "Org 2"
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Query example - with pivot columns:**
+```json
+{
+  "$includes": {
+    "org": {
+      "_defaults": true,
+      "role": true,
+      "joinedAt": true
+    }
+  }
+}
+```
+
+**Result with pivot columns:**
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "username": "user1",
+      "org": [
+        {
+          "id": 1,
+          "name": "Org 1",
+          "role": "admin",
+          "joinedAt": "2026-01-15T10:30:00Z"
+        },
+        {
+          "id": 2,
+          "name": "Org 2",
+          "role": "member",
+          "joinedAt": "2026-02-20T14:45:00Z"
+        }
+      ]
+    }
+  ]
+}
+```
+
+Note: When specifying pivot columns like `role` or `joinedAt`, they are selected from the pivot table and included in the target entity result. This allows you to access relationship-specific data (like user's role in an organization) alongside the target entity's properties.
+
 
 ## Column Groups
 

@@ -290,8 +290,14 @@ export function getEntityIncludeRelations(key: string): IncludeRelationSpec {
  * @param key - Relationship key (e.g., 'org_to_wks')
  * @returns Relationship definition
  */
-export function getRelationship(key: string, key1: string): RelationshipDef {
+export function getRelationship(
+  key: string,
+  key1: string
+): RelationshipDef | undefined {
   const keyRel = `${key}_to_${key1}`;
+  if (!RELATIONSHIP_DEFS[keyRel]) {
+    return;
+  }
   const rel = JSON.parse(JSON.stringify(RELATIONSHIP_DEFS[keyRel]));
   if (!rel) {
     throw new Error(`No relationship found with key '${keyRel}'`);

@@ -402,12 +402,11 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
   ): IncludeProcessorOptions | undefined {
     alias = alias || "main";
 
+    const includes = queryOptions?.includes;
     // if this dao has a fixed column.
-    if (this.columns) {
+    if (this.columns && !includes) {
       query.columns(this.columns);
     }
-
-    const includes = queryOptions?.includes;
     let includeOptions: IncludeProcessorOptions | undefined = undefined;
 
     if (queryOptions) {

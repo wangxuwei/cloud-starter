@@ -48,6 +48,8 @@ export interface IncludeProcessorOptions {
   targetColumns: string[];
   /** Final columns for database query (resolved from includes) - path-based structure */
   targetRelationColumns: Record<string, string[]>;
+  /** Original include spec for this level (from user query) */
+  spec?: IncludeObject | boolean | undefined;
 }
 
 // ============================================================================
@@ -75,6 +77,7 @@ export function addTableAlias(column: string, alias: string): string {
 /**
  * Validate include processor options.
  * Checks that all keys in includeObject are valid columns, column groups, or relationships.
+ * Also validates pivot columns for manyToMany relationships.
  *
  * @param includeObject - The include specification to validate
  * @param entityKey - Entity key to lookup valid columns and relationships from schema
@@ -85,6 +88,7 @@ export function addTableAlias(column: string, alias: string): string {
 export function validateIncludeProcessor(
   includeObject: IncludeObject | undefined | boolean,
   entityKey: string,
+  lastEntityKey?: string,
   relations?: IncludeRelationSpec,
   path: string = ""
 ): void {
@@ -137,8 +141,23 @@ export function validateIncludeProcessor(
     } else {
       // Must be either a valid relationship (from current entity) or a valid column
       const isValidRelationship = validRelationshipKeys.has(key);
-      const isValidColumn = validColumns.has(key);
+      const validContainPivotColumns = new Set(validColumns);
 
+      // For manyToMany relationships, validate pivot columns
+      if (lastEntityKey) {
+        const relationshipDef = getRelationship(lastEntityKey, entityKey);
+        if (
+          relationshipDef &&
+          relationshipDef.type === "manyToMany" &&
+          relationshipDef.pivotColumns
+        ) {
+          const validPivotColumns = new Set(relationshipDef.pivotColumns);
+          for (const c of validPivotColumns) {
+            validContainPivotColumns.add(c);
+          }
+        }
+      }
+      const isValidColumn = validContainPivotColumns.has(key);
       if (!isValidRelationship && !isValidColumn) {
         let message = `Invalid include at path '${currentPath}': '${key}' is not a valid key for entity '${entityKey}'. `;
         if (validRelationshipKeys && validRelationshipKeys.size > 0) {
@@ -148,17 +167,24 @@ export function validateIncludeProcessor(
         }
 
         throw new Error(
-          message + `Valid columns: ${Array.from(validColumns).join(", ")}`
+          message +
+            `Valid columns: ${Array.from(validContainPivotColumns).join(", ")}`
         );
       }
 
-      // Recursively validate nested relationships
       if (
         isValidRelationship &&
         typeof spec === "object" &&
         !Array.isArray(spec)
       ) {
-        validateIncludeProcessor(spec, key, validRelationships, currentPath);
+        // Recursively validate nested relationships
+        validateIncludeProcessor(
+          spec,
+          key,
+          entityKey,
+          validRelationships,
+          currentPath
+        );
       }
     }
   }
@@ -197,6 +223,7 @@ function buildIncludeProcessorOptions(
     targetColumns: [],
     targetRelationColumns: {},
     relationships: validRelationships as any,
+    spec: includeObject, // Store original spec for this level
   };
 
   // If no includes specified, return defaults with main table columns
@@ -205,9 +232,11 @@ function buildIncludeProcessorOptions(
     typeof includeObject !== "object" ||
     Object.keys(includeObject).length === 0
   ) {
-    options.targetColumns = options.columns!.map((c) =>
-      addTableAlias(c, alias)
-    );
+    options.targetColumns = options
+      .columns!.filter((col) => {
+        return entityIncludeColumns.allColumns.includes(col);
+      })
+      .map((c) => addTableAlias(c, alias));
     return options;
   }
 
@@ -273,7 +302,7 @@ function buildIncludeProcessorOptions(
         }
       } else {
         // It's not a relationship, treat as direct column (spec must be true to include)
-        if (spec === true) {
+        if (spec === true && entityIncludeColumns.allColumns.includes(key)) {
           directColumns.add(addTableAlias(key, alias));
         }
       }
@@ -284,9 +313,11 @@ function buildIncludeProcessorOptions(
   if (directColumns.size > 0) {
     options.targetColumns = Array.from(directColumns);
   } else {
-    options.targetColumns = options.columns!.map((c) =>
-      addTableAlias(c, alias)
-    );
+    options.targetColumns = options
+      .columns!.filter((col) => {
+        return entityIncludeColumns.allColumns.includes(col);
+      })
+      .map((c) => addTableAlias(c, alias));
   }
 
   return options;
