@@ -5,21 +5,14 @@ import { QueryOptions, StampedEntity } from "#shared/entities.js";
 import { Knex } from "knex";
 import { Monitor } from "../perf.js";
 import { UserContext } from "../user-context.js";
-import { ensureArray, nowTimestamp, removeProps } from "../utils.js";
+import { nowTimestamp, removeProps } from "../utils.js";
 import { AccessRequires } from "./access.js";
 import { knexQuery } from "./db.js";
-import { completeQueryFilter } from "./options/filter/index.js";
+import { IncludeProcessorOptions } from "./options/include/processor.js";
 import {
-  IncludeProcessorOptions,
-  processIncludes,
-} from "./options/include/processor.js";
-import {
-  buildBelongsJoinToQuery,
-  buildMainAndRelationColumns,
-  loadNestEntity,
-  parseNestRecord,
-  removeIdsIfNeed,
-} from "./options/include/query.js";
+  buildQueryByQueryOptions,
+  parsedRecordsByQueryOptions,
+} from "./options/index.js";
 
 export interface CustomQuery {
   custom?: (q: Knex.QueryBuilder) => void;
@@ -232,20 +225,16 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
       return null;
     }
 
-    // Parse nested records from JOINed tables
-    if (includeOptions) {
-      const parsedRecords = records.map((r) =>
-        parseNestRecord(r, includeOptions)
-      );
-      const entities = this.parseRecords(parsedRecords);
+    const entities = await parsedRecordsByQueryOptions<E>(
+      utx,
+      records,
+      includeOptions,
+      (recs: E[]) => {
+        return this.parseRecords(recs);
+      }
+    );
 
-      // Load nested entities for hasMany/hasOne relationships
-      await loadNestEntity(utx, entities, includeOptions);
-      removeIdsIfNeed(entities, includeOptions);
-      return entities[0];
-    } else {
-      return this.parseRecords(records)[0];
-    }
+    return entities[0];
   }
 
   @Monitor()
@@ -346,20 +335,16 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
     );
     const records = (await query.then()) as any[];
 
-    // Parse nested records from JOINed tables
-    if (includeOptions) {
-      const parsedRecords = records.map((r) =>
-        parseNestRecord(r, includeOptions)
-      );
-      const entities = this.parseRecords(parsedRecords);
+    const entities = await parsedRecordsByQueryOptions<E>(
+      utx,
+      records,
+      includeOptions,
+      (recs: E[]) => {
+        return this.parseRecords(recs);
+      }
+    );
 
-      // Load nested entities for hasMany/hasOne relationships
-      await loadNestEntity(utx, entities, includeOptions);
-      removeIdsIfNeed(entities, includeOptions);
-      return entities;
-    } else {
-      return this.parseRecords(records);
-    }
+    return entities;
   }
 
   /**
@@ -400,77 +385,13 @@ export class BaseDao<E, I, Q extends QueryOptions<E> = QueryOptions<E>> {
     queryOptions?: Q & CustomQuery,
     alias?: string
   ): IncludeProcessorOptions | undefined {
-    alias = alias || "main";
-
-    const includes = queryOptions?.includes;
-    // if this dao has a fixed column.
-    if (this.columns && !includes) {
-      query.columns(this.columns);
-    }
-    let includeOptions: IncludeProcessorOptions | undefined = undefined;
-
-    if (queryOptions) {
-      if (queryOptions.custom) {
-        queryOptions.custom(query);
-      }
-
-      if (queryOptions.list_options?.limit != null) {
-        query.limit(queryOptions.list_options?.limit);
-      }
-
-      if (queryOptions.list_options?.offset != null) {
-        query.offset(queryOptions.list_options?.offset);
-      }
-
-      // Process includes if provided
-      if (includes) {
-        // Use buildIncludeProcessorOptions to get the complete options with targetColumns map
-        const entityKey = this.getEntity();
-        includeOptions = processIncludes(includes, entityKey, alias);
-
-        // Build main table columns and relation columns with proper aliases
-        buildMainAndRelationColumns(query, includeOptions);
-
-        // Build JOINs and nested configs for all belongsTo relationships
-        if (includeOptions.relationships) {
-          buildBelongsJoinToQuery(query, includeOptions);
-        }
-      }
-
-      //// add() filters
-      if (queryOptions.filters) {
-        const filters = queryOptions.filters;
-        if (filters instanceof Array) {
-          for (const filter of filters) {
-            query.andWhere(function () {
-              completeQueryFilter(this, filter, alias!);
-            });
-          }
-        } else {
-          completeQueryFilter(query, filters, alias!);
-        }
-      }
-
-      //// add() orderBy
-      let orderBy =
-        queryOptions.list_options?.order_bys !== undefined
-          ? queryOptions.list_options?.order_bys
-          : this.orderBy;
-      if (orderBy) {
-        const orderBys = ensureArray(orderBy);
-        for (const orderByColExpr of orderBys) {
-          let asc = true;
-          let orderByCol = orderByColExpr;
-          if (orderByColExpr.startsWith("!")) {
-            asc = false;
-            orderByCol = orderByColExpr.substring(1);
-          }
-          query.orderBy(orderByCol, asc ? "ASC" : "DESC");
-        }
-      }
-    }
-
-    return includeOptions;
+    return buildQueryByQueryOptions(
+      query,
+      this.getEntity(),
+      queryOptions,
+      this.columns,
+      this.orderBy
+    );
   }
 
   private getWhereIdObject(id: any) {
