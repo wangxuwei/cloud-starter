@@ -101,6 +101,9 @@ export type RelationshipType =
  * - hasMany: FK on target table
  * - belongsTo: FK on source table
  * - hasOne: FK on target table
+ *
+ * Inverse relationships are automatically resolved by getRelationship() to avoid duplication.
+ * For example, 'wks_to_org' is the inverse of 'org_to_wks'.
  */
 const RELATIONSHIP_DEFS: Record<string, RelationshipDef> = Object.freeze({
   // org -> wks (one-to-many): FK on wks table
@@ -112,29 +115,11 @@ const RELATIONSHIP_DEFS: Record<string, RelationshipDef> = Object.freeze({
     targetKey: "id",
   },
 
-  // wks -> org (many-to-one): FK on wks table (reverse perspective of org_to_wks)
-  wks_to_org: {
-    fromTable: "wks",
-    toTable: "org",
-    type: "belongsTo",
-    foreignKey: "orgId",
-    targetKey: "id",
-  },
-
   // wks -> project (one-to-many): FK on project table
   wks_to_project: {
     fromTable: "wks",
     toTable: "project",
     type: "hasMany",
-    foreignKey: "wksId",
-    targetKey: "id",
-  },
-
-  // project -> wks (many-to-one): FK on project table (reverse perspective of wks_to_project)
-  project_to_wks: {
-    fromTable: "project",
-    toTable: "wks",
-    type: "belongsTo",
     foreignKey: "wksId",
     targetKey: "id",
   },
@@ -212,6 +197,7 @@ const ENTITY_COLUMN_SPECS: Record<string, EntityIncludeColumnsSpec> =
  *
  * Relationship details (type, foreignKey, targetKeyCol) are auto-resolved from
  * RELATIONSHIP_DEFS based on the entityKey and relationKey pattern: ${entityKey}_${relationKey}
+ * Inverse relationships are automatically resolved by swapping fromTable/toTable and type.
  */
 const ENTITY_INCLUDE_RELATION_SPECS: Record<string, IncludeRelationSpec> =
   Object.freeze({
@@ -286,21 +272,68 @@ export function getEntityIncludeRelations(key: string): IncludeRelationSpec {
 
 /**
  * Get relationship definition by key.
+ * Automatically resolves inverse relationships if direct definition is not found.
  *
- * @param key - Relationship key (e.g., 'org_to_wks')
+ * @param key - Source entity key (e.g., 'wks')
+ * @param key1 - Target entity key (e.g., 'org')
  * @returns Relationship definition
+ *
+ * @example
+ * // Direct match: returns 'org_to_wks' definition
+ * getRelationship('org', 'wks')
+ *
+ * // Inverse match: returns converted 'org_to_wks' definition (hasMany -> belongsTo)
+ * getRelationship('wks', 'org')
  */
 export function getRelationship(
   key: string,
   key1: string
 ): RelationshipDef | undefined {
   const keyRel = `${key}_to_${key1}`;
-  if (!RELATIONSHIP_DEFS[keyRel]) {
-    return;
+
+  // Try direct match first
+  if (RELATIONSHIP_DEFS[keyRel]) {
+    return JSON.parse(JSON.stringify(RELATIONSHIP_DEFS[keyRel]));
   }
-  const rel = JSON.parse(JSON.stringify(RELATIONSHIP_DEFS[keyRel]));
-  if (!rel) {
-    throw new Error(`No relationship found with key '${keyRel}'`);
+
+  // Try inverse
+  const inverseKey = `${key1}_to_${key}`;
+  if (RELATIONSHIP_DEFS[inverseKey]) {
+    const inverse = JSON.parse(JSON.stringify(RELATIONSHIP_DEFS[inverseKey]));
+
+    const getInverseType = (type: string) => {
+      switch (type) {
+        case "hasMany":
+          return "belongsTo";
+        case "hasOne":
+          return "belongsTo";
+        case "belongsTo":
+          return "hasMany";
+        case "manyToMany":
+          return "manyToMany";
+        default:
+          return "manyToMany";
+      }
+    };
+
+    // Convert inverse
+    const converted: RelationshipDef = {
+      fromTable: inverse.toTable,
+      toTable: inverse.fromTable,
+      type: getInverseType(inverse.type),
+      foreignKey: inverse.foreignKey,
+      targetKey: inverse.targetKey,
+    };
+
+    if (inverse.type == "manyToMany") {
+      converted.pivotTable = inverse.pivotTable;
+      converted.pivotSourceKey = inverse.pivotTargetKey;
+      converted.pivotTargetKey = inverse.pivotSourceKey;
+      converted.pivotColumns = inverse.pivotColumns;
+    }
+
+    return converted;
   }
-  return rel;
+
+  return undefined;
 }

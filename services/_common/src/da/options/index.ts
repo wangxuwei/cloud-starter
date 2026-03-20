@@ -1,7 +1,7 @@
-import { QueryOptions } from "#shared/query_options";
+import { QueryOptions } from "#shared/query_options.js";
 import { Knex } from "knex";
-import { UserContext } from "user-context.js";
-import { ensureArray } from "utils.js";
+import { UserContext } from "../../user-context.js";
+import { ensureArray } from "../../utils.js";
 import { CustomQuery } from "../dao-base.js";
 import { completeQueryFilter } from "./filter/index.js";
 import {
