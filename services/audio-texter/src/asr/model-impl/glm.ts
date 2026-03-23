@@ -21,12 +21,9 @@ export async function transcribeWithGlm(filePath: string, model: string): Promis
   
   const chunks = await transcribeAudio(filePath, verifyDuration);
   
-  const transcriptions: string[] = [];
-  
-  for (const chunk of chunks) {
-    const text = await transcribeWithApi(chunk, model, apiKey);
-    transcriptions.push(text);
-  }
+  const transcriptions = await Promise.all(
+    chunks.map(chunk => transcribeWithApi(chunk, model, apiKey))
+  );
     
   return transcriptions.join(' ');
 }
