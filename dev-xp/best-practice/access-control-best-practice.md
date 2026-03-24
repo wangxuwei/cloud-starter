@@ -6,74 +6,93 @@ This document explains how to configure and use the access control system in thi
 
 The access control system is based on a decorator-based approach using `@AccessRequires` to enforce permissions at the DAO (Data Access Object) method level. The system supports two levels of access control:
 
-- **Global Access**: System-wide permissions (e.g., `a_admin`, `a_orgs_list`)
+- **Global Access**: System-wide permissions (e.g., `a_admin`, `a_api`)
 - **Organization Access**: Scoped to specific organizations (e.g., `org_a_content_view`, `org_a_content_create`)
 
 ## Access Types
 
 ### Global Accesses
 
-Global accesses are defined in `services/_common/src/da/role/global.ts` and apply system-wide:
+Global accesses are defined in `shared/src/access-types.ts` and apply system-wide:
 
 ```typescript
-export const globalAccessEnum = freeze({
-  a_web_login: 'a_web_login',    // Access to web login
-  a_api: 'a_api',                // Access to API
-  a_orgs_list: 'a_orgs_list',    // List organizations
-  a_orgs_create: 'a_orgs_create',// Create organizations
-  a_orgs_update: 'a_orgs_update',// Update organizations
-  a_orgs_delete: 'a_orgs_delete',// Delete organizations
-  a_users_list: 'a_users_list',  // List users
-  a_users_create: 'a_users_create',// Create users
-  a_users_update: 'a_users_update',// Update users
-  a_users_delete: 'a_users_delete',// Delete users
-} as const);
+const GLOBAL_ACCESSES = freeze([
+  "#sys", // this is a special access only for getSysContext
+  "#user", // any logged request (api or user) get the special #user access
+  "a_ui", // ui web interface access (web login). Can be negated in user.accesses modifiers
+  "a_api", // for API access. Can be added in user.accesses modifiers
+  "a_admin", // all basic admin tasks
+  "a_pwd_reset", // password reset
+  "a_admin_edit_user", // ability to reset user information
+] as const);
 ```
 
 ### Global Roles
 
 Global roles are mapped to global accesses:
 
-- **`r_sys`**: System administrator with all accesses
-- **`r_user`**: Regular user with basic accesses (`a_web_login`, `a_orgs_create`)
+- **`r_sys`**: System context with `#sys` access only
+- **`r_user`**: Regular user with `#user` and `a_ui` accesses
+- **`r_admin`**: Administrator with all r_user accesses plus `a_admin`, `a_admin_edit_user`, and `a_pwd_reset`
 
-Role to access mappings:
+Role to access mappings in `access-types.ts`:
 
 ```typescript
-// r_sys role has all global accesses
-const R_SYS_ACCESSES = [
-  'a_web_login', 'a_api', 
-  'a_orgs_list', 'a_orgs_create', 'a_orgs_update', 'a_orgs_delete',
-  'a_users_list', 'a_users_create', 'a_users_update', 'a_users_delete'
-];
-
-// r_user role has basic accesses
-const R_USER_ACCESSES = ['a_web_login', 'a_orgs_create'];
+const r_sys: Readonly<GlobalAccess[]> = freeze(["#sys"]);
+const r_user: Readonly<GlobalAccess[]> = freeze(["#user", "a_ui"]);
+const r_admin: Readonly<GlobalAccess[]> = freeze([
+  ...r_user,
+  "a_admin",
+  "a_admin_edit_user",
+  "a_pwd_reset",
+]);
 ```
 
 ### Organization Accesses
 
-Organization accesses are defined in `services/_common/src/da/role/org.ts` and apply within an organization context:
+Organization accesses are defined in `shared/src/access-types.ts` and apply within an organization context:
 
-Based on the codebase, the following org accesses are used:
-
-- `org_a_content_view`: View content in the org
-- `org_a_content_create`: Create content in the org
-- `org_a_content_edit`: Edit content in the org
-- `org_a_project_manage`: Manage projects in the org
-- `org_a_wks_manage`: Manage workspaces in the org
-- `org_a_user_assign_admin`: Assign admin roles to users
-- `org_a_delete`: Delete the org
+```typescript
+const ORG_ACCESSES = freeze([
+  "org_a_delete",                 // Delete the organization
+  "org_a_user_assign_admin",      // Add user admin (only owner)
+  "org_a_content_create",         // Create new content for this org
+  "org_a_content_edit",           // Edit content in this org
+  "org_a_content_view",           // View info and tickets from a Orgs
+  "org_a_wks_manage",             // Manage workspaces in this org
+  "org_a_project_manage",         // Manage projects in this org
+  "org_a_user_add",               // Add user to this org
+  "org_a_user_remove",            // Remove user from this org
+] as const);
+```
 
 ### Organization Roles
 
-Organization roles grant a set of org accesses:
+Organization roles grant a set of org accesses in `shared/src/access-types.ts`:
 
-- **`org_r_owner`**: Full privileges on the org (including delete and rename)
-- **`org_r_admin`**: Full privileges except delete and rename
-- **`org_r_editor`**: Edit content
-- **`org_r_viewer`**: View content
-- **`org_r_member`**: Basic member
+- **`org_r_owner`**: Full privileges on the org (all org accesses)
+- **`org_r_admin`**: Full privileges except delete and user admin assignment
+- **`org_r_editor`**: Can create and edit content, manage projects and workspaces
+- **`org_r_viewer`**: View content only
+
+Role to access mappings:
+
+```typescript
+const org_r_viewer: Readonly<OrgAccess[]> = freeze(["org_a_content_view"]);
+const org_r_editor: Readonly<OrgAccess[]> = freeze([
+  ...org_r_viewer,
+  "org_a_content_create",
+  "org_a_content_edit",
+  "org_a_project_manage",
+  "org_a_wks_manage",
+]);
+const org_r_admin: Readonly<OrgAccess[]> = freeze([
+  ...org_r_editor,
+  "org_a_user_remove",
+  "org_a_user_add",
+]);
+const org_r_owner: Readonly<OrgAccess[]> = ORG_ACCESSES;
+```
 
 ## Using @AccessRequires Decorator
 
@@ -90,7 +109,7 @@ async methodName(utx: UserContext, ...args) {
 
 ### Access Types Supported
 
-1. **Global Access**: `a_admin`, `a_orgs_list`, etc.
+1. **Global Access**: `a_admin`, `a_api`, `a_ui`, etc.
    - Checks `utx.hasAccess(access)`
 
 2. **System Access**: `#sys`, `#user`
@@ -221,7 +240,7 @@ Users have global access through their `role` field in the `user` table:
 interface User {
   id: number;
   username: string;
-  role: GlobalRoleName;  // 'r_sys' or 'r_user'
+  role: GlobalRoleName;  // 'r_sys', 'r_user', or 'r_admin'
   accesses?: string[];    // Optional access modifiers
 }
 ```
@@ -465,64 +484,79 @@ async list(utx: UserContext, queryOptions?: OrgQueryOptions): Promise<Org[]> {
 
 ### Adding a New Global Access
 
-1. Add to `services/_common/src/da/role/global.ts`:
+1. Add to `shared/src/access-types.ts`:
 
 ```typescript
-export const globalAccessEnum = freeze({
+const GLOBAL_ACCESSES = freeze([
   // ... existing accesses
-  a_new_access: 'a_new_access',
-} as const);
+  'a_new_access',  // New access
+] as const);
 ```
 
 2. Add to role mappings if needed:
 
 ```typescript
-const R_SYS_ACCESSES = [...existingAccesses, 'a_new_access'];
+const r_sys: Readonly<GlobalAccess[]> = freeze([...existingAccesses, 'a_new_access']);
+```
+
+3. Update `services/_common/src/da/role/global.ts` for JSON generation:
+
+```typescript
+export const globalAccessEnum = freeze({
+  // ... existing accesses
+  'a_new_access': 'a_new_access',
+} as const);
 ```
 
 ### Adding a New Org Access
 
-1. Add to `services/_common/src/da/role/org.ts`:
+1. Add to `shared/src/access-types.ts`:
+
+```typescript
+const ORG_ACCESSES = freeze([
+  // ... existing accesses
+  'org_a_new_access',  // New access
+] as const);
+```
+
+2. Add to appropriate roles:
+
+```typescript
+const org_r_owner: Readonly<OrgAccess[]> = freeze([...existingAccesses, 'org_a_new_access']);
+```
+
+3. Update `services/_common/src/da/role/org.ts` for JSON generation:
 
 ```typescript
 export const orgAccessEnum = freeze({
-  a_web_login: 'a_web_login',
-  org_a_new_access: 'org_a_new_access',  // New access
+  // ... existing accesses
+  'org_a_new_access': 'org_a_new_access',
 } as const);
-```
-
-2. Define in shared `access-types.ts` the mapping from role to access:
-
-```typescript
-export const ORG_ROLES = new Map<OrgRoleName, Readonly<OrgAccess[]>>([
-  ['org_r_owner', Object.freeze([
-    'org_a_content_view',
-    'org_a_content_create',
-    'org_a_content_edit',
-    'org_a_new_access',  // Add new access
-    // ... other accesses
-  ])],
-  // ... other roles
-]);
 ```
 
 ### Adding a New Role
 
-Define the role with its accesses:
+Define the role with its accesses in `shared/src/access-types.ts`:
+
+```typescript
+const org_r_new_role: Readonly<OrgAccess[]> = freeze([
+  'org_a_content_view',
+  // ... specific accesses for this role
+]);
+
+const _ORG_ROLES = freeze({
+  // ... existing mappings
+  org_r_new_role: org_r_new_role,
+} as const);
+```
+
+Then add to `services/_common/src/da/role/org.ts`:
 
 ```typescript
 export const orgRoleEnum = freeze({
   // ... existing roles
   org_r_new_role: 'org_r_new_role',
 } as const);
-
-export const ORG_ROLES = new Map<OrgRoleName, Readonly<OrgAccess[]>>([
-  // ... existing mappings
-  ['org_r_new_role', Object.freeze([
-    'org_a_content_view',
-    // ... specific accesses for this role
-  ])],
-]);
 ```
 
 ## Common Access Control Scenarios
@@ -594,12 +628,12 @@ throw new AccessDecoratorError(`First argument must be a "UserContext"`);
 
 ## Related Files
 
+- `shared/src/access-types.ts` - Main source of truth for all role and access definitions
 - `services/_common/src/da/access.ts` - Access decorator and logic
 - `services/_common/src/da/access-org.ts` - Org-specific access functions
 - `services/_common/src/da/dao-base.ts` - Base DAO with default access controls
 - `services/_common/src/da/dao-org-scoped.ts` - Org-scoped DAO base class
 - `services/_common/src/da/dao-org.ts` - Organization DAO implementation
 - `services/_common/src/da/dao-user.ts` - User DAO implementation
-- `services/_common/src/da/role/global.ts` - Global role and access definitions
-- `services/_common/src/da/role/org.ts` - Organization role and access definitions
-- `shared/src/access-types.ts` - Shared access type definitions
+- `services/_common/src/da/role/global.ts` - Global role and access enums for JSON generation
+- `services/_common/src/da/role/org.ts` - Organization role and access enums for JSON generation
