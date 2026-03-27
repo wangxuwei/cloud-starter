@@ -1,15 +1,21 @@
+import { OrgAccesses } from "./access-types.js";
+import { StampedEntity } from "./entities-base.js";
+import { JobEventName } from "./event-types.js";
 
-import { OrgAccesses } from './access-types.js';
-import { StampedEntity } from './entities-base.js';
-import { JobEventName } from './event-types.js';
+export * from "./entities-base.js";
 
-export * from './entities-base.js';
-
-
-//#region    ---------- User ---------- 
+//#region    ---------- User ----------
 // Default user columns (more defined in dao-user for auth, login, ...)
-export const USER_COLUMNS = Object.freeze(['id', 'uuid', 'username', 'cid', 'ctime', 'mid', 'mtime'] as const);
-type UserPropName = typeof USER_COLUMNS[number];
+export const USER_COLUMNS = Object.freeze([
+	"id",
+	"uuid",
+	"username",
+	"cid",
+	"ctime",
+	"mid",
+	"mtime",
+] as const);
+type UserPropName = (typeof USER_COLUMNS)[number];
 
 // postgres enum user_type
 
@@ -18,8 +24,7 @@ export interface User extends StampedEntity {
 	uuid: string;
 	username: string;
 }
-//#endregion ---------- /User ---------- 
-
+//#endregion ---------- /User ----------
 
 export interface OAuth extends StampedEntity {
 	id: number;
@@ -35,7 +40,7 @@ export interface Org extends StampedEntity {
 	id: number;
 	uuid: string;
 	name: string;
-	accesses?: OrgAccesses
+	accesses?: OrgAccesses;
 }
 
 export interface Wks extends StampedEntity, OrgScopedEntity {
@@ -48,70 +53,69 @@ export interface OrgScopedEntity {
 	orgId: number;
 }
 
-
 /**
  * Project entity model when read from the DAO
  * table name: 'project'
  */
 export interface Project extends StampedEntity, OrgScopedEntity {
-  /**
-   * @access some stuff
-   * @minimum 123
-   */
-  id: number,
-  uuid: string,
+	/**
+	 * @access some stuff
+	 * @minimum 123
+	 */
+	id: number;
+	uuid: string;
 	orgId: number;
-  wksId?: number,
+	wksId?: number;
 
-  name: string,
+	name: string;
 
-  desc?: string,
+	desc?: string;
 }
 
-//#region    ---------- Media ---------- 
-export type MediaType = 'video' | 'image';
-export type MediaResolution = '480p30' | '360p30';
+//#region    ---------- Media ----------
+export type AssetType = "video" | "image";
+export type MediaResolution = "480p30" | "360p30";
 
-export interface Media extends StampedEntity, OrgScopedEntity {
+export interface Asset extends StampedEntity, OrgScopedEntity {
 	id: number;
 	projectId: number;
-	type: MediaType;
+	type: AssetType;
 	uuid: string;
 	srcName: string; // the orginal source name
-	name: string; // the name of the main media file (can have different extension as srcName)
+	name: string; // the name of the main asset file (can have different extension as srcName)
 	folderPath: string; // from after the contentRoot
 	sd: MediaResolution;
 
 	url: string; // set by MediaDao.parseRecord
 	sdUrl?: string; // set by MediaDao.parseRecord
 }
-//#endregion ---------- /Media ---------- 
+//#endregion ---------- /Media ----------
 
-//#region    ---------- Job ---------- 
-export type JobState = 'new' | 'started' | 'completed' | 'skipped' | 'failed';
+//#region    ---------- Job ----------
+export type JobState = "new" | "started" | "completed" | "skipped" | "failed";
 
 export interface Job {
-	id: number,
-	state: JobState,
+	id: number;
+	state: JobState;
 
-	event: JobEventName,
+	event: JobEventName;
 
-	orgId?: number, // can be undefined when not for a workspace
-	onEntity?: string, // the entity type name e.g., "Media"
-	onId?: number, // the entity id (for now support only entity with number as id)
+	orgId?: number; // can be undefined when not for a workspace
+	onEntity?: string; // the entity type name e.g., "Media"
+	onId?: number; // the entity id (for now support only entity with number as id)
 
-	newTime?: string,
-	startTime?: string,
-	endTime?: string,
+	newTime?: string;
+	startTime?: string;
+	endTime?: string;
 
-	ntd: boolean, // nothing done (when the job was already processed)
+	ntd: boolean; // nothing done (when the job was already processed)
 
-	todo?: any, // the ...Todo event (todo: check if we should type generic this one)
-	done?: any, // the ...Done event (todo: check if we should type generic this one)
-	progress?: { [name: string]: number }, // the step progress in (0 to 100) Names are snake format e.g., {framing_generate: 25, framing_upload: 12}
+	todo?: any; // the ...Todo event (todo: check if we should type generic this one)
+	done?: any; // the ...Done event (todo: check if we should type generic this one)
+	progress?: { [name: string]: number }; // the step progress in (0 to 100) Names are snake format e.g., {framing_generate: 25, framing_upload: 12}
 
-	err_code?: string, // only if state = failed
-	err_msg?: string, // only if state = failed
+	err_code?: string; // only if state = failed
+	err_msg?: string; // only if state = failed
 }
 
-//#endregion ---------- /Job ---------- 
+//#endregion ---------- /Job ----------

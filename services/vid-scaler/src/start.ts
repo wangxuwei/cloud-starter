@@ -5,8 +5,8 @@
 ////
 
 import { CORE_STORE_ROOT_DIR, __version__ } from '#common/conf.js';
-import { getResMp4Name } from '#common/da/dao-media.js';
-import { mediaDao } from '#common/da/daos.js';
+import { getResMp4Name } from '#common/da/dao-asset.js';
+import { assetDao } from '#common/da/daos.js';
 import { getAppQueue, getJobQueue } from '#common/queue.js';
 import { existFile, getCoreBucket } from '#common/store.js';
 import { getSysContext } from '#common/user-context.js';
@@ -14,7 +14,7 @@ import { execa } from 'execa';
 import { mkdir } from 'fs/promises';
 import * as Path from 'path';
 import { split } from 'utils-min';
-import { v4 as newUuid } from 'uuid';
+import { v7 as newUuid } from 'uuid';
 import { Worker } from 'worker_threads';
 
 
@@ -43,7 +43,7 @@ async function start() {
 			const { orgId, mediaId, res } = entry.data;
 
 			const sysUtx = await getSysContext({ orgId });
-			const media = await mediaDao.get(sysUtx, mediaId);
+			const media = await assetDao.get(sysUtx, mediaId);
 
 			const mediaName = media.name;
 
@@ -81,7 +81,7 @@ async function start() {
 			// update the sd if not present
 			// TODO: later probably check if this new processed is the lowest resolution
 			if (media.sd != res) {
-				await mediaDao.update(sysUtx, mediaId, { sd: res });
+				await assetDao.update(sysUtx, mediaId, { sd: res });
 			}
 
 			await vidScalerJobQueue.done(entry);

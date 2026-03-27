@@ -1,7 +1,7 @@
 // <origin src="https://raw.githubusercontent.com/BriteSnow/cloud-starter/master/services/web-server/src/web/router-auth-google-oauth.ts" />
 // (c) 2019 BriteSnow, inc - This code is licensed under MIT license (see LICENSE for details)
 
-import { mediaDao } from '#common/da/daos.js';
+import { assetDao } from '#common/da/daos.js';
 import { Err } from '#common/error.js';
 import { symbolDic } from '#common/utils.js';
 import { ApiKtx, AppRouter, routePost, success } from '#common/web/koa-utils.js';
@@ -13,9 +13,9 @@ const ERROR = symbolDic(
 )
 
 
-class MediaRouter extends AppRouter {
+class AssetRouter extends AppRouter {
 
-	@routePost('/upload-media')
+	@routePost('/upload-asset')
 	async create(ktx: ApiKtx) {
 		const utx = ktx.state.utx;
 		const body = ktx.request.body as any;
@@ -23,14 +23,14 @@ class MediaRouter extends AppRouter {
 		// ctx.router available
 		const file = ktx.request.files?.file; // 'file' is the formData name for the first file
 		if (file && !(file instanceof Array)) {
-			const id = await mediaDao.createWithFile(utx, { file, projectId });
-			const media = await mediaDao.get(utx, id);
-			return success(media);
+			const id = await assetDao.createWithFile(utx, { file, projectId });
+			const asset = await assetDao.get(utx, id);
+			return success(asset);
 		} else {
-			throw new Err(ERROR.FILE_NOT_FOUND, `Cannot create media, file not found`);
+			throw new Err(ERROR.FILE_NOT_FOUND, `Cannot create asset, file not found`);
 		}
 	}
 
 }
 
-export default function apiRouter(prefix?: string) { return new MediaRouter(prefix) };
+export default function apiRouter(prefix?: string) { return new AssetRouter(prefix) };

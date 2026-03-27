@@ -5,7 +5,7 @@
 ////
 
 import { CORE_STORE_ROOT_DIR, __version__ } from '#common/conf.js';
-import { mediaDao } from '#common/da/daos.js';
+import { assetDao } from '#common/da/daos.js';
 import { getAppQueue, getJobQueue } from '#common/queue.js';
 import { existFile, getCoreBucket } from '#common/store.js';
 import { getSysContext } from '#common/user-context.js';
@@ -14,7 +14,7 @@ import { mkdir } from 'fs/promises';
 import { lookup } from 'mime-types';
 import * as Path from 'path';
 import { split } from 'utils-min';
-import { v4 as newUuid } from 'uuid';
+import { v7 as newUuid } from 'uuid';
 import { Worker } from 'worker_threads';
 
 
@@ -42,7 +42,7 @@ async function start() {
 
 		try {
 			const sysUtx = await getSysContext({ orgId });
-			const media = await mediaDao.get(sysUtx, mediaId);
+			const media = await assetDao.get(sysUtx, mediaId);
 
 			// if the media.name is not mp4, then, transcode
 			// FIXME: needs to suport other video types
@@ -66,12 +66,12 @@ async function start() {
 					await execa('ffmpeg', split(`-i ${tempSrcFile}  -vcodec libx264 -crf 20 ${tempMp4File}`, ' '));
 					await coreStore.upload(tempMp4File, remoteMp4File);
 				}
-				await mediaDao.update(sysUtx, mediaId, { name: mp4Name });
+				await assetDao.update(sysUtx, mediaId, { name: mp4Name });
 			}
 
 			//// Send the Data Event MediaMainMp4
 			// NOTE: Even if the data was already mp4, then, we still send the event MediaMainMp4 for other to pickup
-			const mediaAfterUpdate = await mediaDao.get(sysUtx, mediaId);
+			const mediaAfterUpdate = await assetDao.get(sysUtx, mediaId);
 			if (mediaAfterUpdate.name.endsWith('.mp4')) {
 				await mediaMainMp4Queue.add({ type: 'MediaMainMp4', orgId, mediaId });
 			}

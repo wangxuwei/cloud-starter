@@ -1,4 +1,4 @@
-import { MediaDao } from "./dao-media.js";
+import { AssetDao } from "./dao-asset.js";
 import { OAuthDao } from "./dao-oauth.js";
 import { OrgDao } from "./dao-org.js";
 import { PrlinkDao } from "./dao-prlink.js";
@@ -14,7 +14,7 @@ export const wksDao = new WksDao();
 
 export const projectDao = new ProjectDao();
 
-export const mediaDao = new MediaDao();
+export const assetDao = new AssetDao();
 
 export const oauthDao = new OAuthDao();
 

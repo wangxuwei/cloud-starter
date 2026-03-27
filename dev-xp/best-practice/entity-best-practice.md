@@ -75,10 +75,10 @@ Entities should:
 export interface Media extends StampedEntity, OrgScopedEntity {
 	id: number;
 	projectId: number;
-	type: MediaType;
+	type: AssetType;
 	uuid: string;
 	srcName: string; // The orginal source name
-	name: string;    // name of the main media file
+	name: string;    // name of the main asset file
 	folderPath: string;
 	sd: MediaResolution;
 	url: string;     // set by MediaDao.parseRecord

@@ -196,8 +196,8 @@ ALTER SEQUENCE project_id_seq
 -- #endregion: --- Project
 
 
--- #region:    --- Media
-CREATE TYPE media_type AS ENUM (
+-- #region:    --- Asset
+CREATE TYPE asset_type AS ENUM (
   'image',
   'video'
 );
@@ -207,12 +207,12 @@ CREATE TYPE media_res AS ENUM (
   '360p30'
 );
 
-CREATE TABLE "media" (
+CREATE TABLE "asset" (
   id bigserial PRIMARY KEY,
   "orgId" bigint NOT NULL,
   "projectId" bigint NULL, -- FIXME
   uuid uuid NOT NULL UNIQUE DEFAULT gen_random_uuid (),
-  type media_type NOT NULL,
+  type asset_type NOT NULL,
   name varchar(64),
 
   "srcName" varchar(64),
@@ -233,7 +233,7 @@ CREATE TABLE "media" (
   FOREIGN KEY ("projectId") REFERENCES "project" (id) ON DELETE CASCADE
 );
 
-ALTER SEQUENCE media_id_seq
+ALTER SEQUENCE asset_id_seq
   RESTART WITH 1000;
 
 

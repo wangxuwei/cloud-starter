@@ -6,7 +6,7 @@ import { existFile, getCoreBucket } from '#common/store.js';
 import { getSysContext } from '#common/user-context.js';
 import { mkdir, rm, writeFile } from 'fs/promises';
 import * as Path from 'path';
-import { v4 as newUuid } from 'uuid';
+import { v7 as newUuid } from 'uuid';
 import { Worker } from 'worker_threads';
 import { transcribeToText } from './asr/transcribe.js';
 

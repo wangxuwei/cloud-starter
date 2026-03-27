@@ -4,9 +4,9 @@ import { RpcRouter } from "#common/web/rpc.js";
 import { execa } from "execa";
 import { env } from "process";
 import routerAuthGoogleOAuth from "./web/router-auth-google-oauth.js";
-import routerMedia from "./web/router-media.js";
+import routerAsset from "./web/router-asset.js";
 // Import RPC handlers to register them
-import "./web/rpc-media.js";
+import "./web/rpc-asset.js";
 import "./web/rpc-org.js";
 import "./web/rpc-project.js";
 import "./web/rpc-user.js";
@@ -31,7 +31,7 @@ async function main() {
     token_name: "token",
     beforeAuthMdws: [routerAuthGoogleOAuth().middleware()],
     apiMdws: [
-      routerMedia("/api").middleware(),
+      routerAsset("/api").middleware(),
       // Authenticated RPC routes (requires authentication) - uses /rpc prefix
       new RpcRouter("/wapi").middleware(),
     ],
