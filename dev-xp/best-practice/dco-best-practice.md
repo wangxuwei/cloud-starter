@@ -52,18 +52,18 @@ When you need special behavior (file uploads, custom methods, etc.), create a cl
 
 ```ts
 import { BaseDco, dcoHub } from './dco-base.js';
-import { Media } from 'shared/entities.js';
+import { Asset } from 'shared/entities.js';
 import type { QueryOptions } from 'shared/query_options.js';
 
-class MediaDao extends BaseDco<Media, QueryOptions<Media>> {
+class AssetDco extends BaseDco<Asset, QueryOptions<Asset>> {
   constructor() {
-    super('Media');
+    super('Asset');
   }
 
   // Custom methods go here
 }
 
-export const mediaDco = new MediaDao();
+export const assetDco = new AssetDco();
 ```
 
 ## Adding Custom Methods
@@ -73,16 +73,16 @@ export const mediaDco = new MediaDao();
 Add methods that provide commonly used queries with predefined filters:
 
 ```ts
-class MediaDao extends BaseDco<Media, QueryOptions<Media>> {
+class AssetDco extends BaseDco<Asset, QueryOptions<Asset>> {
   constructor() {
-    super('Media');
+    super('Asset');
   }
 
-  async listImages(): Promise<Media[]> {
+  async listImages(): Promise<Asset[]> {
     return super.list({ filters: { type: 'image' } });
   }
 
-  async listVideos(): Promise<Media[]> {
+  async listVideos(): Promise<Asset[]> {
     return super.list({ filters: { type: 'video' } });
   }
 }
@@ -93,12 +93,12 @@ class MediaDao extends BaseDco<Media, QueryOptions<Media>> {
 Override base methods when you need special handling, such as file uploads:
 
 ```ts
-class MediaDao extends BaseDco<Media, QueryOptions<Media>> {
+class AssetDco extends BaseDco<Asset, QueryOptions<Asset>> {
   constructor() {
-    super('Media');
+    super('Asset');
   }
 
-  async create(props: any & { file?: File }): Promise<Media> {
+  async create(props: any & { file?: File }): Promise<Asset> {
     const file = props.file;
 
     if (file) {
@@ -106,19 +106,19 @@ class MediaDao extends BaseDco<Media, QueryOptions<Media>> {
       const formData = new FormData();
       formData.append('file', file);
 
-      const webResult = await webRequest('POST', '/api/dse/Media', {
+      const webResult = await webRequest('POST', '/api/dse/Asset', {
         body: formData
       });
 
-      const media = webResult.success ? webResult.data as Media : null;
+      const asset = webResult.success ? webResult.data as Asset : null;
 
-      if (media == null) {
-        throw new Error(`Could not create media for ${file.name}`);
+      if (asset == null) {
+        throw new Error(`Could not create asset for ${file.name}`);
       }
 
       // Publish the event manually
-      dcoHub.pub(this._entityType, 'create', media);
-      return media;
+      dcoHub.pub(this._entityType, 'create', asset);
+      return asset;
 
     } else {
       // Use default behavior
@@ -161,17 +161,17 @@ async get(id: number): Promise<E> {
 
 ```ts
 async create(props: any): Promise<E> {
-  const webResult = await webRequest('POST', '/api/dse/Media', {
+  const webResult = await webRequest('POST', '/api/dse/Asset', {
     body: formData
   });
 
-  const media = webResult.success ? webResult.data as Media : null;
+  const asset = webResult.success ? webResult.data as Asset : null;
 
-  if (media == null) {
-    throw new Error(`Could not create media for ${file.name}`);
+  if (asset == null) {
+    throw new Error(`Could not create asset for ${file.name}`);
   }
 
-  return media;
+  return asset;
 }
 ```
 
@@ -181,35 +181,35 @@ Here is a complete example showing various DCO patterns:
 
 ```ts
 import { webRequest } from 'common/web-request.js';
-import { Media } from 'shared/entities.js';
+import { Asset } from 'shared/entities.js';
 import type { QueryOptions } from 'shared/query_options.js';
 import { BaseDco, dcoHub } from './dco-base.js';
 
-class MediaDao extends BaseDco<Media, QueryOptions<Media>> {
+class AssetDco extends BaseDco<Asset, QueryOptions<Asset>> {
   constructor() {
-    super('Media');
+    super('Asset');
   }
 
   // Override create for file upload support
-  async create(props: any & { file?: File }): Promise<Media> {
+  async create(props: any & { file?: File }): Promise<Asset> {
     const file = props.file;
 
     if (file) {
       const formData = new FormData();
       formData.append('file', file);
 
-      const webResult = await webRequest('POST', '/api/dse/Media', {
+      const webResult = await webRequest('POST', '/api/dse/Asset', {
         body: formData
       });
 
-      const media = webResult.success ? webResult.data as Media : null;
+      const asset = webResult.success ? webResult.data as Asset : null;
 
-      if (media == null) {
-        throw new Error(`Could not create media for ${file.name}`);
+      if (asset == null) {
+        throw new Error(`Could not create asset for ${file.name}`);
       }
 
-      dcoHub.pub(this._entityType, 'create', media);
-      return media;
+      dcoHub.pub(this._entityType, 'create', asset);
+      return asset;
 
     } else {
       return super.create(props);
@@ -217,16 +217,16 @@ class MediaDao extends BaseDco<Media, QueryOptions<Media>> {
   }
 
   // Convenience methods for common queries
-  async listImages(): Promise<Media[]> {
+  async listImages(): Promise<Asset[]> {
     return super.list({ filters: { type: 'image' } });
   }
 
-  async listVideos(): Promise<Media[]> {
+  async listVideos(): Promise<Asset[]> {
     return super.list({ filters: { type: 'video' } });
   }
 
   // Custom method for batch operations
-  async updateMultiple(ids: number[], props: Partial<Media>): Promise<Media[]> {
+  async updateMultiple(ids: number[], props: Partial<Asset>): Promise<Asset[]> {
     const results = await Promise.all(
       ids.map(id => this.update(id, props))
     );
@@ -234,7 +234,7 @@ class MediaDao extends BaseDco<Media, QueryOptions<Media>> {
   }
 }
 
-export const mediaDco = new MediaDao();
+export const assetDco = new AssetDco();
 ```
 
 ## Best Practices

@@ -175,7 +175,7 @@ Use PostgreSQL arrays for storing multiple related values.
 ```sql
 accesses user_access[],
 pwdHistory varchar(128)[],
-resList media_res[]
+resList asset_res[]
 ```
 
 ## Junction Tables

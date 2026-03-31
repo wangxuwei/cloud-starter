@@ -1,43 +1,45 @@
-import { __version__, CORE_STORE_ROOT_DIR } from '#common/conf.js';
-import { getAudioName, getAudioTextName } from '#common/da/dao-media.js';
-import { mediaDao } from '#common/da/daos.js';
-import { getAppQueue, getJobQueue } from '#common/queue.js';
-import { existFile, getCoreBucket } from '#common/store.js';
-import { getSysContext } from '#common/user-context.js';
-import { mkdir, rm, writeFile } from 'fs/promises';
-import * as Path from 'path';
-import { v4 as newUuid } from 'uuid';
-import { Worker } from 'worker_threads';
-import { transcribeToText } from './asr/transcribe.js';
+import { __version__, CORE_STORE_ROOT_DIR } from "#common/conf.js";
+import { getAudioName, getAudioTextName } from "#common/da/dao-asset.js";
+import { assetDao } from "#common/da/daos.js";
+import { getAppQueue, getJobQueue } from "#common/queue.js";
+import { existFile, getCoreBucket } from "#common/store.js";
+import { getSysContext } from "#common/user-context.js";
+import { ASSET_NAME } from "#shared/entities.js";
+import { mkdir, rm, writeFile } from "fs/promises";
+import * as Path from "path";
+import { v7 as newUuid } from "uuid";
+import { Worker } from "worker_threads";
+import { transcribeToText } from "./asr/transcribe.js";
 
 start();
 
 async function start() {
 	console.log(`--> audio-texter (${__version__}) - starting  ->> 445`);
 
-	new Worker('./dist/services/audio-texter/src/wkr-bridge-media-text.js');
+	new Worker("./dist/services/audio-texter/src/wkr-bridge-asset-text.js");
 
-	const mediaTextQueue = getAppQueue('MediaText');
+	const assetTextQueue = getAppQueue("AssetText");
 
-	const vidTextJobQueue = getJobQueue('VidTextJob');
+	const vidTextJobQueue = getJobQueue("VidTextJob");
 
-	for (; ;) {
+	for (;;) {
 		const entry = await vidTextJobQueue.nextJob();
 		let transcriptionResult: any = null;
 
 		try {
-			const { orgId, mediaId } = entry.data;
+			const { orgId, assetId } = entry.data;
 
 			const sysUtx = await getSysContext({ orgId });
-			const media = await mediaDao.get(sysUtx, mediaId);
+			const asset = await assetDao.get(sysUtx, assetId);
 
-			const mediaName = media.name;
+			const assetName = ASSET_NAME + ".mp4";
 
-			const audioName = getAudioName(mediaName);
-			const remoteAudioFile = CORE_STORE_ROOT_DIR + media.folderPath + audioName;
+			const audioName = getAudioName(assetName);
+			const remoteAudioFile =
+				CORE_STORE_ROOT_DIR + asset.folderPath + audioName;
 
-			const textName = getAudioTextName(mediaName);
-			const remoteTextFile = CORE_STORE_ROOT_DIR + media.folderPath + textName;
+			const textName = getAudioTextName(assetName);
+			const remoteTextFile = CORE_STORE_ROOT_DIR + asset.folderPath + textName;
 
 			const coreStore = await getCoreBucket();
 
@@ -58,13 +60,12 @@ async function start() {
 
 				await coreStore.upload(localTextFile, remoteTextFile);
 
-				await mediaTextQueue.add({ type: 'MediaText', mediaId, orgId });
+				await assetTextQueue.add({ type: "AssetText", assetId, orgId });
 
 				await rm(tempDir, { recursive: true, force: true });
 			}
 
 			await vidTextJobQueue.done(entry);
-
 		} catch (ex) {
 			const msg = `ERROR - audio-texter ${ex} (transcription result: ${transcriptionResult}) (skip and go next) - cause: ${ex}`;
 			await vidTextJobQueue.fail(entry, new Error(msg));

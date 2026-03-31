@@ -1,61 +1,81 @@
-import { position } from '@dom-native/draggable';
-import { BaseViewElement } from 'common/v-base.js';
-import { mediaDco } from 'dcos';
-import { append, cherryChild, closest, customElement, elem, first, frag, getAttr, html, on, onEvent, OnEvent, onHub } from 'dom-native';
-import { asNum } from 'utils-min';
+import { position } from "@dom-native/draggable";
+import { BaseViewElement } from "common/v-base.js";
+import { assetDco } from "dcos";
+import {
+	append,
+	cherryChild,
+	closest,
+	customElement,
+	elem,
+	first,
+	frag,
+	getAttr,
+	html,
+	on,
+	onEvent,
+	OnEvent,
+	onHub,
+} from "dom-native";
+import { asNum } from "utils-min";
 
 const VIDEOS_HTML = html`
 	<header>
-	<h1>Videos</h1>
-	</header>	
+		<h1>Videos</h1>
+	</header>
 	<section class="content">
-		<div class="card-add media-add">
+		<div class="card-add asset-add">
 			<d-ico name="ico-add"></d-ico>
 			<h3>Add Video</h3>
 		</div>
 	</section>
 `;
 
-@customElement('v-videos')
+@customElement("v-videos")
 export class VideosView extends BaseViewElement {
-
 	//// Key Elements
-	get contentEl():BaseViewElement { return this } // for now the contentEl is this element
-	get mediaAddEl():HTMLElement { return this.cacheFirst('.media-add')! }
-	get projectId() { return asNum(getAttr(closest(this, "v-project-main")!, 'project-id')) }
+	get contentEl(): BaseViewElement {
+		return this;
+	} // for now the contentEl is this element
+	get assetAddEl(): HTMLElement {
+		return this.cacheFirst(".asset-add")!;
+	}
+	get projectId() {
+		return asNum(getAttr(closest(this, "v-project-main")!, "project-id"));
+	}
 
-	//#region    ---------- Element Events ---------- 
+	//#region    ---------- Element Events ----------
 
-	@onEvent('pointerup', '.show-menu')
+	@onEvent("pointerup", ".show-menu")
 	onCardShowMenuUp(evt: PointerEvent & OnEvent) {
-
-		if (first('#media-card-menue') == null) {
-
-			const [menu] = append(document.body, `
-			<c-menu id='media-card-menue'>
+		if (first("#asset-card-menue") == null) {
+			const [menu] = append(
+				document.body,
+				`
+			<c-menu id='asset-card-menue'>
 				<li class="do-delete">Delete</li>
-			</c-menu>`);
+			</c-menu>`
+			);
 
-			position(menu, evt.selectTarget, { at: 'bottom', align: 'right' });
+			position(menu, evt.selectTarget, { at: "bottom", align: "right" });
 
-			const cardEl = closest(evt.selectTarget, '[data-type="Media"]');
-			on(menu, 'pointerup', '.do-delete', async (evt) => {
-				const id = asNum(cardEl?.getAttribute('data-id'));
+			const cardEl = closest(evt.selectTarget, '[data-type="Asset"]');
+			on(menu, "pointerup", ".do-delete", async (evt) => {
+				const id = asNum(cardEl?.getAttribute("data-id"));
 				if (id == null) {
-					throw new Error(`UI ERROR - cannot find data-type=Media ${cardEl}`);
+					throw new Error(`UI ERROR - cannot find data-type=Asset ${cardEl}`);
 				}
-				await mediaDco.delete(id);
-			})
+				await assetDco.delete(id);
+			});
 		}
 	}
 
-	@onEvent('dragenter,dragover', '.media-add')
+	@onEvent("dragenter,dragover", ".asset-add")
 	enableDrop(evt: DragEvent) {
 		evt.preventDefault();
 		const firstItem = evt.dataTransfer?.items[0];
 		if (firstItem != null) {
-			if (firstItem.type.startsWith('video')) {
-				// we are ok. 
+			if (firstItem.type.startsWith("video")) {
+				// we are ok.
 				// Note: for this event, evt.dataTransfer?.files[0] is not defined
 			} else {
 				// TODO: we get firstItem.type
@@ -63,26 +83,26 @@ export class VideosView extends BaseViewElement {
 		}
 	}
 
-	@onEvent('drop', '.media-add')
+	@onEvent("drop", ".asset-add")
 	async viewAdd(evt: DragEvent & OnEvent) {
 		evt.preventDefault();
 		evt.stopPropagation();
 		const file = evt.dataTransfer?.files?.[0];
-		if (file != null && file.type.startsWith('video')) {
-			await mediaDco.create({ file, projectId: this.projectId });
+		if (file != null && file.type.startsWith("video")) {
+			await assetDco.create({ file, projectId: this.projectId });
 		} else {
 			// TODO: show message not valid
 		}
 	}
 	//#endregion ---------- /Element Events ----------
 
-	//#region    ---------- Data Event ---------- 
-	@onHub('dcoHub', 'media', 'create,update,delete')
-	onMediaChange() {
+	//#region    ---------- Data Event ----------
+	@onHub("dcoHub", "asset", "create,update,delete")
+	onAssetChange() {
 		this.refresh();
 	}
 
-	//#endregion ---------- /Data Event ---------- 
+	//#endregion ---------- /Data Event ----------
 	async init() {
 		// then initial render
 		this.refresh();
@@ -90,20 +110,24 @@ export class VideosView extends BaseViewElement {
 
 	async refresh() {
 		const projectId = this.projectId;
-		const mediaList = await mediaDco.listVideos(projectId!);
-		const content = frag(mediaList, m => {
+		const assetList = await assetDco.listVideoAssets(projectId!);
+		const content = frag(assetList, (m) => {
 			const itemContentEl = html`
 				<header>
-				<h2>${m.name}</h2>
-				<c-ico src="#ico-more" class="show-menu"></c-ico>
+					<h2>${m.name}</h2>
+					<c-ico src="#ico-more" class="show-menu"></c-ico>
 				</header>
 				<section>
 					<video controls>
-						<source src="${m.sdUrl ?? m.url}" type="video/mp4">
-					</video>			
+						<source src="${m.sdUrl ?? m.url}" type="video/mp4" />
+					</video>
 				</section>
 			`;
-			const item = elem('div', { class: 'card', 'data-id': m.id, 'data-type': 'Media'});
+			const item = elem("div", {
+				class: "card",
+				"data-id": m.id,
+				"data-type": "Asset",
+			});
 			item.replaceChildren(document.importNode(itemContentEl, true));
 			return item;
 		});
@@ -113,5 +137,4 @@ export class VideosView extends BaseViewElement {
 		sectionEl.append(content);
 		this.replaceChildren(mainContent);
 	}
-
 }

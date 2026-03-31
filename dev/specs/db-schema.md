@@ -10,7 +10,7 @@ The database consists of the following main entities:
 - Organization management
 - Workspace management
 - Project management
-- Media management
+- Asset management
 - Job processing
 
 ## Tables
@@ -147,9 +147,9 @@ Projects within workspaces.
 **Note**: ID sequence starts at 1000.
 ---
 
-### media
+### asset
 
-Media files (images and videos) with resolution information.
+Asset files (images and videos) with resolution information.
 
 | Field | Type | Description | Constraints |
 |-------|------|-------------|-------------|
@@ -157,12 +157,12 @@ Media files (images and videos) with resolution information.
 | orgId | bigint | Reference to organization | NOT NULL, FOREIGN KEY → org(id) ON DELETE CASCADE |
 | projectId | bigint | Reference to project | NULL, FOREIGN KEY → project(id) ON DELETE CASCADE |
 | uuid | uuid | Unique identifier | NOT NULL, UNIQUE, DEFAULT: gen_random_uuid() |
-| type | media_type | Media type (image, video) | NOT NULL |
-| name | varchar(64) | Media name | |
+| type | asset_type | Asset type (image, video) | NOT NULL |
+| name | varchar(64) | Asset name | |
 | srcName | varchar(64) | Source file name | |
 | folderPath | varchar(256) | Folder path in storage | |
-| resList | media_res[] | Available resolutions | |
-| sd | media_res | Standard definition resolution | |
+| resList | asset_res[] | Available resolutions | |
+| sd | asset_res | Standard definition resolution | |
 | cid | bigint | Creator ID | |
 | ctime | timestamp with time zone | Creation timestamp | |
 | mid | bigint | Modifier ID | |
@@ -248,15 +248,15 @@ Organization types:
 - `personal` - Personal organization
 - `group` - Group organization
 
-### media_type
+### asset_type
 
-Media file types:
+Asset file types:
 - `image` - Image file
 - `video` - Video file
 
-### media_res
+### asset_res
 
-Media resolution options:
+Asset resolution options:
 - `480p30` - 480p at 30fps
 - `360p30` - 360p at 30fps
 

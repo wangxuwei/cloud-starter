@@ -2,7 +2,7 @@
 
 ## Overview
 
-The audio-extractor service extracts audio tracks from video files using FFmpeg and stores them in cloud storage. It is part of the media processing pipeline, converting scaled videos to audio format for subsequent text transcription.
+The audio-extractor service extracts audio tracks from video files using FFmpeg and stores them in cloud storage. It is part of the asset processing pipeline, converting scaled videos to audio format for subsequent text transcription.
 
 ## Architecture
 
@@ -10,35 +10,35 @@ The audio-extractor service extracts audio tracks from video files using FFmpeg 
 
 ```
 Video Input -> Video Scaler -> Audio Extractor -> Audio Texter
-                               (MediaScaledMp4)
+                               (AssetScaledMp4)
 ```
 
 The service operates as a queue-based worker that:
-1. Listens for scaled video files from `MediaScaledMp4` queue
+1. Listens for scaled video files from `AssetScaledMp4` queue
 2. Extracts audio using FFmpeg with MP3 codec (128kbps)
 3. Uploads extracted audio to cloud storage
-4. Publishes `MediaAudioMp4` event for audio texter processing
+4. Publishes `AssetAudioMp4` event for audio texter processing
 5. Adds `VidTextJob` to trigger text transcription
 
 ### Worker Threads
 
 The service runs with two main components:
 - **Main Thread**: Handles the `VidAudioJob` queue, performs FFmpeg extraction
-- **Worker Thread**: Listens to `MediaScaledMp4` queue and creates VidAudioJob tasks
+- **Worker Thread**: Listens to `AssetScaledMp4` queue and creates VidAudioJob tasks
 
 ## Queue Jobs
 
 ### Consumed Queues
 
-#### MediaScaledMp4 (App Queue)
+#### AssetScaledMp4 (App Queue)
 - **Stream Group**: `audio-extractor-bgrp`
-- **Event Type**: `MediaScaledMp4`
+- **Event Type**: `AssetScaledMp4`
 - **Payload**:
   ```typescript
   {
-    type: 'MediaScaledMp4',
+    type: 'AssetScaledMp4',
     orgId: number,
-    mediaId: number
+    assetId: number
   }
   ```
 - **Purpose**: Triggered when a video has been scaled, signaling readiness for audio extraction
@@ -50,21 +50,21 @@ The service runs with two main components:
   {
     type: 'VidAudioJob',
     orgId: number,
-    mediaId: number
+    assetId: number
   }
   ```
-- **Purpose**: Job to extract audio from a specific media item
+- **Purpose**: Job to extract audio from a specific asset item
 
 ### Produced Queues
 
-#### MediaAudioMp4 (App Queue)
-- **Event Type**: `MediaAudioMp4`
+#### AssetAudioMp4 (App Queue)
+- **Event Type**: `AssetAudioMp4`
 - **Payload**:
   ```typescript
   {
-    type: 'MediaAudioMp4',
+    type: 'AssetAudioMp4',
     orgId: number,
-    mediaId: number
+    assetId: number
   }
   ```
 - **Purpose**: Notification that audio extraction is complete
@@ -76,7 +76,7 @@ The service runs with two main components:
   {
     type: 'VidTextJob',
     orgId: number,
-    mediaId: number
+    assetId: number
   }
   ```
 - **Purpose**: Triggers audio-texter service to transcribe the audio
@@ -106,10 +106,10 @@ Given a video file name, the audio file is derived using `getAudioName()`:
 
 Files are stored in the cloud bucket under:
 ```
-{CORE_STORE_ROOT_DIR}{media.folderPath}{audioName}
+{CORE_STORE_ROOT_DIR}{asset.folderPath}{audioName}
 ```
 
-Example: `/core-store-root/org/{orgId}/medias/{mediaId}/{mediaName}-audio.mp3`
+Example: `/core-store-root/org/{orgId}/assets/{assetId}/{assetName}-audio.mp3`
 
 ### Processing Logic
 
@@ -170,7 +170,7 @@ Controlled via `RUN_MODE` environment variable:
 - **Node.js**: ES2021 compatible (Node.js 16+)
 - **Redis**: For queue management
 - **Cloud Storage**: S3-compatible or Google Cloud Storage
-- **PostgreSQL**: For media metadata
+- **PostgreSQL**: For asset metadata
 
 ## Usage Example
 
@@ -178,11 +178,11 @@ Controlled via `RUN_MODE` environment variable:
 
 1. Video is uploaded and processed by vid-init service
 2. Video is scaled by vid-scaler service
-3. vid-scaler publishes `MediaScaledMp4` event
+3. vid-scaler publishes `AssetScaledMp4` event
 4. audio-extractor worker receives event, creates `VidAudioJob`
 5. audio-extractor extracts audio using FFmpeg
 6. audio-extractor uploads audio to cloud storage
-7. audio-extractor publishes `MediaAudioMp4` event
+7. audio-extractor publishes `AssetAudioMp4` event
 8. audio-extractor adds `VidTextJob` to queue
 9. audio-texter service picks up `VidTextJob` for transcription
 

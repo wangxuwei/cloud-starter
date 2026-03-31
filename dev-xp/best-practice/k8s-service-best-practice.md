@@ -13,7 +13,7 @@ Our services are built as Node.js ES Modules (`type: "module"`) running in a Kub
 *   **Main Process:** Orchestrates application lifecycle, handles signals, and spawns worker threads.
 *   **Worker Threads:** Isolate heavy logic (transcoding, external API calls) to prevent blocking the main event loop.
 *   **Queues:**
-    *   **AppQueue (Streams):** Used for real-time event broadcasting (e.g., `MediaNew`).
+    *   **AppQueue (Streams):** Used for real-time event broadcasting (e.g., `AssetNew`).
     *   **JobQueue:** Used for reliable task processing (e.g., `VidInitJob`, `VidTextJob`).
 *   **Storage:** Abstracted via `cloud-bucket` (supports AWS S3 and Google Cloud Storage).
 *   **Database:** PostgreSQL accessed via `knex`.
@@ -34,32 +34,32 @@ Use this pattern for services with focused, sequential processing logic.
 3.  The Worker reads from a `JobQueue` (e.g., `getJobQueue('VidInitJob')`).
 4.  The Worker processes one item, acknowledges it, and fetches the next.
 
-**Example Worker Implementation (`wkr-bridge-media-new.ts`):**
+**Example Worker Implementation (`wkr-bridge-asset-new.ts`):**
 ```typescript
 import { getAppQueue, getJobQueue } from '#common/queue.js';
 
 async function main() {
-    // Input queue (Stream) - e.g., MediaNew events
-    const mediaQueue = getAppQueue('MediaNew');
+    // Input queue (Stream) - e.g., AssetNew events
+    const assetQueue = getAppQueue('AssetNew');
     // Output queue (Job) - e.g., processing tasks
     const jobQueue = getJobQueue('VidInitJob');
 
     const streamGroup = 'ServiceBridgeGroup';
 
     for (;;) {
-        const entry = await mediaQueue.next(streamGroup);
+        const entry = await assetQueue.next(streamGroup);
         
         // Validate input event
-        // assertEvent('MediaNew', entry.data); 
+        // assertEvent('AssetNew', entry.data); 
 
-        const { orgId, mediaId } = entry.data;
+        const { orgId, assetId } = entry.data;
 
         // Create the job payload
-        const jobPayload = { type: 'VidInitJob', orgId, mediaId };
+        const jobPayload = { type: 'VidInitJob', orgId, assetId };
         await jobQueue.add(jobPayload);
 
         // Acknowledge the stream entry
-        await mediaQueue.ack(streamGroup, entry.id);
+        await assetQueue.ack(streamGroup, entry.id);
     }
 }
 ```
@@ -88,26 +88,26 @@ Use this pattern for services requiring asynchronous external interactions (APIs
 ```typescript
 import { getJobQueue, getAppQueue } from '#common/queue.js';
 import { getSysContext } from '#common/user-context.js';
-import { mediaDao } from '#common/da/dao-media.js';
+import { assetDao } from '#common/da/dao-asset.js';
 import { getCoreBucket } from '#common/store.js';
 import { transcribeToText } from './asr/transcribe.js'; // Custom logic
 
 async function start() {
     const jobQueue = getJobQueue('VidTextJob');
-    const mediaTextQueue = getAppQueue('MediaText');
+    const assetTextQueue = getAppQueue('AssetText');
 
     for (;;) {
         const entry = await jobQueue.nextJob();
-        const { orgId, mediaId } = entry.data;
+        const { orgId, assetId } = entry.data;
 
         try {
             const sysUtx = await getSysContext({ orgId });
-            const media = await mediaDao.get(sysUtx, mediaId);
+            const asset = await assetDao.get(sysUtx, assetId);
 
             // ... processing logic ...
 
             // Publish result
-            await mediaTextQueue.add({ type: 'MediaText', orgId, mediaId });
+            await assetTextQueue.add({ type: 'AssetText', orgId, assetId });
             await jobQueue.done(entry);
         } catch (ex) {
             const msg = `ERROR - audio-texter - ${ex}`;
@@ -205,7 +205,7 @@ async function start() {
 *   If the service requires FFmpeg (e.g., for video/audio processing), use `britesnow/base-media:<tag>`.
 *   Otherwise, use `britesnow/base-node:<tag>`.
 
-Both images include Node.js, but `base-media` is larger as it includes additional media processing tools.
+Both images include Node.js, but `base-media` is larger as it includes additional asset processing tools.
 
 **Example Dockerfile for services requiring FFmpeg:**
 ```dockerfile
@@ -357,7 +357,7 @@ blocks:
 *   **Image:** `localhost:5000/cstar-service-name:{{image_tag}}` (Using local registry for dev).
 *   **Env:** `service_name: service-name` (Used by internal code to identify itself, if necessary).
 *   **Restart Policy:**
-    *   Development: `restartPolicy: Always` (Facilitates `nodemon` and immediate restarts).
+    *   Development: `restartPolicy: Always` (Facilitates `nodemon` and imassette restarts).
     *   Production: `restartPolicy: OnFailure`.
 
 **Volumes (Development Only):**

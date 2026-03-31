@@ -75,7 +75,7 @@ Main web application for users.
   - `src/views/` - Application views
     - `spec/` - Specification/design views and components
     - `timeline/` - Timeline view
-    - Various views: home, login, main, media, nav, project, etc.
+    - Various views: home, login, main, asset, nav, project, etc.
   - `src/dco-base.ts` - Base data component
   - `src/dcos.ts` - Data components registry
   - `src/utils.ts` - Utility functions
@@ -114,7 +114,7 @@ Contains common code shared by all backend services (admin-server, web-server, c
 
   - **Data Access Objects (DAOs)**:
     - `dao-base.ts` - Base DAO class with CRUD operations, query building, stamping, and record processing
-    - `dao-media.ts` - Media DAO with file upload handling and URL generation
+    - `dao-asset.ts` - Asset DAO with file upload handling and URL generation
     - `dao-oauth.ts` - OAuth credentials DAO for external authentication
     - `dao-org-scoped.ts` - Base DAO for org-scoped entities with automatic orgId scoping
     - `dao-org.ts` - Organization DAO with role-based access control and owner management
@@ -122,7 +122,8 @@ Contains common code shared by all backend services (admin-server, web-server, c
     - `dao-project.ts` - Project DAO extending org-scoped base
     - `dao-user.ts` - User DAO with credential management, password hashing, and security column filtering
     - `dao-wks.ts` - Workspace DAO extending org-scoped base
-    - `daos.ts` - DAO singleton registry (userDao, orgDao, wksDao, projectDao, mediaDao, oauthDao, rplinkDao)
+    - `daos.ts` - DAO singleton registry (userDao, orgDao, wksDao, projectDao, assetDao, oauthDao, rplinkDao)
+    - `daos.ts` - DAO singleton registry (userDao, orgDao, wksDao, projectDao, assetDao, oauthDao, rplinkDao)
 
   - **Alternative DAO Implementations**: `daos/`
     - `dao-base.ts` - Simplified base DAO with stamping and table configuration
@@ -235,7 +236,7 @@ Main backend service for web application.
   - `src/start.ts` - Service entry point
   - `src/web/` - Web-specific routers and data source endpoints
     - `dse-generics.ts` - Generic data source endpoints
-    - `dse-media.ts` - Media data source endpoints
+    - `dse-asset.ts` - Asset data source endpoints
     - `dse-org.ts` - Organization data source endpoints
     - `dse-wks.ts` - Workspace data source endpoints
     - `web-commons.ts` - Common web utilities
@@ -270,7 +271,7 @@ Video initialization service. Handles initialization phase of video processing.
 
 - **Source**:
   - `src/start.ts` - Service entry point
-  - `src/wkr-bridge-media-new.ts` - Media processing worker bridge
+  - `src/wkr-bridge-asset-new.ts` - Asset processing worker bridge
 
 ### services/vid-scaler
 
@@ -278,7 +279,7 @@ Video scaling/transcoding service. Handles video format conversion and scaling.
 
 - **Source**:
   - `src/start.ts` - Service entry point
-  - `src/wkr-bridge-media-mp4.ts` - MP4 processing worker bridge
+  - `src/wkr-bridge-asset-mp4.ts` - MP4 processing worker bridge
 
 ### services/mock-s3
 

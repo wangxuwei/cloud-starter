@@ -32,48 +32,48 @@ import { IncludeProcessorOptions } from "./processor.js";
  * @param options - IncludeProcessorOptions containing targetColumns map
  */
 export function buildMainAndRelationColumns(
-  query: Knex.QueryBuilder,
-  options: IncludeProcessorOptions,
-  pivotConfig?: {
-    pivotAlias: string;
-    pivotCols: string[];
-    pivotSourceKey: string;
-  }
+	query: Knex.QueryBuilder,
+	options: IncludeProcessorOptions,
+	pivotConfig?: {
+		pivotAlias: string;
+		pivotCols: string[];
+		pivotSourceKey: string;
+	}
 ): void {
-  // Build columns from targetColumns map (path-based structure)
-  for (const [_, col] of Object.entries(options.targetColumns)) {
-    query.column(col);
-  }
+	// Build columns from targetColumns map (path-based structure)
+	for (const [_, col] of Object.entries(options.targetColumns)) {
+		query.column(col);
+	}
 
-  if (!options.targetColumns?.includes(`${options.alias}.id`)) {
-    query.column(`${options.alias}.id as id`);
-  }
+	if (!options.targetColumns?.includes(`${options.alias}.id`)) {
+		query.column(`${options.alias}.id as id`);
+	}
 
-  // Build columns from targetRelationColumns map (path-based structure)
-  for (const [path, cols] of Object.entries(options.targetRelationColumns)) {
-    for (const col of cols) {
-      // should include .
-      // For joined table columns, add column alias using format: ${alias}.${col} as ${path_col}
-      // The column already has alias.table format, we need to convert to path_col format
-      query.column(`${col} as ${path}_${col.split(".")[1]}`);
-    }
-  }
+	// Build columns from targetRelationColumns map (path-based structure)
+	for (const [path, cols] of Object.entries(options.targetRelationColumns)) {
+		for (const col of cols) {
+			// should include .
+			// For joined table columns, add column alias using format: ${alias}.${col} as ${path_col}
+			// The column already has alias.table format, we need to convert to path_col format
+			query.column(`${col} as ${path}_${col.split(".")[1]}`);
+		}
+	}
 
-  // Build pivot table columns if provided (for manyToMany relationships)
-  if (pivotConfig) {
-    const { pivotAlias, pivotCols, pivotSourceKey } = pivotConfig;
-    const targetAlias = options.alias;
+	// Build pivot table columns if provided (for manyToMany relationships)
+	if (pivotConfig) {
+		const { pivotAlias, pivotCols, pivotSourceKey } = pivotConfig;
+		const targetAlias = options.alias;
 
-    // Select pivot columns with '_pivot' suffix to distinguish them
-    for (const pCol of pivotCols) {
-      query.column(`${pivotAlias}.${pCol} as ${targetAlias}_pivot_${pCol}`);
-    }
+		// Select pivot columns with '_pivot' suffix to distinguish them
+		for (const pCol of pivotCols) {
+			query.column(`${pivotAlias}.${pCol} as ${targetAlias}_pivot_${pCol}`);
+		}
 
-    // Select the source key from pivot table to group back to parents
-    query.column(
-      `${pivotAlias}.${pivotSourceKey} as ${targetAlias}_${pivotSourceKey}`
-    );
-  }
+		// Select the source key from pivot table to group back to parents
+		query.column(
+			`${pivotAlias}.${pivotSourceKey} as ${targetAlias}_${pivotSourceKey}`
+		);
+	}
 }
 
 /**
@@ -86,41 +86,41 @@ export function buildMainAndRelationColumns(
  * @param options - Include processor options containing relationship configurations
  */
 export function buildBelongsJoinToQuery(
-  query: Knex.QueryBuilder,
-  options: IncludeProcessorOptions
+	query: Knex.QueryBuilder,
+	options: IncludeProcessorOptions
 ): void {
-  // Iterate through all relationships defined in options
-  if (!options.relationships) {
-    return;
-  }
+	// Iterate through all relationships defined in options
+	if (!options.relationships) {
+		return;
+	}
 
-  for (const [relName, relOptions] of Object.entries(options.relationships)) {
-    if (!options.entityKey) {
-      continue;
-    }
+	for (const [relName, relOptions] of Object.entries(options.relationships)) {
+		if (!options.entityKey) {
+			continue;
+		}
 
-    // Get relationship definition from conf.ts
-    const relationship = getRelationship(options.entityKey, relName)!;
+		// Get relationship definition from conf.ts
+		const relationship = getRelationship(options.entityKey, relName)!;
 
-    // Only process belongsTo relationships (LEFT JOIN)
-    if (relationship.type === "belongsTo") {
-      const targetAlias = relOptions.alias;
-      const sourceAlias = options.alias;
-      const foreignKey = relationship.foreignKey;
-      const targetKey = relationship.targetKey || "id";
+		// Only process belongsTo relationships (LEFT JOIN)
+		if (relationship.type === "belongsTo") {
+			const targetAlias = relOptions.alias;
+			const sourceAlias = options.alias;
+			const foreignKey = relationship.foreignKey;
+			const targetKey = relationship.targetKey || "id";
 
-      // Add LEFT JOIN: from (sourceAlias) to (targetAlias)
-      // ON sourceAlias.foreignKey = targetAlias.targetKey
-      query.leftJoin(
-        `${relationship.toTable} as ${targetAlias}`,
-        `${sourceAlias}.${foreignKey}`,
-        `${targetAlias}.${targetKey}`
-      );
+			// Add LEFT JOIN: from (sourceAlias) to (targetAlias)
+			// ON sourceAlias.foreignKey = targetAlias.targetKey
+			query.leftJoin(
+				`${relationship.toTable} as ${targetAlias}`,
+				`${sourceAlias}.${foreignKey}`,
+				`${targetAlias}.${targetKey}`
+			);
 
-      // Recursively process nested relationships
-      buildBelongsJoinToQuery(query, relOptions);
-    }
-  }
+			// Recursively process nested relationships
+			buildBelongsJoinToQuery(query, relOptions);
+		}
+	}
 }
 
 /**
@@ -133,59 +133,59 @@ export function buildBelongsJoinToQuery(
  * @returns Parsed record with nested objects
  */
 export function parseNestRecord(
-  record: any,
-  options: IncludeProcessorOptions
+	record: any,
+	options: IncludeProcessorOptions
 ): any {
-  if (!record || !options || !options.targetColumns) {
-    return record;
-  }
+	if (!record || !options || !options.targetColumns) {
+		return record;
+	}
 
-  const result = { ...record };
+	const result = { ...record };
 
-  // Process each path in targetColumns (e.g., '', 'project', 'project.wks', 'project.wks.org')
-  for (const [path, columns] of Object.entries(options.targetRelationColumns)) {
-    // Skip empty path (main table columns) - they stay at root level
-    if (path === "") {
-      continue;
-    }
+	// Process each path in targetColumns (e.g., '', 'project', 'project.wks', 'project.wks.org')
+	for (const [path, columns] of Object.entries(options.targetRelationColumns)) {
+		// Skip empty path (main table columns) - they stay at root level
+		if (path === "") {
+			continue;
+		}
 
-    // Extract nested object for this path
-    const nestedObj: any = {};
-    const pathPrefix = path + "_";
-    let hasColumns = false;
+		// Extract nested object for this path
+		const nestedObj: any = {};
+		const pathPrefix = path + "_";
+		let hasColumns = false;
 
-    // Find columns that match this path (e.g., 'project_wks_id' for path 'project.wks')
-    for (const column of Object.keys(result)) {
-      if (column.startsWith(pathPrefix)) {
-        const attrName = column.substring(pathPrefix.length);
-        nestedObj[attrName] = result[column];
-        delete result[column];
-        hasColumns = true;
-      }
-    }
+		// Find columns that match this path (e.g., 'project_wks_id' for path 'project.wks')
+		for (const column of Object.keys(result)) {
+			if (column.startsWith(pathPrefix)) {
+				const attrName = column.substring(pathPrefix.length);
+				nestedObj[attrName] = result[column];
+				delete result[column];
+				hasColumns = true;
+			}
+		}
 
-    // If we found columns for this path, assign the nested object
-    if (hasColumns) {
-      // Build nested path structure (e.g., 'project.wks' -> result.project.wks)
-      const pathParts = path.split(".");
-      let current = result;
-      for (let i = 0; i < pathParts.length; i++) {
-        const part = pathParts[i];
-        if (i === pathParts.length - 1) {
-          // Last part: assign the nested object
-          current[part] = nestedObj;
-        } else {
-          // Intermediate parts: ensure the path exists
-          if (!current[part]) {
-            current[part] = {};
-          }
-          current = current[part];
-        }
-      }
-    }
-  }
+		// If we found columns for this path, assign the nested object
+		if (hasColumns) {
+			// Build nested path structure (e.g., 'project.wks' -> result.project.wks)
+			const pathParts = path.split(".");
+			let current = result;
+			for (let i = 0; i < pathParts.length; i++) {
+				const part = pathParts[i];
+				if (i === pathParts.length - 1) {
+					// Last part: assign the nested object
+					current[part] = nestedObj;
+				} else {
+					// Interassette parts: ensure the path exists
+					if (!current[part]) {
+						current[part] = {};
+					}
+					current = current[part];
+				}
+			}
+		}
+	}
 
-  return result;
+	return result;
 }
 
 /**
@@ -195,57 +195,57 @@ export function parseNestRecord(
  * @param options - IncludeProcessorOptions containing targetColumns and relationships
  */
 export function removeIdsIfNeed(
-  entities: any[],
-  options: IncludeProcessorOptions,
-  parentEntityKey: string = ""
+	entities: any[],
+	options: IncludeProcessorOptions,
+	parentEntityKey: string = ""
 ): void {
-  if (!entities || entities.length === 0 || !options) {
-    return;
-  }
+	if (!entities || entities.length === 0 || !options) {
+		return;
+	}
 
-  const idColumn = `${options.alias}.id`;
-  let foreignColumn = "";
-  let shouldKeepIdForeign = true;
-  if (parentEntityKey) {
-    const relationship = getRelationship(parentEntityKey, options.entityKey!);
-    if (relationship && relationship.type !== "belongsTo") {
-      foreignColumn = relationship.foreignKey;
-      shouldKeepIdForeign = options.targetColumns.includes(
-        `${options.alias}.${relationship.foreignKey}`
-      );
-    }
-  }
-  const shouldKeepId = options.targetColumns.includes(idColumn);
+	const idColumn = `${options.alias}.id`;
+	let foreignColumn = "";
+	let shouldKeepIdForeign = true;
+	if (parentEntityKey) {
+		const relationship = getRelationship(parentEntityKey, options.entityKey!);
+		if (relationship && relationship.type !== "belongsTo") {
+			foreignColumn = relationship.foreignKey;
+			shouldKeepIdForeign = options.targetColumns.includes(
+				`${options.alias}.${relationship.foreignKey}`
+			);
+		}
+	}
+	const shouldKeepId = options.targetColumns.includes(idColumn);
 
-  for (const entity of entities) {
-    if (!entity) {
-      continue;
-    }
+	for (const entity of entities) {
+		if (!entity) {
+			continue;
+		}
 
-    if (!shouldKeepId) {
-      delete entity.id;
-    }
+		if (!shouldKeepId) {
+			delete entity.id;
+		}
 
-    if (!shouldKeepIdForeign && foreignColumn) {
-      delete entity[foreignColumn];
-    }
+		if (!shouldKeepIdForeign && foreignColumn) {
+			delete entity[foreignColumn];
+		}
 
-    // Recursively process nested relationships
-    if (options.relationships) {
-      for (const [relName, relOptions] of Object.entries(
-        options.relationships
-      )) {
-        const nestedEntity = (entity as any)[relName];
-        if (nestedEntity) {
-          if (Array.isArray(nestedEntity)) {
-            removeIdsIfNeed(nestedEntity, relOptions, options.entityKey);
-          } else {
-            removeIdsIfNeed([nestedEntity], relOptions, options.entityKey);
-          }
-        }
-      }
-    }
-  }
+		// Recursively process nested relationships
+		if (options.relationships) {
+			for (const [relName, relOptions] of Object.entries(
+				options.relationships
+			)) {
+				const nestedEntity = (entity as any)[relName];
+				if (nestedEntity) {
+					if (Array.isArray(nestedEntity)) {
+						removeIdsIfNeed(nestedEntity, relOptions, options.entityKey);
+					} else {
+						removeIdsIfNeed([nestedEntity], relOptions, options.entityKey);
+					}
+				}
+			}
+		}
+	}
 }
 
 /**
@@ -253,42 +253,42 @@ export function removeIdsIfNeed(
  * Common logic used for hasMany/hasOne and manyToMany relationship processing.
  */
 async function applyRecursiveLoading(
-  utx: UserContext,
-  groupedByParent: Map<any, any[]>,
-  flatEntities: any[],
-  relationOptions: IncludeProcessorOptions,
-  currentPath: string,
-  relationKey: string
+	utx: UserContext,
+	groupedByParent: Map<any, any[]>,
+	flatEntities: any[],
+	relationOptions: IncludeProcessorOptions,
+	currentPath: string,
+	relationKey: string
 ): Promise<void> {
-  if (
-    !relationOptions.relationships ||
-    Object.keys(relationOptions.relationships).length === 0
-  ) {
-    return;
-  }
+	if (
+		!relationOptions.relationships ||
+		Object.keys(relationOptions.relationships).length === 0
+	) {
+		return;
+	}
 
-  const nestedPath = currentPath
-    ? `${currentPath}.${relationKey}`
-    : relationKey;
+	const nestedPath = currentPath
+		? `${currentPath}.${relationKey}`
+		: relationKey;
 
-  const entitiesWithNested = await loadNestEntity(
-    utx,
-    flatEntities,
-    relationOptions,
-    nestedPath
-  );
+	const entitiesWithNested = await loadNestEntity(
+		utx,
+		flatEntities,
+		relationOptions,
+		nestedPath
+	);
 
-  const entityMap = new Map<any, any>();
-  for (let i = 0; i < flatEntities.length; i++) {
-    entityMap.set(flatEntities[i].id, entitiesWithNested[i]);
-  }
+	const entityMap = new Map<any, any>();
+	for (let i = 0; i < flatEntities.length; i++) {
+		entityMap.set(flatEntities[i].id, entitiesWithNested[i]);
+	}
 
-  for (const [parentId, group] of groupedByParent.entries()) {
-    groupedByParent.set(
-      parentId,
-      group.map((e) => entityMap.get(e.id) || e)
-    );
-  }
+	for (const [parentId, group] of groupedByParent.entries()) {
+		groupedByParent.set(
+			parentId,
+			group.map((e) => entityMap.get(e.id) || e)
+		);
+	}
 }
 
 /**
@@ -307,270 +307,270 @@ async function applyRecursiveLoading(
  * @returns Entities with all nested relationships loaded
  */
 export async function loadNestEntity<E>(
-  utx: UserContext,
-  entities: E[],
-  options: IncludeProcessorOptions,
-  currentPath: string = ""
+	utx: UserContext,
+	entities: E[],
+	options: IncludeProcessorOptions,
+	currentPath: string = ""
 ): Promise<E[]> {
-  if (
-    entities.length === 0 ||
-    !options.relationships ||
-    Object.keys(options.relationships).length === 0
-  ) {
-    return entities;
-  }
+	if (
+		entities.length === 0 ||
+		!options.relationships ||
+		Object.keys(options.relationships).length === 0
+	) {
+		return entities;
+	}
 
-  const result = [...entities];
+	const result = [...entities];
 
-  for (const [relationKey, relationOptions] of Object.entries(
-    options.relationships
-  )) {
-    try {
-      const relationshipDef = getRelationship(
-        options.entityKey || options.table || "",
-        relationKey
-      )!;
+	for (const [relationKey, relationOptions] of Object.entries(
+		options.relationships
+	)) {
+		try {
+			const relationshipDef = getRelationship(
+				options.entityKey || options.table || "",
+				relationKey
+			)!;
 
-      if (relationshipDef.type === "belongsTo") {
-        // For belongsTo relationships, data is already JOINed and parsed via parseNestRecord
-        // Need to recursively load deeper nested relationships if they exist
-        const nestedEntities: any[] = [];
-        for (const entity of result) {
-          const nestedEntity = (entity as any)[relationKey];
-          if (nestedEntity) {
-            nestedEntities.push(nestedEntity);
-          }
-        }
+			if (relationshipDef.type === "belongsTo") {
+				// For belongsTo relationships, data is already JOINed and parsed via parseNestRecord
+				// Need to recursively load deeper nested relationships if they exist
+				const nestedEntities: any[] = [];
+				for (const entity of result) {
+					const nestedEntity = (entity as any)[relationKey];
+					if (nestedEntity) {
+						nestedEntities.push(nestedEntity);
+					}
+				}
 
-        if (
-          nestedEntities.length > 0 &&
-          relationOptions.relationships &&
-          Object.keys(relationOptions.relationships).length > 0
-        ) {
-          // Recursively load deeper nested entities
-          const nestedPath = currentPath
-            ? `${currentPath}.${relationKey}`
-            : relationKey;
-          const entitiesWithNested = await loadNestEntity(
-            utx,
-            nestedEntities,
-            relationOptions,
-            nestedPath
-          );
+				if (
+					nestedEntities.length > 0 &&
+					relationOptions.relationships &&
+					Object.keys(relationOptions.relationships).length > 0
+				) {
+					// Recursively load deeper nested entities
+					const nestedPath = currentPath
+						? `${currentPath}.${relationKey}`
+						: relationKey;
+					const entitiesWithNested = await loadNestEntity(
+						utx,
+						nestedEntities,
+						relationOptions,
+						nestedPath
+					);
 
-          // Map back to parent entities
-          let entityIndex = 0;
-          for (const entity of result) {
-            if ((entity as any)[relationKey]) {
-              (entity as any)[relationKey] = entitiesWithNested[entityIndex++];
-            }
-          }
-        }
-      } else if (relationshipDef.type === "manyToMany") {
-        // For manyToMany, query pivot table joined with target table
-        const pivotTable = relationshipDef.pivotTable!;
-        const pivotSourceKey = relationshipDef.pivotSourceKey!;
-        const pivotTargetKey = relationshipDef.pivotTargetKey!;
-        const allPivotCols = relationshipDef.pivotColumns || [];
+					// Map back to parent entities
+					let entityIndex = 0;
+					for (const entity of result) {
+						if ((entity as any)[relationKey]) {
+							(entity as any)[relationKey] = entitiesWithNested[entityIndex++];
+						}
+					}
+				}
+			} else if (relationshipDef.type === "manyToMany") {
+				// For manyToMany, query pivot table joined with target table
+				const pivotTable = relationshipDef.pivotTable!;
+				const pivotSourceKey = relationshipDef.pivotSourceKey!;
+				const pivotTargetKey = relationshipDef.pivotTargetKey!;
+				const allPivotCols = relationshipDef.pivotColumns || [];
 
-        // Determine which pivot columns to include based on user spec
-        const spec = relationOptions.spec;
-        let selectedPivotCols: string[] = [];
+				// Determine which pivot columns to include based on user spec
+				const spec = relationOptions.spec;
+				let selectedPivotCols: string[] = [];
 
-        if (spec && typeof spec === "object" && !Array.isArray(spec)) {
-          // User specified pivot columns in the spec (e.g., { "role": true, "joinedAt": true })
-          selectedPivotCols = allPivotCols.filter((col) => spec[col] === true);
-        }
+				if (spec && typeof spec === "object" && !Array.isArray(spec)) {
+					// User specified pivot columns in the spec (e.g., { "role": true, "joinedAt": true })
+					selectedPivotCols = allPivotCols.filter((col) => spec[col] === true);
+				}
 
-        const parentIds = entities.map((e) => (e as any).id);
-        const pivotAlias = `${relationOptions.alias}_pivot`;
-        const targetAlias = relationOptions.alias;
+				const parentIds = entities.map((e) => (e as any).id);
+				const pivotAlias = `${relationOptions.alias}_pivot`;
+				const targetAlias = relationOptions.alias;
 
-        const { query } = await knexQuery({
-          utx,
-          tableName: `${pivotTable} as ${pivotAlias}`,
-        });
+				const { query } = await knexQuery({
+					utx,
+					tableName: `${pivotTable} as ${pivotAlias}`,
+				});
 
-        // Join target table
-        query.leftJoin(
-          `${relationshipDef.toTable} as ${targetAlias}`,
-          `${pivotAlias}.${pivotTargetKey}`,
-          `${targetAlias}.id`
-        );
+				// Join target table
+				query.leftJoin(
+					`${relationshipDef.toTable} as ${targetAlias}`,
+					`${pivotAlias}.${pivotTargetKey}`,
+					`${targetAlias}.id`
+				);
 
-        // Add nested belongsTo joins for the target entity (if any)
-        buildBelongsJoinToQuery(query, relationOptions);
-        // Build main and relation columns using unified function
-        buildMainAndRelationColumns(query, relationOptions, {
-          pivotAlias: pivotAlias,
-          pivotCols: selectedPivotCols,
-          pivotSourceKey: pivotSourceKey,
-        });
+				// Add nested belongsTo joins for the target entity (if any)
+				buildBelongsJoinToQuery(query, relationOptions);
+				// Build main and relation columns using unified function
+				buildMainAndRelationColumns(query, relationOptions, {
+					pivotAlias: pivotAlias,
+					pivotCols: selectedPivotCols,
+					pivotSourceKey: pivotSourceKey,
+				});
 
-        // Add nested belongsTo joins for the target entity (if any)
-        buildBelongsJoinToQuery(query, relationOptions);
+				// Add nested belongsTo joins for the target entity (if any)
+				buildBelongsJoinToQuery(query, relationOptions);
 
-        // Filter by parent IDs
-        query.whereIn(`${pivotAlias}.${pivotSourceKey}`, parentIds);
+				// Filter by parent IDs
+				query.whereIn(`${pivotAlias}.${pivotSourceKey}`, parentIds);
 
-        let records = [] as any[];
-        try {
-          records = await query;
-        } catch (e) {
-          console.log("Error occurs in manyToMany query: ", e);
-        }
+				let records = [] as any[];
+				try {
+					records = await query;
+				} catch (e) {
+					console.log("Error occurs in manyToMany query: ", e);
+				}
 
-        // Parse records: separate pivot columns and target columns
-        const groupedByParent = new Map<any, any[]>();
+				// Parse records: separate pivot columns and target columns
+				const groupedByParent = new Map<any, any[]>();
 
-        for (const record of records) {
-          const parentId = (record as any)[`${targetAlias}_${pivotSourceKey}`];
+				for (const record of records) {
+					const parentId = (record as any)[`${targetAlias}_${pivotSourceKey}`];
 
-          const pivotObj: any = {};
-          const targetObj: any = {};
+					const pivotObj: any = {};
+					const targetObj: any = {};
 
-          // Separate pivot columns (suffix _pivot)
-          const pivotPrefix = `${targetAlias}_pivot_`;
-          const sourceKeyAlias = `${targetAlias}_${pivotSourceKey}`;
+					// Separate pivot columns (suffix _pivot)
+					const pivotPrefix = `${targetAlias}_pivot_`;
+					const sourceKeyAlias = `${targetAlias}_${pivotSourceKey}`;
 
-          for (const key in record) {
-            if (key.startsWith(pivotPrefix)) {
-              const attrName = key.substring(pivotPrefix.length);
-              pivotObj[attrName] = record[key];
-            } else if (key !== sourceKeyAlias) {
-              // This is a target column or nested relation column
-              targetObj[key] = record[key];
-            }
-          }
+					for (const key in record) {
+						if (key.startsWith(pivotPrefix)) {
+							const attrName = key.substring(pivotPrefix.length);
+							pivotObj[attrName] = record[key];
+						} else if (key !== sourceKeyAlias) {
+							// This is a target column or nested relation column
+							targetObj[key] = record[key];
+						}
+					}
 
-          // Mount pivot object onto target entity only if pivot columns were selected by user
-          const entity: any = { ...targetObj };
+					// Mount pivot object onto target entity only if pivot columns were selected by user
+					const entity: any = { ...targetObj };
 
-          if (selectedPivotCols.length > 0) {
-            // Only add pivot columns that user explicitly requested via spec
-            for (const pCol of selectedPivotCols) {
-              if (
-                spec &&
-                typeof spec == "object" &&
-                spec[pCol] === true &&
-                pivotObj[pCol] !== undefined
-              ) {
-                entity[pCol] = pivotObj[pCol];
-              }
-            }
-          }
+					if (selectedPivotCols.length > 0) {
+						// Only add pivot columns that user explicitly requested via spec
+						for (const pCol of selectedPivotCols) {
+							if (
+								spec &&
+								typeof spec == "object" &&
+								spec[pCol] === true &&
+								pivotObj[pCol] !== undefined
+							) {
+								entity[pCol] = pivotObj[pCol];
+							}
+						}
+					}
 
-          // Group by parent ID
-          if (!groupedByParent.has(parentId)) {
-            groupedByParent.set(parentId, []);
-          }
-          groupedByParent.get(parentId)!.push(entity);
-        }
+					// Group by parent ID
+					if (!groupedByParent.has(parentId)) {
+						groupedByParent.set(parentId, []);
+					}
+					groupedByParent.get(parentId)!.push(entity);
+				}
 
-        // Recursively load deeper nested entities using common helper
-        const allTargetEntities = Array.from(groupedByParent.values()).flat();
-        await applyRecursiveLoading(
-          utx,
-          groupedByParent,
-          allTargetEntities,
-          relationOptions,
-          currentPath,
-          relationKey
-        );
+				// Recursively load deeper nested entities using common helper
+				const allTargetEntities = Array.from(groupedByParent.values()).flat();
+				await applyRecursiveLoading(
+					utx,
+					groupedByParent,
+					allTargetEntities,
+					relationOptions,
+					currentPath,
+					relationKey
+				);
 
-        // Assign to parent entities
-        for (const entity of result) {
-          const parentId = (entity as any).id;
-          (entity as any)[relationKey] = groupedByParent.get(parentId) || [];
-        }
-      } else {
-        // For hasMany and hasOne, use batch queries
-        const parentIds = entities.map((e) => (e as any).id);
-        const foreignKey = relationshipDef.foreignKey;
+				// Assign to parent entities
+				for (const entity of result) {
+					const parentId = (entity as any).id;
+					(entity as any)[relationKey] = groupedByParent.get(parentId) || [];
+				}
+			} else {
+				// For hasMany and hasOne, use batch queries
+				const parentIds = entities.map((e) => (e as any).id);
+				const foreignKey = relationshipDef.foreignKey;
 
-        // Build CustomQuery to avoid recursion in dao.list
-        const alias = relationOptions.alias;
-        const { query } = await knexQuery({
-          utx,
-          tableName: `${relationOptions.table} as ${alias}`,
-        });
+				// Build CustomQuery to avoid recursion in dao.list
+				const alias = relationOptions.alias;
+				const { query } = await knexQuery({
+					utx,
+					tableName: `${relationOptions.table} as ${alias}`,
+				});
 
-        buildMainAndRelationColumns(query, relationOptions);
-        query.column(`${relationOptions.alias}.${foreignKey} as ${foreignKey}`);
-        buildBelongsJoinToQuery(query, relationOptions);
+				buildMainAndRelationColumns(query, relationOptions);
+				query.column(`${relationOptions.alias}.${foreignKey} as ${foreignKey}`);
+				buildBelongsJoinToQuery(query, relationOptions);
 
-        query.whereIn(foreignKey, parentIds);
+				query.whereIn(foreignKey, parentIds);
 
-        // Use dao.listByProcessor with CustomQuery to get nested entities
-        const sysUtx = await getSysContext();
-        let records = [] as any[];
-        try {
-          records = await listByProcessor(sysUtx, relationOptions, query);
-        } catch (e) {
-          console.log("Error occurs: ", e);
-        }
+				// Use dao.listByProcessor with CustomQuery to get nested entities
+				const sysUtx = await getSysContext();
+				let records = [] as any[];
+				try {
+					records = await listByProcessor(sysUtx, relationOptions, query);
+				} catch (e) {
+					console.log("Error occurs: ", e);
+				}
 
-        // Parse nested records for belongsTo within this hasMany/hasOne level
-        const parsedRecords = records.map((r: any) =>
-          parseNestRecord(r, relationOptions)
-        );
+				// Parse nested records for belongsTo within this hasMany/hasOne level
+				const parsedRecords = records.map((r: any) =>
+					parseNestRecord(r, relationOptions)
+				);
 
-        // Group by parent ID
-        const groupedByParent = new Map<any, any[]>();
-        for (const record of parsedRecords) {
-          const parentId = (record as any)[foreignKey];
-          const entity = { ...record };
-          delete entity[foreignKey];
-          if (!groupedByParent.has(parentId)) {
-            groupedByParent.set(parentId, []);
-          }
-          groupedByParent.get(parentId)!.push(entity);
-        }
+				// Group by parent ID
+				const groupedByParent = new Map<any, any[]>();
+				for (const record of parsedRecords) {
+					const parentId = (record as any)[foreignKey];
+					const entity = { ...record };
+					delete entity[foreignKey];
+					if (!groupedByParent.has(parentId)) {
+						groupedByParent.set(parentId, []);
+					}
+					groupedByParent.get(parentId)!.push(entity);
+				}
 
-        // Recursively load deeper nested entities using common helper
-        await applyRecursiveLoading(
-          utx,
-          groupedByParent,
-          parsedRecords,
-          relationOptions,
-          currentPath,
-          relationKey
-        );
+				// Recursively load deeper nested entities using common helper
+				await applyRecursiveLoading(
+					utx,
+					groupedByParent,
+					parsedRecords,
+					relationOptions,
+					currentPath,
+					relationKey
+				);
 
-        // Assign nested entities to parent entities
-        for (const entity of result) {
-          const parentId = (entity as any).id;
-          const nestedList = groupedByParent.get(parentId) || [];
+				// Assign nested entities to parent entities
+				for (const entity of result) {
+					const parentId = (entity as any).id;
+					const nestedList = groupedByParent.get(parentId) || [];
 
-          if (relationshipDef.type === "hasOne") {
-            (entity as any)[relationKey] = nestedList[0] || null;
-          } else {
-            (entity as any)[relationKey] = nestedList;
-          }
-        }
-      }
-    } catch {
-      continue;
-    }
-  }
+					if (relationshipDef.type === "hasOne") {
+						(entity as any)[relationKey] = nestedList[0] || null;
+					} else {
+						(entity as any)[relationKey] = nestedList;
+					}
+				}
+			}
+		} catch {
+			continue;
+		}
+	}
 
-  return result;
+	return result;
 }
 
 async function listByProcessor<E>(
-  utx: UserContext,
-  includeOptions: IncludeProcessorOptions,
-  query: Knex.QueryBuilder
+	utx: UserContext,
+	includeOptions: IncludeProcessorOptions,
+	query: Knex.QueryBuilder
 ): Promise<E[]> {
-  const records = (await query.then()) as any[];
-  // Parse nested records from JOINed tables
-  if (includeOptions) {
-    const entities = records.map((r) => parseNestRecord(r, includeOptions));
+	const records = (await query.then()) as any[];
+	// Parse nested records from JOINed tables
+	if (includeOptions) {
+		const entities = records.map((r) => parseNestRecord(r, includeOptions));
 
-    // Load nested entities for hasMany/hasOne relationships
-    await loadNestEntity(utx, entities, includeOptions);
-    return entities;
-  } else {
-    return records;
-  }
+		// Load nested entities for hasMany/hasOne relationships
+		await loadNestEntity(utx, entities, includeOptions);
+		return entities;
+	} else {
+		return records;
+	}
 }

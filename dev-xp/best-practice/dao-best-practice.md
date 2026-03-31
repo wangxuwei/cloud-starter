@@ -178,17 +178,17 @@ Transform database rows into entities. Called for each row returned.
 
 ```typescript
 import { CORE_STORE_CDN_BASE_URL, CORE_STORE_ROOT_DIR } from '../conf.js';
-import { Media } from '#shared/entities.js';
+import { Asset } from '#shared/entities.js';
 
-export class MediaDao extends OrgScopedDao<Media, number> {
-  constructor() { super({ table: 'media', stamped: true }) }
+export class AssetDao extends OrgScopedDao<Asset, number> {
+  constructor() { super({ table: 'asset', stamped: true }) }
 
-  parseRecord(dbRec: any): Media {
+  parseRecord(dbRec: any): Asset {
     dbRec.url = `${CORE_STORE_CDN_BASE_URL}${CORE_STORE_ROOT_DIR}${dbRec.folderPath}${dbRec.name ?? dbRec.srcName}`;
     if (dbRec.sd) {
       dbRec.sdUrl = `${CORE_STORE_CDN_BASE_URL}${CORE_STORE_ROOT_DIR}${dbRec.folderPath}${getResMp4Name(dbRec.name, dbRec.sd)}`;
     }
-    return dbRec as Media;
+    return dbRec as Asset;
   }
 }
 ```
@@ -527,7 +527,7 @@ export interface OrgQueryOptions extends QueryOptions<Org> {
 Add validation for critical data:
 
 ```typescript
-async createWithFile(utx: UserContext, data: Partial<Media> & { file: File }): Promise<number> {
+async createWithFile(utx: UserContext, data: Partial<Asset> & { file: File }): Promise<number> {
   const orgId = utx.orgId;
 
   if (orgId == null) {
@@ -561,7 +561,7 @@ Export singleton instances from a central `daos.ts` file:
 export const userDao = new UserDao();
 export const orgDao = new OrgDao();
 export const projectDao = new ProjectDao();
-export const mediaDao = new MediaDao();
+export const assetDao = new AssetDao();
 ```
 
 ### 10. Use Knex Query for Custom SQL

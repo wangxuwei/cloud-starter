@@ -2,13 +2,13 @@
 
 ## Overview
 
-The `vid-init` service is a worker service responsible for initializing video media files to ensure they have everything needed for further processing in the pipeline. It guarantees that all video files are in MP4 format with H.264 codec, which is the standard format required by downstream services.
+The `vid-init` service is a worker service responsible for initializing video asset files to ensure they have everything needed for further processing in the pipeline. It guarantees that all video files are in MP4 format with H.264 codec, which is the standard format required by downstream services.
 
 ## Architecture
 
 ### Service Position in Pipeline
 
-1. **vid-init** - Initializes video media, ensures MP4 format with H.264 codec ← **You are here**
+1. **vid-init** - Initializes video asset, ensures MP4 format with H.264 codec ← **You are here**
 2. **vid-scaler** - Scales video to different resolutions
 3. **audio-extractor** - Extracts audio track from video (MP3 output)
 4. **audio-texter** - Transcribes audio to text (TXT output)
@@ -17,7 +17,7 @@ The `vid-init` service is a worker service responsible for initializing video me
 
 The service operates using a dual-process worker model:
 - **Main Process** (`start.ts`) - Handles job processing and FFmpeg transcoding
-- **Worker Thread** (`wkr-bridge-media-new.ts`) - Bridges event streams to job queues
+- **Worker Thread** (`wkr-bridge-asset-new.ts`) - Bridges event streams to job queues
 
 ## Configuration
 
@@ -50,17 +50,17 @@ CRF 20 provides good visual quality while keeping file size reasonable. Lower va
 
 The service processes video files from cloud storage:
 - **Source**: Any video format (MOV, AVI, MKV, MP4, etc.)
-- **Location**: Cloud storage bucket path under media folder
-- **Event**: `MediaNew` event from upstream services
+- **Location**: Cloud storage bucket path under asset folder
+- **Event**: `AssetNew` event from upstream services
 
-### MediaNew Event Structure
+### AssetNew Event Structure
 
 ```typescript
 {
-  type: 'MediaNew',
+  type: 'AssetNew',
   orgId: number,
-  mediaId: number,
-  mediaMimeType: string  // e.g., "video/mp4", "video/quicktime"
+  assetId: number,
+  assetMimeType: string  // e.g., "video/mp4", "video/quicktime"
 }
 ```
 
@@ -68,20 +68,20 @@ The service processes video files from cloud storage:
 
 - **Format**: MP4 video file
 - **Video Codec**: H.264 (libx264)
-- **Location**: Same media folder in cloud storage
+- **Location**: Same asset folder in cloud storage
 - **Naming**: Original filename changed to `.mp4` extension
 - **Encoding**: Standard MP4 container with H.264 video
 
 Example: If input is `video.mov`, output will be `video.mp4`
 
-### MediaMainMp4 Event
+### AssetMainMp4 Event
 
 After processing, the service emits:
 ```typescript
 {
-  type: 'MediaMainMp4',
+  type: 'AssetMainMp4',
   orgId: number,
-  mediaId: number
+  assetId: number
 }
 ```
 
@@ -91,7 +91,7 @@ This event signals downstream services that the video is ready for further proce
 
 ### Transcoding Decision
 
-The service checks the MIME type of the media file:
+The service checks the MIME type of the asset file:
 - If `video/mp4` and file exists: Skips transcoding
 - If not `video/mp4` or file doesn't exist: Transcodes to MP4
 
@@ -100,8 +100,8 @@ The service checks the MIME type of the media file:
 1. **Download** original video to temporary directory
 2. **Transcode** using FFmpeg to MP4 with H.264
 3. **Upload** transcoded MP4 back to cloud storage
-4. **Update** media record with new filename
-5. **Emit** `MediaMainMp4` event for downstream processing
+4. **Update** asset record with new filename
+5. **Emit** `AssetMainMp4` event for downstream processing
 
 ### Temporary File Handling
 
@@ -112,7 +112,7 @@ The service checks the MIME type of the media file:
 ## Event Queue Flow
 
 ```
-MediaNew (video uploaded)
+AssetNew (video uploaded)
     ↓
 Worker bridges to VidInitJob queue
     ↓
@@ -123,9 +123,9 @@ Check if MP4 needed?
     ↓ [yes]
 Transcode to MP4 (FFmpeg)
     ↓
-Update media record
+Update asset record
     ↓
-MediaMainMp4 event
+AssetMainMp4 event
     ↓
 audio-extractor picks up
 ```
@@ -137,7 +137,7 @@ The service handles various error scenarios:
 1. **FFmpeg Errors**: Logs error, fails job with detailed message
 2. **Download Errors**: Reports error if source file unavailable
 3. **Upload Errors**: Reports error if storage upload fails
-4. **Database Errors**: Reports error if media record update fails
+4. **Database Errors**: Reports error if asset record update fails
 5. **Invalid MIME Type**: Logs warning but attempts processing
 
 All errors are logged and propagated to the job queue for monitoring and retry logic.
@@ -151,12 +151,12 @@ All errors are logged and propagated to the job queue for monitoring and retry l
 - Interacts with database and cloud storage
 - Emits downstream events
 
-### Worker Thread (wkr-bridge-media-new.ts)
+### Worker Thread (wkr-bridge-asset-new.ts)
 
-- Listens to `MediaNew` application queue
-- Creates `VidInitJob` entries for video media
+- Listens to `AssetNew` application queue
+- Creates `VidInitJob` entries for video asset
 - Uses stream group `VidInitJobBridge` for ack tracking
-- Filters non-video media (only processes `video/*` MIME types)
+- Filters non-video asset (only processes `video/*` MIME types)
 
 ### Communication
 

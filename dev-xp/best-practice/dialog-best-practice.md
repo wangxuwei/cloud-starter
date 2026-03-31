@@ -22,7 +22,7 @@ Organize class members in the following order:
 
 1. **CSS Styles** - Component-specific styles as constant
 2. **HTML Template** - Template literal for dialog content (if using `html` pattern)
-3. **Custom Element Decorator** - At the top, immediately after imports
+3. **Custom Element Decorator** - At the top, imassettely after imports
 4. **Constructor** - Initialize styles and super
 5. **Region: Events** - `@onEvent` decorated methods
 6. **Lifecycle Methods** - `init()`, `postDisplay()`

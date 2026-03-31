@@ -252,11 +252,11 @@ Use CSS variables for breakpoints when needed:
 .container {
   padding: var(--spacing-md);
   
-  @media (min-width: var(--breakpoint-md)) {
+  @asset (min-width: var(--breakpoint-md)) {
     padding: var(--spacing-lg);
   }
   
-  @media (min-width: var(--breakpoint-lg)) {
+  @asset (min-width: var(--breakpoint-lg)) {
     padding: var(--spacing-xl);
   }
 }

@@ -1,12 +1,16 @@
-import { AllEventDic, AppEventDic, JobEventDic } from '#shared/event-types.js';
+import { AllEventDic, AppEventDic, JobEventDic } from "#shared/event-types.js";
 import IORedis, { Redis } from "ioredis";
-import redstream, { objectDataParser, objectDataSerializer, RedStream } from 'redstream';
-import { StreamEntry, XReadGroupResult } from 'redstream/dist/redstream.js';
-import { KHOST } from './conf.js';
-import { typify } from './utils.js';
+import redstream, {
+	objectDataParser,
+	objectDataSerializer,
+	RedStream,
+} from "redstream";
+import { StreamEntry, XReadGroupResult } from "redstream/dist/redstream.js";
+import { KHOST } from "./conf.js";
+import { typify } from "./utils.js";
 
-export * from '#shared/event-types.js';
-export * from './event/event-assert.js';
+export * from "#shared/event-types.js";
+export * from "./event/event-assert.js";
 
 export interface Queue<N extends keyof D, D = AllEventDic> {
 	next(group: string, timeout: number): Promise<StreamEntry<D[N]> | null>;
@@ -16,7 +20,8 @@ export interface Queue<N extends keyof D, D = AllEventDic> {
 	ack(group: string, entryId: string): Promise<number>;
 }
 
-export interface JobQueue<N extends keyof D, D = JobEventDic> extends Queue<N, D> {
+export interface JobQueue<N extends keyof D, D = JobEventDic>
+	extends Queue<N, D> {
 	nextJob(timeout: number): Promise<StreamEntry<D[N]> | null>;
 	nextJob(): Promise<StreamEntry<D[N]>>;
 
@@ -26,21 +31,26 @@ export interface JobQueue<N extends keyof D, D = JobEventDic> extends Queue<N, D
 
 // export function getQueue<N extends keyof DataEventDic>(name: N, forBlocking?: boolean): Queue<N>
 // export function getQueue<N extends keyof JobEventDic>(name: N, forBlocking?: boolean): Queue<N>
-export function getAppQueue<N extends keyof AppEventDic>(name: N, forBlocking = true): Queue<N> {
+export function getAppQueue<N extends keyof AppEventDic>(
+	name: N,
+	forBlocking = true
+): Queue<N> {
 	return new QueueImpl(name);
 }
 
-export function getJobQueue<N extends keyof JobEventDic>(name: N, forBlocking = true): JobQueue<N> {
+export function getJobQueue<N extends keyof JobEventDic>(
+	name: N,
+	forBlocking = true
+): JobQueue<N> {
 	return new JobQueueImpl(name);
 }
 
-
 //#region    ---------- Stream Queues ----------
-/** 
+/**
  * Contains the application queue semantic apis on top of redis stream.
  */
-class QueueImpl<N extends keyof AllEventDic> implements Queue<N>{
-	#stream: RedStream<AllEventDic[N]>
+class QueueImpl<N extends keyof AllEventDic> implements Queue<N> {
+	#stream: RedStream<AllEventDic[N]>;
 	constructor(name: N) {
 		this.#stream = getStream(name);
 	}
@@ -51,18 +61,24 @@ class QueueImpl<N extends keyof AllEventDic> implements Queue<N>{
 	}
 
 	/**
-	 * 
-	 * @param group 
-	 * @param timeout 
+	 *
+	 * @param group
+	 * @param timeout
 	 */
-	async next(group: string, timeout: number): Promise<StreamEntry<AllEventDic[N]> | null>
-	async next(group: string): Promise<StreamEntry<AllEventDic[N]>>
-	async next(group: string, timeout?: number): Promise<StreamEntry<AllEventDic[N]> | null> {
+	async next(
+		group: string,
+		timeout: number
+	): Promise<StreamEntry<AllEventDic[N]> | null>;
+	async next(group: string): Promise<StreamEntry<AllEventDic[N]>>;
+	async next(
+		group: string,
+		timeout?: number
+	): Promise<StreamEntry<AllEventDic[N]> | null> {
 		let res: XReadGroupResult<AllEventDic[N]> | null = null;
 
 		const block = timeout ?? true;
 
-		for (; ;) {
+		for (;;) {
 			res = await this.#stream.xreadgroup(group, KHOST, { block, count: 1 });
 			if (res?.entries[0]?.data != null) {
 				// TODO freeze before return (prevent caller to do any change)
@@ -77,16 +93,16 @@ class QueueImpl<N extends keyof AllEventDic> implements Queue<N>{
 	}
 }
 
-class JobQueueImpl<N extends keyof JobEventDic> extends QueueImpl<N>{
+class JobQueueImpl<N extends keyof JobEventDic> extends QueueImpl<N> {
 	#group: string;
 
 	constructor(name: N) {
 		super(name);
-		this.#group = name + '-JGRP'
+		this.#group = name + "-JGRP";
 	}
 
-	async nextJob(): Promise<StreamEntry<JobEventDic[N]>>
-	async nextJob(timeout: number): Promise<StreamEntry<JobEventDic[N]> | null>
+	async nextJob(): Promise<StreamEntry<JobEventDic[N]>>;
+	async nextJob(timeout: number): Promise<StreamEntry<JobEventDic[N]> | null>;
 	async nextJob(timeout?: number): Promise<StreamEntry<JobEventDic[N]> | null> {
 		return super.next(this.#group, timeout!); // TS-TRICK  otherwise, it say super.next cannot have undefined timeout
 	}
@@ -101,47 +117,54 @@ class JobQueueImpl<N extends keyof JobEventDic> extends QueueImpl<N>{
 	}
 }
 
-export function getStream<K extends keyof AllEventDic>(name: K, forBlocking = true): RedStream<AllEventDic[K]> {
-	const r = redstream(getRedisClient(forBlocking || 'common'), {
+export function getStream<K extends keyof AllEventDic>(
+	name: K,
+	forBlocking = true
+): RedStream<AllEventDic[K]> {
+	const r = redstream(getRedisClient(forBlocking || "common"), {
 		key: name,
 		dataParser: function (arr) {
 			const obj = objectDataParser(arr);
-			const data = typify(obj, { nums: ['mediaId', 'orgId'] });
+			const data = typify(obj, { nums: ["assetId", "orgId"] });
 			return data as AllEventDic[K];
 		},
 		// TODO: needs to assert the obj
-		dataSerializer: function (obj: any) { return objectDataSerializer(obj) }
+		dataSerializer: function (obj: any) {
+			return objectDataSerializer(obj);
+		},
 	});
 	return r;
 }
 
 //#endregion ---------- /Stream Queues ----------
 
-//#region    ---------- RedisClient Factory / Cache ---------- 
+//#region    ---------- RedisClient Factory / Cache ----------
 const REDIS_MAX_RETRY = 100;
-const QUEUE_HOST = 'cstar-queue-srv';
+const QUEUE_HOST = "cstar-queue-srv";
 let newSeq = 1; // the sequence id for anonymous redisClient (when getRedisClient(true))
 
 interface Clients {
-	common?: Redis
+	common?: Redis;
 }
 
 const clients: Clients = {};
 
 /**
- * Redis client factory / cache for named redis client. 
- * 
+ * Redis client factory / cache for named redis client.
+ *
  * If named, it has to match a clients names, and the client will be cached for this name.
  * If true, it means it will create a new one just for this request.
- * 
- * IMPORTANT: Most of the application code should just use the shared 'common' redis client for NON BLOCKING read and write to the redis server. 
- *            However, for JobManagers, since they are read block, they MUST have their own redis client so that they do not block other code. 
+ *
+ * IMPORTANT: Most of the application code should just use the shared 'common' redis client for NON BLOCKING read and write to the redis server.
+ *            However, for JobManagers, since they are read block, they MUST have their own redis client so that they do not block other code.
  *            This is why this function provides a simple way to get client by name, and the default is 'common'
- * 
- * NOTE: Also, we are fully typing which name we are allowing here, to make the code more tight, and prevent missed used of the API. If more 
- *       Names are needed, add the name in the Clients interface above. 
+ *
+ * NOTE: Also, we are fully typing which name we are allowing here, to make the code more tight, and prevent missed used of the API. If more
+ *       Names are needed, add the name in the Clients interface above.
  */
-export function getRedisClient(name_or_new: true | keyof Clients = 'common'): Redis {
+export function getRedisClient(
+	name_or_new: true | keyof Clients = "common"
+): Redis {
 	if (name_or_new === true) {
 		return createRedisClient(`anonymous-${newSeq++}`);
 	} else {
@@ -155,28 +178,25 @@ export function getRedisClient(name_or_new: true | keyof Clients = 'common'): Re
 
 		return client;
 	}
-
 }
 
 function createRedisClient(name: string) {
-
 	const client = new IORedis(QUEUE_HOST, {
 		maxRetriesPerRequest: REDIS_MAX_RETRY,
 		sentinelRetryStrategy: function (times: number) {
-			console.log(`INFO - Redis client for ${name} sentinelRetryStrategy`, times);
+			console.log(
+				`INFO - Redis client for ${name} sentinelRetryStrategy`,
+				times
+			);
 			// reconnect after some time (wait longer with attempt up to 3 seconds)
 			return Math.min(times * 10, 3000);
-		}
+		},
 	});
 
-	client.on('ready', async function (data: any) {
+	client.on("ready", async function (data: any) {
 		console.log(`INFO - Redis client for ${name} ready`);
 	});
 
 	return client;
 }
 //#endregion ---------- /RedisClient Factory / Cache ----------
-
-
-
-

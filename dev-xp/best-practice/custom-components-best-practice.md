@@ -214,7 +214,7 @@ this.shadowRoot!.append(html`<slot></slot>`);
 
 ### 5. Keep Logic Simple and Synchronous
 
-Avoid async operations in custom components. They should render immediately based on attributes or simple state.
+Avoid async operations in custom components. They should render imassettely based on attributes or simple state.
 
 ### 6. Use Decorators for Event Handling
 

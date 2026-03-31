@@ -72,17 +72,17 @@ Entities should:
 - Include clear property comments where context is needed
 
 ```typescript
-export interface Media extends StampedEntity, OrgScopedEntity {
+export interface Asset extends StampedEntity, OrgScopedEntity {
 	id: number;
 	projectId: number;
-	type: MediaType;
+	type: AssetType;
 	uuid: string;
 	srcName: string; // The orginal source name
-	name: string;    // name of the main media file
+	name: string;    // name of the main asset file
 	folderPath: string;
-	sd: MediaResolution;
-	url: string;     // set by MediaDao.parseRecord
-	sdUrl?: string;  // set by MediaDao.parseRecord
+	sd: AssetResolution;
+	url: string;     // set by AssetDao.parseRecord
+	sdUrl?: string;  // set by AssetDao.parseRecord
 }
 ```
 
@@ -91,8 +91,8 @@ export interface Media extends StampedEntity, OrgScopedEntity {
 Define related types near the entity interface:
 
 ```typescript
-export type MediaType = 'video' | 'image';
-export type MediaResolution = '480p30' | '360p30';
+export type AssetType = 'video' | 'image';
+export type AssetResolution = '480p30' | '360p30';
 export type JobState = 'new' | 'started' | 'completed' | 'skipped' | 'failed';
 ```
 
@@ -121,7 +121,7 @@ export interface Job {
 	state: JobState;
 	event: JobEventName;
 	orgId?: number; // can be undefined when not for a workspace
-	onEntity?: string; //	the entity type name e.g., "Media"
+	onEntity?: string; //	the entity type name e.g., "Asset"
 	onId?: number;    //	the entity id
 	progress?: { [name: string]: number }; // step progress (0 to 100), names are snake format
 	err_code?: string; // only if state = failed
@@ -209,7 +209,7 @@ const adults = await userDao.list(utx, {
 });
 
 // Range queries
-const recent = await mediaDao.list(utx, {
+const recent = await assetDao.list(utx, {
 	filters: {
 		ctime: { $gte: '2024-01-01', $lt: '2024-02-01' }
 	}
@@ -239,7 +239,7 @@ const activeUsers = await userDao.list(utx, {
 });
 
 // Contains any (OR)
-const tags = await mediaDao.list(utx, {
+const tags = await assetDao.list(utx, {
 	filters: { tags: { $containsAny: ['video', 'audio'] } }
 });
 ```
@@ -303,10 +303,10 @@ export interface Wks extends StampedEntity, OrgScopedEntity {
 Properties that are set by data access layer should be documented:
 
 ```typescript
-export interface Media extends StampedEntity, OrgScopedEntity {
+export interface Asset extends StampedEntity, OrgScopedEntity {
 	id: number;
-	url: string;     // set by MediaDao.parseRecord
-	sdUrl?: string;  // set by MediaDao.parseRecord
+	url: string;     // set by AssetDao.parseRecord
+	sdUrl?: string;  // set by AssetDao.parseRecord
 }
 ```
 
@@ -315,7 +315,7 @@ export interface Media extends StampedEntity, OrgScopedEntity {
 Reference other entities by ID, not by the entity type itself:
 
 ```typescript
-export interface Media extends StampedEntity, OrgScopedEntity {
+export interface Asset extends StampedEntity, OrgScopedEntity {
 	id: number;
 	projectId: number;  // Reference to Project entity by ID
 	orgId: number;      // From OrgScopedEntity
@@ -324,9 +324,9 @@ export interface Media extends StampedEntity, OrgScopedEntity {
 
 ## Naming Conventions
 
-- Interface names: PascalCase (e.g., `Media`, `User`)
+- Interface names: PascalCase (e.g., `Asset`, `User`)
 - Column constants: UPPER_SNAKE_CASE with `_COLUMNS` suffix (e.g., `USER_COLUMNS`)
-- Type aliases: PascalCase (e.g., `MediaType`, `JobState`)
+- Type aliases: PascalCase (e.g., `AssetType`, `JobState`)
 - Property names: camelCase (e.g., `folderPath`, `createTime`)
 
 ## Export Pattern

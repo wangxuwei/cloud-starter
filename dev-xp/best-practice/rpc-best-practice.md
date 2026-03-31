@@ -233,7 +233,7 @@ const daoByEntity: { [type: string]: BaseDao<any, any> } = {
 	org: orgDao,
 	wks: wksDao,
 	project: projectDao,
-	media: mediaDao,
+	asset: assetDao,
 	myEntity: myEntityDao  // Add your DAO here
 };
 ```
@@ -357,8 +357,8 @@ async createMyEntity(ktx: ApiKtx, params: MyEntityCreateParams) {
 Leverage the QueryOptions pattern for flexible filtering:
 
 ```ts
-@RpcMethod("media_list")
-async listMedias(ktx: ApiKtx, params: { 
+@RpcMethod("asset_list")
+async listAssets(ktx: ApiKtx, params: { 
 	filters?: any; 
 	limit?: number; 
 	offset?: number;
@@ -378,7 +378,7 @@ async listMedias(ktx: ApiKtx, params: {
 		};
 	}
 
-	const entities = await mediaDao.list(ctx, queryOptions);
+	const entities = await assetDao.list(ctx, queryOptions);
 	return success(entities);
 }
 ```
@@ -388,8 +388,8 @@ async listMedias(ktx: ApiKtx, params: {
 For RPC handlers that need to work with files, use multipart requests and access files via the DAO layer:
 
 ```ts
-@RpcMethod("media_create")
-async createMedia(ktx: ApiKtx, params: { 
+@RpcMethod("asset_create")
+async createAsset(ktx: ApiKtx, params: { 
 	projectId: number; 
 	fileData?: string; 
 	mimeType?: string;
@@ -401,19 +401,19 @@ async createMedia(ktx: ApiKtx, params: {
 		throw new Error('fileData is required');
 	}
 
-	const id = await mediaDao.createWithData(ctx, {
+	const id = await assetDao.createWithData(ctx, {
 		projectId,
 		fileData,
 		mimeType
 	});
 
-	return success(await mediaDao.get(ctx, id));
+	return success(await assetDao.get(ctx, id));
 }
 ```
 
 ## Best Practices
 
-1. **Method Naming Convention**: Use `{entity}_{action}` format for RPC method names (e.g., `user_get`, `media_list`, `project_create`).
+1. **Method Naming Convention**: Use `{entity}_{action}` format for RPC method names (e.g., `user_get`, `asset_list`, `project_create`).
 
 2. **Parameter Types**: Define TypeScript interfaces for parameters to ensure type safety.
 
@@ -477,40 +477,40 @@ export const wksDco = new BaseDco<Wks, QueryOptions<Wks>>('wks');
 For entities with custom operations, extend the BaseDco:
 
 ```ts
-class MediaDao extends BaseDco<Media, QueryOptions<Media>> {
-	constructor() { super('media') }
+class AssetDco extends BaseDco<Asset, QueryOptions<Asset>> {
+	constructor() { super('asset') }
 
-	async listImages(projectId: number): Promise<Media[]> {
+	async listImages(projectId: number): Promise<Asset[]> {
 		return super.list({ filters: { type: 'image', projectId } });
 	}
 
-	async listVideos(projectId: number): Promise<Media[]> {
+	async listVideos(projectId: number): Promise<Asset[]> {
 		return super.list({ filters: { type: 'video', projectId } });
 	}
 
-	async create(props: any & { file?: File }): Promise<Media> {
+	async create(props: any & { file?: File }): Promise<Asset> {
 		const file = props.file;
 		if (file) {
 			const formData = new FormData();
 			for(const prop in props){
 				formData.append(prop, props[prop]);
 			}
-			const webResult = await webRequest('POST', '/api/upload-media', { body: formData });
-			const media = (webResult.success) ? webResult.data as Media : null;
+			const webResult = await webRequest('POST', '/api/upload-asset', { body: formData });
+			const asset = (webResult.success) ? webResult.data as Asset : null;
 
-			if (media == null) {
-				throw new Error(`MediaDao.create could not create the new media for ${file.name}`);
+			if (asset == null) {
+				throw new Error(`AssetDco.create could not create the new asset for ${file.name}`);
 			}
 
-			dcoHub.pub(this.cmd_suffix, 'create', media);
-			return media;
+			dcoHub.pub(this.cmd_suffix, 'create', asset);
+			return asset;
 		} else {
 			return super.create(props);
 		}
 	}
 }
 
-export const mediaDco = new MediaDao();
+export const assetDco = new AssetDco();
 ```
 
 #### Using DCO Methods

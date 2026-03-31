@@ -21,13 +21,13 @@ The main process runs as a worker that:
 - Downloads the original video from cloud storage
 - Uses FFmpeg to transcode/scale the video
 - Uploads the processed video back to cloud storage
-- Updates the media record in the database
+- Updates the asset record in the database
 - Publishes events for downstream processing
 
-### 2. Worker Bridge (`wkr-bridge-media-mp4.ts`)
+### 2. Worker Bridge (`wkr-bridge-asset-mp4.ts`)
 
 The worker bridge:
-- Listens for `MediaMainMp4` events on the application queue
+- Listens for `AssetMainMp4` events on the application queue
 - Creates `VidScalerJob` entries for processing
 - Acknowledges processed stream entries
 
@@ -39,13 +39,13 @@ The worker bridge:
 |-------|------|-------------|
 | `type` | string | Fixed value: `'VidScalerJob'` |
 | `orgId` | number | Organization ID |
-| `mediaId` | number | Media record ID |
+| `assetId` | number | Asset record ID |
 | `res` | string | Target resolution (e.g., `'480p30'`) |
 
 ### Processing Flow
 
-1. **Retrieve Media Record**
-   - Fetch media details using `mediaId` and `orgId`
+1. **Retrieve Asset Record**
+   - Fetch asset details using `assetId` and `orgId`
    - Get original video filename and storage path
 
 2. **Check Existing Output**
@@ -60,11 +60,11 @@ The worker bridge:
    - Clean up temporary files
 
 4. **Update Database**
-   - Set `media.sd` field to the processed resolution (e.g., `'480p30'`)
+   - Set `asset.sd` field to the processed resolution (e.g., `'480p30'`)
    - Mark the `VidScalerJob` as complete
 
 5. **Trigger Downstream Services**
-   - If media type is `'video'`, publish `MediaScaledMp4` event
+   - If asset type is `'video'`, publish `AssetScaledMp4` event
    - This triggers audio extraction via `audio-extractor` service
 
 ## FFmpeg Command
@@ -95,8 +95,8 @@ Examples:
 
 ## Storage Paths
 
-- **Original Video**: `{CORE_STORE_ROOT_DIR}{media.folderPath}{mediaName}`
-- **Scaled Video**: `{CORE_STORE_ROOT_DIR}{media.folderPath}{scaledName}`
+- **Original Video**: `{CORE_STORE_ROOT_DIR}{asset.folderPath}{assetName}`
+- **Scaled Video**: `{CORE_STORE_ROOT_DIR}{asset.folderPath}{scaledName}`
 - **Temporary Files**: `temp/{uuid}/` (local, cleaned up after processing)
 
 ## Events
@@ -105,18 +105,18 @@ Examples:
 
 | Queue | Event | Trigger |
 |-------|-------|---------|
-| `MediaMainMp4` | `MediaMainMp4` | New main video uploaded to storage |
+| `AssetMainMp4` | `AssetMainMp4` | New main video uploaded to storage |
 
 ### Published Events
 
 | Queue | Event | Trigger |
 |-------|-------|---------|
-| `MediaScaledMp4` | `MediaScaledMp4` | Video successfully scaled (only if media.type = 'video') |
+| `AssetScaledMp4` | `AssetScaledMp4` | Video successfully scaled (only if asset.type = 'video') |
 
 ## Dependencies
 
 - **Redis**: Queue management via `redstream`
-- **PostgreSQL**: Media record storage via `knex` and `pg`
+- **PostgreSQL**: Asset record storage via `knex` and `pg`
 - **Cloud Storage**: File storage via `cloud-bucket` (AWS S3 or Google Cloud Storage)
 - **FFmpeg**: Video transcoding (must be installed in container)
 
@@ -137,23 +137,23 @@ Environment variables (inherited from base container):
 
 ### Triggering Video Scaling
 
-1. Upload a video file to the media storage
-2. Create a media record with type `'video'`
-3. The system automatically publishes a `MediaMainMp4` event
-4. `wkr-bridge-media-mp4` receives the event and creates a `VidScalerJob`
+1. Upload a video file to the asset storage
+2. Create a asset record with type `'video'`
+3. The system automatically publishes a `AssetMainMp4` event
+4. `wkr-bridge-asset-mp4` receives the event and creates a `VidScalerJob`
 5. `start.ts` processes the job and creates the scaled version
-6. The `MediaScaledMp4` event triggers audio extraction
+6. The `AssetScaledMp4` event triggers audio extraction
 
 ### Manual Job Creation
 
-To manually trigger scaling for a specific media:
+To manually trigger scaling for a specific asset:
 
 ```typescript
 const vidScalerJobQueue = getJobQueue('VidScalerJob');
 await vidScalerJobQueue.add({
   type: 'VidScalerJob',
   orgId: 'your-org-id',
-  mediaId: 'your-media-id',
+  assetId: 'your-asset-id',
   res: '480p30'
 });
 ```

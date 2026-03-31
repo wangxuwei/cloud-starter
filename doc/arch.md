@@ -24,7 +24,7 @@ From bottom to top:
 
 5) **Front-End Services** are services that interface the system application to external systems that could be end-user UI application such as web or mobile applications or other web services that would access the system via API. 
 
-6) **Cloud Specific Services** While being 100% cloud portable is appealing and can be mostly achieved, leveraging cloud services can provide great value to an application. Services like CDN/MediaService, Cloud Storage (Bucket/Blog storage), big data (e.g., Big Query) will add great scalability characteristics to an application and should be integrated in any cloud architecture. 
+6) **Cloud Specific Services** While being 100% cloud portable is appealing and can be mostly achieved, leveraging cloud services can provide great value to an application. Services like CDN/AssetService, Cloud Storage (Bucket/Blog storage), big data (e.g., Big Query) will add great scalability characteristics to an application and should be integrated in any cloud architecture. 
     > Services like databases that could be run as a Kubernetes service in some context (e.g., Dev and Stage) might be used as a cloud service (.e.g., cloud SQL on google or RDS on AWS) in a production environment. Kubernetes end-point support allows to nicely abstract this access to other services, making this choice just a deployment configuration. 
 
 

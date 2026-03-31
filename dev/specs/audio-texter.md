@@ -9,19 +9,19 @@ The audio-texter service is a background worker service that transcribes audio f
 ### Workflow
 
 ```
-MediaAudioMp4 Queue (audio-extractor)
+AssetAudioMp4 Queue (audio-extractor)
     ↓ (trigger)
 VidTextJob Queue (audio-texter internal)
     ↓ (processing)
-MediaText Queue (notification to downstream)
+AssetText Queue (notification to downstream)
     ↓
 S3 Storage (transcription result)
 ```
 
 ### Components
 
-1. **Worker Bridge** (`wkr-bridge-media-text.ts`)
-   - Listens to `MediaAudioMp4` queue
+1. **Worker Bridge** (`wkr-bridge-asset-text.ts`)
+   - Listens to `AssetAudioMp4` queue
    - Creates `VidTextJob` entries for transcription processing
 
 2. **Main Worker** (`start.ts`)
@@ -29,7 +29,7 @@ S3 Storage (transcription result)
    - Downloads audio from S3
    - Transcribes using ASR provider
    - Uploads transcription result to S3
-   - Notifies via `MediaText` queue
+   - Notifies via `AssetText` queue
 
 3. **ASR Layer** (`asr/`)
    - `transcribe.ts`: Main transcription orchestration
@@ -50,15 +50,15 @@ S3 Storage (transcription result)
 
 ## Queue Integration
 
-### Input Queue: MediaAudioMp4
+### Input Queue: AssetAudioMp4
 
 Emitted by `audio-extractor` service when audio extraction completes.
 
 ```typescript
-interface MediaAudioMp4Event {
-  type: 'MediaAudioMp4';
+interface AssetAudioMp4Event {
+  type: 'AssetAudioMp4';
   orgId: string;
-  mediaId: string;
+  assetId: string;
 }
 ```
 
@@ -70,19 +70,19 @@ Created by worker bridge to trigger transcription.
 interface VidTextJob {
   type: 'VidTextJob';
   orgId: string;
-  mediaId: string;
+  assetId: string;
 }
 ```
 
-### Output Queue: MediaText
+### Output Queue: AssetText
 
 Emitted after successful transcription to notify downstream services.
 
 ```typescript
-interface MediaTextEvent {
-  type: 'MediaText';
+interface AssetTextEvent {
+  type: 'AssetText';
   orgId: string;
-  mediaId: string;
+  assetId: string;
 }
 ```
 
@@ -90,22 +90,22 @@ interface MediaTextEvent {
 
 ### Input Files
 
-Audio files follow the naming convention from `dao-media.ts`:
+Audio files follow the naming convention from `dao-asset.ts`:
 
 ```
-{CORE_STORE_ROOT_DIR}{media.folderPath}{audioName}
+{CORE_STORE_ROOT_DIR}{asset.folderPath}{audioName}
 ```
 
-Where `audioName` is generated from `media.name` (the video filename):
-- Original: `video-file.mp4`
-- Audio: `video-file-audio.mp3`
+Where `audioName` is generated from name `asset` (the fixed name):
+- Original: `asset.mp4`
+- Audio: `asset-audio.mp3`
 
 ### Output Files
 
 Transcription files are stored alongside audio:
 
 ```
-{CORE_STORE_ROOT_DIR}{media.folderPath}{textName}
+{CORE_STORE_ROOT_DIR}{asset.folderPath}{textName}
 ```
 
 Where `textName` is generated as:
@@ -128,14 +128,14 @@ Chunking prevents timeouts with ASR providers that have file size or duration li
 ### Transcription Flow
 
 1. **Job Reception**: Receive `VidTextJob` from queue
-2. **Metadata Lookup**: Fetch media record from database
+2. **Metadata Lookup**: Fetch asset record from database
 3. **File Check**: Verify if transcription already exists in S3
 4. **Download**: Download audio to temporary directory
 5. **Chunking**: Split audio if duration exceeds limit
 6. **Transcription**: Send chunks to ASR provider
 7. **Aggregation**: Combine transcribed segments with space separator
 8. **Upload**: Save transcription to S3
-9. **Notification**: Emit `MediaText` event
+9. **Notification**: Emit `AssetText` event
 10. **Cleanup**: Remove temporary files
 
 ### Error Handling
@@ -195,7 +195,7 @@ registerAsrService('NEWPROVIDER', transcribeWithNewProvider);
 
 - **Node.js**: Runtime (ES2021 modules)
 - **FFmpeg**: Audio processing (installed in base image)
-- **PostgreSQL**: Media metadata storage
+- **PostgreSQL**: Asset metadata storage
 - **Redis**: Job queue management
 - **S3/Rustfs**: Audio and transcription file storage
 
@@ -225,6 +225,6 @@ ERROR - audio-texter {error} (skip and go next) - cause: {cause}
 
 Monitor queue sizes in Redis:
 
-- `MediaAudioMp4`: Incoming audio extraction events
+- `AssetAudioMp4`: Incoming audio extraction events
 - `VidTextJob`: Pending transcription jobs
-- `MediaText`: Completed transcriptions
+- `AssetText`: Completed transcriptions

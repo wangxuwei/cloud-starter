@@ -14,7 +14,7 @@ This document outlines the coding standards and best practices for TypeScript vi
 
 #### Variables and Properties
 - **Private variables**: camelCase with underscore prefix or private keyword
-  - Example: `_orgList`, `_mediaList`
+  - Example: `_orgList`, `_assetList`
 - **Getters**: camelCase
   - Example: `get contentEl()`, `get projectId()`, `get orgId()`
 - **Methods**: camelCase
@@ -24,7 +24,7 @@ This document outlines the coding standards and best practices for TypeScript vi
 - **Element event handlers**: camelCase, starting with event type or action
   - Example: `clickAddOrg()`, `onShowClick()`, `onCardShowMenuUp()`
 - **Hub event handlers**: camelCase, starting with `on` and entity name
-  - Example: `onOrgChange()`, `onMediaChange()`, `routeChange()`
+  - Example: `onOrgChange()`, `onAssetChange()`, `routeChange()`
 
 #### Render Functions
 - Use underscore prefix to indicate private/internal
@@ -34,7 +34,7 @@ This document outlines the coding standards and best practices for TypeScript vi
 
 Organize class members in the following order:
 
-1. **Custom Element Decorator** - At the top, immediately after imports
+1. **Custom Element Decorator** - At the top, imassettely after imports
 2. **Getters for Key Elements** - Important DOM element references
 3. **Properties** - Data properties with getters
 4. **Region: Events** - `@onEvent` decorated methods
@@ -126,8 +126,8 @@ For longer explanations, use block comments:
 
 ```typescript
 /*
-    This handles the drag and drop functionality for the media add card.
-    It prevents the default browser behavior and creates a new Media record.
+    This handles the drag and drop functionality for the asset add card.
+    It prevents the default browser behavior and creates a new Asset record.
 */
 ```
 
@@ -169,7 +169,7 @@ async onEntityChange() { }
 
 Hub parameters:
 - First: hub name (e.g., `'dcoHub'`, `'routeHub'`)
-- Second: entity type (e.g., `'Org'`, `'Media'`) or event type (e.g., `'CHANGE'`)
+- Second: entity type (e.g., `'Org'`, `'Asset'`) or event type (e.g., `'CHANGE'`)
 - Third: comma-separated action list (e.g., `'create,update,remove'`)
 
 #### Route Change Events
@@ -201,7 +201,7 @@ Always call `super.init()` first. Attempt to draw empty state synchronously when
 async init() {
     super.init();
     
-    // Render empty state immediately
+    // Render empty state imassettely
     this.refresh([]);
     
     // Then fetch and render actual data
@@ -299,7 +299,7 @@ v-images {
 
 ```css
 .card-org-add { }
-.media-add { }
+.asset-add { }
 .show-menu { }
 ```
 

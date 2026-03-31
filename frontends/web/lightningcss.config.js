@@ -59,7 +59,7 @@ async function build() {
   }
 }
 
-// Run build immediately
+// Run build imassettely
 build();
 
 // Check if -w flag is present

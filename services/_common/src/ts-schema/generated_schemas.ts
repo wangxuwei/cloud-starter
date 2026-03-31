@@ -200,6 +200,7 @@ const generated_schemas = {
     },
     "GlobalRole": {
       "enum": [
+        "r_admin",
         "r_sys",
         "r_user"
       ],

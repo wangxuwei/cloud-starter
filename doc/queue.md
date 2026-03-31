@@ -19,8 +19,8 @@ Here are the key points of such architecture:
 - **Job Service** are services that listen to a redis job queue _stream_ with a specific _redis group_, allowing multiple instances of a service to get messages that was not already delivered to another consumer. 
 - **Bridges** are processes that bridge two queues, typically an Application Queue with a Job Queue. By best practice, the bridges are usually within their corresponding Job Service container. 
   - For examples: 
-    - A [vid-init](../services/vid-init/) job service will create nodejs worker thread to bridge `MediaNew` application event to a `VidInitJob` for any media of type video. See [vid-init/src/wkr-bridge-media-new.ts](../services/vid-init/src/wkr-bridge-media-new.ts)
-    - A [vid-scaler](../services/vid-scaler/)  job service will create a new worker thread to bridge `MediaMainMP4` (when the main MP4 is available) to the `VidScalerJob` queue. See [vid-scaler/src/wkr-bridge-media-mp4.ts](../services/vid-scaler/src/wkr-bridge-media-mp4.ts)
+    - A [vid-init](../services/vid-init/) job service will create nodejs worker thread to bridge `AssetNew` application event to a `VidInitJob` for any asset of type video. See [vid-init/src/wkr-bridge-asset-new.ts](../services/vid-init/src/wkr-bridge-asset-new.ts)
+    - A [vid-scaler](../services/vid-scaler/)  job service will create a new worker thread to bridge `AssetMainMP4` (when the main MP4 is available) to the `VidScalerJob` queue. See [vid-scaler/src/wkr-bridge-asset-mp4.ts](../services/vid-scaler/src/wkr-bridge-asset-mp4.ts)
   - Best practice: 
     - Bridges are Nodejs Worker Thread, one file per bridge, starting with `wkr-...ts`, and they are started on the appropriate service `start.ts`.
 
@@ -33,18 +33,18 @@ Here are the key points of such architecture:
 - The Redis Stream APIs start with `X` such as [XADD](https://redis.io/commands/xadd), [XREADGROUP](https://redis.io/commands/xreadgroup).
 - The [redstream](https://www.npmjs.com/package/redstream) will be used to query the redis stream server. It uses [ioredis](https://www.npmjs.com/package/ioredis) as backend (which needs to be installed as it is defined as peer dependency)
   - A Stream entry has a `.id` which is typically created by redis on `.xadd(data)` and a `.data` which is TypesScript typed when using _redstream_ 
-  - Each Stream has a unique key, e.g., `VidScalerJob` or `MediaNew`, and the Redis API allows adding entries (name/value pair). 
+  - Each Stream has a unique key, e.g., `VidScalerJob` or `AssetNew`, and the Redis API allows adding entries (name/value pair). 
   - With the _redstream_ API, you first create a `redstream` object, with a given key
-    - `const mediaNewStream = redstream(ioredisClient, 'MediaNew')` (in application code, a factory module should be used to allow caching, typing, normalization, see [queue.ts](../services/_common/src/queue.ts))
+    - `const assetNewStream = redstream(ioredisClient, 'AssetNew')` (in application code, a factory module should be used to allow caching, typing, normalization, see [queue.ts](../services/_common/src/queue.ts))
   - Adding new entries is done with `queue.xadd(data)`
-    - `mediaNewStream.xadd({type: 'MediaNew', wksId: 11, mediaId: 123, mediaMimeType: 'video/mov'})` (all should typed, see [../shared/src/event-types.ts], and the `.type` property is required and must match the event type name)
+    - `assetNewStream.xadd({type: 'AssetNew', wksId: 11, assetId: 123, assetMimeType: 'video/mov'})` (all should typed, see [../shared/src/event-types.ts], and the `.type` property is required and must match the event type name)
   - Reading (blocking) is done with `await stream.xreadgroup(group, consumer)` (where consumer_ID is usually `KHOST`)
     - `group` is a way to group all of the callers so that they only get messages that have not been delivered to another consumer of the same group. 
     - `consumer` allows to identify which client/instance read the message. Typically, this will be the KHOST. (Redis Stream allows to `xinfo` a stream and get that information)
-    - `const entry = await mediaNewStream.xreadgroup('VidInitJobBridge', KHOST))`. with `entry = {id:string, data: MediaNew}`. This example is used to bridge the `MediaNew` queue to another queue. 
+    - `const entry = await assetNewStream.xreadgroup('VidInitJobBridge', KHOST))`. with `entry = {id:string, data: AssetNew}`. This example is used to bridge the `AssetNew` queue to another queue. 
     - After an entry is read with `xreadgroup` it has to be `xack` to remove it to the pending list of this group once it is deemed processed. This is like an acknowledgment that the entry was processed. This is done with `stream.xack(group, entry.id)`
 - `getAppQueue` and `getJobQueue` from [queue.ts](../services/_common/src/queue.ts) are thin application wrapper used to add queue semantic.  
-  - `const queue = getAppQueue('MediaNew')` is used to get a use for a specific event type name
+  - `const queue = getAppQueue('AssetNew')` is used to get a use for a specific event type name
   - `queue.next(groupName)` is used to get the next entry. 
   - `jobQueue.nextJob()` is used to get the next entry of a job queue to perform the job (the group name is inferred from the event name)
   - `queue.add({...})` is used to add some data. 
