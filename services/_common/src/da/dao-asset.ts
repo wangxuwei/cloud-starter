@@ -8,8 +8,13 @@ import { getCoreBucket } from "../store.js";
 import { UserContext } from "../user-context.js";
 import { getMimeType, symbolDic } from "../utils.js";
 import { OrgScopedDao } from "./dao-org-scoped.js";
+import { knexQuery } from "./db.js";
 
-const ERROR = symbolDic("ASSET_UPLOAD_FAIL_NO_ORGID");
+const ERROR = symbolDic(
+	"ASSET_UPLOAD_FAIL_NO_ORGID",
+	"ASSET_UPLOAD_FAIL_NO_PROJECTID",
+	"ASSET_UPLOAD_FAIL_NO_WKSID"
+);
 
 export class AssetDao extends OrgScopedDao<Asset, number> {
 	constructor() {
@@ -39,13 +44,44 @@ export class AssetDao extends OrgScopedDao<Asset, number> {
 	}
 
 	//#region    ---------- Asset Specific Methods ----------
+
+	/**
+	 * Load org, wks, and project UUIDs for a given asset ID
+	 * @param utx User context
+	 * @param assetId Asset ID
+	 * @returns Object containing orgUuid, wksUuid, and projectUuid
+	 */
+	private async getOrgWksProjectUuid(
+		utx: UserContext,
+		assetId: number
+	): Promise<{ orgUuid: string; wksUuid: string; projectUuid: string }> {
+		const { query } = await knexQuery({ utx, tableName: "asset" });
+
+		const result = await query
+			.select({
+				orgUuid: "org.uuid",
+				wksUuid: "wks.uuid",
+				projectUuid: "project.uuid",
+			})
+			.join("project", "asset.projectId", "project.id")
+			.join("wks", "project.wksId", "wks.id")
+			.join("org", "wks.orgId", "org.id")
+			.where("asset.id", assetId)
+			.first();
+
+		if (!result) {
+			throw new Error(
+				`Cannot find org, wks, and project UUIDs for asset ${assetId}`
+			);
+		}
+
+		return result as { orgUuid: string; wksUuid: string; projectUuid: string };
+	}
+
 	async createWithFile(
 		utx: UserContext,
 		data: Partial<Asset> & { file: File }
 	): Promise<number> {
-		// NOTE: Needed to avoid cyclic issues in some cases which makes the AssetDao undefined in export. Investigate if cleaner alternative.
-		const { orgDao } = await import("./daos.js");
-
 		const orgId = utx.orgId;
 
 		if (orgId == null) {
@@ -55,15 +91,26 @@ export class AssetDao extends OrgScopedDao<Asset, number> {
 		const file = data.file;
 		const coreStore = await getCoreBucket();
 
-		const org = await orgDao.get(utx, orgId);
 		const srcName = file.originalFilename!;
 		const name = srcName; // at start same name
 		const type = getAssetType(name);
 		const projectId = data.projectId;
 
+		if (projectId == null) {
+			throw new Err(ERROR.ASSET_UPLOAD_FAIL_NO_PROJECTID);
+		}
+
 		const assetId = await this.create(utx, { srcName, name, type, projectId });
 		const asset = await this.get(utx, assetId);
-		const folderPath = `org/${org.uuid}/assets/${asset.uuid}/`;
+
+		// Load org, wks, and project UUIDs in a single query
+		const { orgUuid, wksUuid, projectUuid } = await this.getOrgWksProjectUuid(
+			utx,
+			assetId
+		);
+
+		// Update folderPath format to include orgs, wkss, and project
+		const folderPath = `orgs/${orgUuid}/wkss/${wksUuid}/project/${projectUuid}/assets/${asset.uuid}/`;
 		await coreStore.upload(
 			file.filepath,
 			CORE_STORE_ROOT_DIR + folderPath + srcName
@@ -81,6 +128,7 @@ export class AssetDao extends OrgScopedDao<Asset, number> {
 		}
 		return assetId;
 	}
+
 	//#endregion ---------- /Asset Specific Methods ----------
 }
 

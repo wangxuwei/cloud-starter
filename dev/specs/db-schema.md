@@ -160,7 +160,7 @@ Asset files (images and videos) with resolution information.
 | type | asset_type | Asset type (image, video) | NOT NULL |
 | name | varchar(64) | Asset name | |
 | srcName | varchar(64) | Source file name | |
-| folderPath | varchar(256) | Folder path in storage | |
+| folderPath | varchar(256) | Folder path in storage (format: orgs/{org.uuid}/wkss/{wks.uuid}/project/{project.uuid}/assets/{asset.uuid}/) | |
 | resList | asset_res[] | Available resolutions | |
 | sd | asset_res | Standard definition resolution | |
 | cid | bigint | Creator ID | |
@@ -168,7 +168,7 @@ Asset files (images and videos) with resolution information.
 | mid | bigint | Modifier ID | |
 | mtime | timestamp with time zone | Modification timestamp | |
 
-**Note**: ID sequence starts at 1000. The `projectId` field has a FIXME comment indicating it may need revision.
+**Note**: ID sequence starts at 1000. The `projectId` field has a FIXME comment indicating it may need revision. The `folderPath` format includes organization, workspace, and project UUIDs for hierarchical organization.
 
 ---
 
