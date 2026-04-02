@@ -19,7 +19,7 @@ const execaOpts = Object.freeze({ stdout, stderr });
 start();
 
 async function start() {
-	console.log(`--> audio-extractor (${__version__}) - starting  ->> 445`);
+	console.log(`--> audio-extractor (${__version__}) - starting`);
 
 	new Worker("./dist/services/audio-extractor/src/wkr-bridge-asset-audio.js");
 

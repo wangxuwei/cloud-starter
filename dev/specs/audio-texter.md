@@ -43,7 +43,7 @@ S3 Storage (transcription result)
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `ASR_API_KEY` | Yes | API key for the ASR provider |
-| `ASR_MODEL` | Yes | Model identifier (e.g., `glm-4`, `openai-whisper-1`) |
+| `ASR_MODEL` | Yes | Model identifier (e.g., `glm-4`, `openai-whisper-1`, not only support `glm-4`) |
 | `CORE_STORE_ROOT_DIR` | Yes | Root path for S3 storage |
 | `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | Yes | Database connection |
 | `REDIS_HOST`, `REDIS_PORT` | Yes | Redis connection for queues |

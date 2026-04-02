@@ -189,8 +189,7 @@ async function start() {
     "redstream": "^0.3.0",
     "utils-min": "^0.2.4",
     "uuid": "^13.0.0",
-    "@aws-sdk/client-s3": "^3.980.0",
-    "openai": "^4.83.0"
+    "@aws-sdk/client-s3": "^3.980.0"
   }
 }
 ```

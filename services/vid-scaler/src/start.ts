@@ -25,7 +25,7 @@ const execaOpts = Object.freeze({ stdout, stderr });
 start();
 
 async function start() {
-	console.log(`--> vid-scaler (${__version__}) - starting  ->> 444`);
+	console.log(`--> vid-scaler (${__version__}) - starting`);
 
 	new Worker("./dist/services/vid-scaler/src/wkr-bridge-asset-mp4.js");
 

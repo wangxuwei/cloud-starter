@@ -14,7 +14,7 @@ import { transcribeToText } from "./asr/transcribe.js";
 start();
 
 async function start() {
-	console.log(`--> audio-texter (${__version__}) - starting  ->> 445`);
+	console.log(`--> audio-texter (${__version__}) - starting`);
 
 	new Worker("./dist/services/audio-texter/src/wkr-bridge-asset-text.js");
 
